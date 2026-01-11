@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from app.api.v1 import auth, reports, validate
+from app.api.v1 import auth, billing, reports, validate
 
 api_router = APIRouter()
 
@@ -10,3 +10,4 @@ api_router = APIRouter()
 api_router.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 api_router.include_router(validate.router, prefix="/validate", tags=["Validation"])
 api_router.include_router(reports.router, prefix="/reports", tags=["Reports"])
+api_router.include_router(billing.router, prefix="/billing", tags=["Billing"])
