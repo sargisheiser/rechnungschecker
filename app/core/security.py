@@ -1,0 +1,216 @@
+"""Security utilities for authentication and authorization."""
+
+from datetime import datetime, timedelta
+from typing import Any
+from uuid import UUID
+
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+
+from app.config import get_settings
+
+settings = get_settings()
+
+# Password hashing context
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify a password against its hash."""
+    return pwd_context.verify(plain_password, hashed_password)
+
+
+def get_password_hash(password: str) -> str:
+    """Hash a password using bcrypt."""
+    return pwd_context.hash(password)
+
+
+def create_access_token(
+    subject: str | UUID,
+    expires_delta: timedelta | None = None,
+    extra_claims: dict[str, Any] | None = None,
+) -> str:
+    """Create a JWT access token.
+
+    Args:
+        subject: The subject (usually user ID) to encode
+        expires_delta: Optional custom expiration time
+        extra_claims: Optional additional claims to include
+
+    Returns:
+        Encoded JWT token string
+    """
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=settings.access_token_expire_minutes)
+
+    to_encode: dict[str, Any] = {
+        "sub": str(subject),
+        "exp": expire,
+        "type": "access",
+        "iat": datetime.utcnow(),
+    }
+
+    if extra_claims:
+        to_encode.update(extra_claims)
+
+    return jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
+
+
+def create_refresh_token(
+    subject: str | UUID,
+    expires_delta: timedelta | None = None,
+) -> str:
+    """Create a JWT refresh token.
+
+    Args:
+        subject: The subject (usually user ID) to encode
+        expires_delta: Optional custom expiration time
+
+    Returns:
+        Encoded JWT refresh token string
+    """
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(days=settings.refresh_token_expire_days)
+
+    to_encode: dict[str, Any] = {
+        "sub": str(subject),
+        "exp": expire,
+        "type": "refresh",
+        "iat": datetime.utcnow(),
+    }
+
+    return jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
+
+
+def decode_token(token: str) -> dict[str, Any] | None:
+    """Decode and validate a JWT token.
+
+    Args:
+        token: The JWT token to decode
+
+    Returns:
+        Decoded token payload or None if invalid
+    """
+    try:
+        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+        return payload
+    except JWTError:
+        return None
+
+
+def verify_access_token(token: str) -> dict[str, Any] | None:
+    """Verify an access token and return its payload.
+
+    Args:
+        token: The access token to verify
+
+    Returns:
+        Token payload if valid, None otherwise
+    """
+    payload = decode_token(token)
+    if payload is None:
+        return None
+
+    # Check token type
+    if payload.get("type") != "access":
+        return None
+
+    return payload
+
+
+def verify_refresh_token(token: str) -> dict[str, Any] | None:
+    """Verify a refresh token and return its payload.
+
+    Args:
+        token: The refresh token to verify
+
+    Returns:
+        Token payload if valid, None otherwise
+    """
+    payload = decode_token(token)
+    if payload is None:
+        return None
+
+    # Check token type
+    if payload.get("type") != "refresh":
+        return None
+
+    return payload
+
+
+def create_email_verification_token(email: str) -> str:
+    """Create a token for email verification.
+
+    Args:
+        email: The email address to verify
+
+    Returns:
+        Encoded verification token
+    """
+    expire = datetime.utcnow() + timedelta(hours=24)
+    to_encode = {
+        "sub": email,
+        "exp": expire,
+        "type": "email_verification",
+    }
+    return jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
+
+
+def verify_email_verification_token(token: str) -> str | None:
+    """Verify an email verification token.
+
+    Args:
+        token: The verification token
+
+    Returns:
+        Email address if valid, None otherwise
+    """
+    payload = decode_token(token)
+    if payload is None:
+        return None
+
+    if payload.get("type") != "email_verification":
+        return None
+
+    return payload.get("sub")
+
+
+def create_password_reset_token(email: str) -> str:
+    """Create a token for password reset.
+
+    Args:
+        email: The email address for password reset
+
+    Returns:
+        Encoded password reset token
+    """
+    expire = datetime.utcnow() + timedelta(hours=1)  # 1 hour validity
+    to_encode = {
+        "sub": email,
+        "exp": expire,
+        "type": "password_reset",
+    }
+    return jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
+
+
+def verify_password_reset_token(token: str) -> str | None:
+    """Verify a password reset token.
+
+    Args:
+        token: The password reset token
+
+    Returns:
+        Email address if valid, None otherwise
+    """
+    payload = decode_token(token)
+    if payload is None:
+        return None
+
+    if payload.get("type") != "password_reset":
+        return None
+
+    return payload.get("sub")
