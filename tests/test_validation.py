@@ -126,23 +126,6 @@ class TestZugferdValidationEndpoint:
     """Tests for /api/v1/validate/zugferd endpoint."""
 
     @pytest.mark.asyncio
-    async def test_zugferd_not_implemented(
-        self, async_client: AsyncClient
-    ) -> None:
-        """Test that ZUGFeRD endpoint returns not implemented."""
-        # Create a minimal PDF-like content
-        pdf_content = b"%PDF-1.4 fake pdf content"
-
-        response = await async_client.post(
-            "/api/v1/validate/zugferd",
-            files={"file": ("invoice.pdf", pdf_content, "application/pdf")},
-        )
-
-        assert response.status_code == 501
-        data = response.json()
-        assert "ZUGFeRD" in data["detail"]
-
-    @pytest.mark.asyncio
     async def test_zugferd_wrong_extension(
         self, async_client: AsyncClient, sample_xrechnung_valid: bytes
     ) -> None:
@@ -155,6 +138,69 @@ class TestZugferdValidationEndpoint:
         assert response.status_code == 400
         data = response.json()
         assert "PDF" in data["detail"]
+
+    @pytest.mark.asyncio
+    async def test_zugferd_invalid_pdf(
+        self, async_client: AsyncClient
+    ) -> None:
+        """Test ZUGFeRD validation with invalid PDF content."""
+        # Create a minimal PDF-like content that's not actually a valid PDF
+        pdf_content = b"%PDF-1.4 fake pdf content"
+
+        response = await async_client.post(
+            "/api/v1/validate/zugferd",
+            files={"file": ("invoice.pdf", pdf_content, "application/pdf")},
+        )
+
+        # Should return 400 because it can't parse the PDF
+        assert response.status_code == 400
+        data = response.json()
+        assert "detail" in data
+
+    @pytest.mark.asyncio
+    async def test_zugferd_empty_pdf(
+        self, async_client: AsyncClient
+    ) -> None:
+        """Test ZUGFeRD validation with empty file."""
+        response = await async_client.post(
+            "/api/v1/validate/zugferd",
+            files={"file": ("invoice.pdf", b"", "application/pdf")},
+        )
+
+        assert response.status_code == 400
+
+
+class TestValidationHistoryEndpoint:
+    """Tests for /api/v1/validate/history endpoint."""
+
+    @pytest.mark.asyncio
+    async def test_get_history_returns_empty(
+        self, async_client: AsyncClient
+    ) -> None:
+        """Test that history endpoint returns empty list without auth."""
+        response = await async_client.get("/api/v1/validate/history")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["items"] == []
+        assert data["total"] == 0
+        assert "page" in data
+        assert "page_size" in data
+
+    @pytest.mark.asyncio
+    async def test_get_history_with_pagination(
+        self, async_client: AsyncClient
+    ) -> None:
+        """Test history endpoint accepts pagination parameters."""
+        response = await async_client.get(
+            "/api/v1/validate/history",
+            params={"page": 2, "page_size": 10},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["page"] == 2
+        assert data["page_size"] == 10
 
 
 class TestHealthEndpoint:

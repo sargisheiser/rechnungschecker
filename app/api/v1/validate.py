@@ -8,8 +8,9 @@ from fastapi import APIRouter, File, HTTPException, Request, UploadFile, status
 
 from app.config import get_settings
 from app.core.exceptions import FileProcessingError, KoSITError, ValidationError
-from app.schemas.validation import ValidationResponse
+from app.schemas.validation import ValidationHistoryResponse, ValidationResponse
 from app.services.validator.xrechnung import XRechnungValidator
+from app.services.validator.zugferd import ZUGFeRDValidator
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -150,8 +151,79 @@ async def validate_zugferd(
             detail="Ungültiger Dateityp. Bitte laden Sie eine PDF-Datei hoch.",
         )
 
-    # TODO: Implement ZUGFeRD validation in Phase 2
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="ZUGFeRD-Validierung wird in der nächsten Version verfügbar sein.",
+    try:
+        validator = ZUGFeRDValidator()
+        result = await validator.validate(
+            content=content,
+            filename=filename,
+            user_id=None,  # TODO: Get from auth context
+        )
+
+        # Set report URL
+        result.report_url = f"/api/v1/reports/{result.id}/pdf"
+
+        logger.info(
+            f"ZUGFeRD validation completed: id={result.id}, valid={result.is_valid}, "
+            f"profile={result.zugferd_profile}, errors={result.error_count}"
+        )
+
+        return result
+
+    except FileProcessingError as e:
+        logger.warning(f"File processing error: {e.message}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=e.message,
+        )
+    except KoSITError as e:
+        logger.error(f"KoSIT validation error: {e.message}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Validierung fehlgeschlagen. Bitte versuchen Sie es später erneut.",
+        )
+    except ValidationError as e:
+        logger.warning(f"Validation error: {e.message}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=e.message,
+        )
+    except Exception as e:
+        logger.exception(f"Unexpected error during ZUGFeRD validation: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Ein unerwarteter Fehler ist aufgetreten.",
+        )
+
+
+@router.get(
+    "/history",
+    response_model=ValidationHistoryResponse,
+    summary="Get validation history",
+    description="Retrieve the validation history for the authenticated user.",
+    responses={
+        200: {"description": "Validation history retrieved"},
+        401: {"description": "Not authenticated"},
+    },
+)
+async def get_validation_history(
+    request: Request,
+    page: int = 1,
+    page_size: int = 20,
+) -> ValidationHistoryResponse:
+    """Get validation history for the authenticated user.
+
+    Returns a paginated list of past validations including:
+    - Validation ID
+    - File type (xrechnung/zugferd)
+    - Validation result (valid/invalid)
+    - Error and warning counts
+    - Timestamp
+    """
+    # TODO: Implement with auth - for now return empty
+    # This will be fully implemented when authentication is added
+    return ValidationHistoryResponse(
+        items=[],
+        total=0,
+        page=page,
+        page_size=page_size,
     )
