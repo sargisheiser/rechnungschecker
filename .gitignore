@@ -106,6 +106,13 @@ secrets/
 # Documentation build
 docs/_build/
 
+# Node.js / Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+.npm
+*.tsbuildinfo
+
 # mypy
 .mypy_cache/
 .dmypy.json
