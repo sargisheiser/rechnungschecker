@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from app.api.v1 import api_keys, auth, billing, convert, reports, validate
+from app.api.v1 import api_keys, auth, billing, clients, convert, reports, validate
 
 api_router = APIRouter()
 
@@ -13,3 +13,4 @@ api_router.include_router(convert.router, prefix="/convert", tags=["Conversion"]
 api_router.include_router(reports.router, prefix="/reports", tags=["Reports"])
 api_router.include_router(billing.router, prefix="/billing", tags=["Billing"])
 api_router.include_router(api_keys.router, prefix="/api-keys", tags=["API Keys"])
+api_router.include_router(clients.router, prefix="/clients", tags=["Clients"])

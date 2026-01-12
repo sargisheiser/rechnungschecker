@@ -51,6 +51,12 @@ export function Layout() {
                   <Link to="/dashboard" className="btn-secondary">
                     Dashboard
                   </Link>
+                  <Link
+                    to="/konvertierung"
+                    className="text-gray-600 hover:text-gray-900 font-medium"
+                  >
+                    Konvertierung
+                  </Link>
                   <div className="relative group">
                     <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
                       <User className="h-5 w-5" />
@@ -124,6 +130,13 @@ export function Layout() {
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Dashboard
+                  </Link>
+                  <Link
+                    to="/konvertierung"
+                    className="block px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Konvertierung
                   </Link>
                   <button
                     onClick={() => {

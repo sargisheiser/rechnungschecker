@@ -28,6 +28,7 @@ class ValidationHistoryService:
         self,
         result: ValidationResponse,
         user_id: UUID | None = None,
+        client_id: UUID | None = None,
         file_name: str | None = None,
         file_size_bytes: int = 0,
     ) -> ValidationLog:
@@ -36,6 +37,7 @@ class ValidationHistoryService:
         Args:
             result: The validation response to store
             user_id: Optional user ID who performed the validation
+            client_id: Optional client ID for client-specific validations
             file_name: Original filename of the validated file
             file_size_bytes: Size of the file in bytes
 
@@ -50,6 +52,7 @@ class ValidationHistoryService:
         log_entry = ValidationLog(
             id=result.id,
             user_id=user_id,
+            client_id=client_id,
             file_name=file_name,
             file_type=file_type,
             file_hash=result.file_hash,
@@ -67,12 +70,23 @@ class ValidationHistoryService:
         self.db.add(log_entry)
         await self.db.flush()
 
-        logger.info(f"Stored validation log: id={log_entry.id}, user_id={user_id}")
+        # Update client statistics if client_id is provided
+        if client_id:
+            from app.models.client import Client
+            client_result = await self.db.execute(
+                select(Client).where(Client.id == client_id)
+            )
+            client = client_result.scalar_one_or_none()
+            if client:
+                client.increment_validation_count()
+
+        logger.info(f"Stored validation log: id={log_entry.id}, user_id={user_id}, client_id={client_id}")
         return log_entry
 
     async def get_user_history(
         self,
         user_id: UUID,
+        client_id: UUID | None = None,
         page: int = 1,
         page_size: int = 20,
     ) -> ValidationHistoryResponse:
@@ -80,6 +94,7 @@ class ValidationHistoryService:
 
         Args:
             user_id: The user ID to get history for
+            client_id: Optional client ID to filter by
             page: Page number (1-indexed)
             page_size: Number of items per page
 
@@ -89,17 +104,20 @@ class ValidationHistoryService:
         # Calculate offset
         offset = (page - 1) * page_size
 
+        # Build base filter
+        filters = [ValidationLog.user_id == user_id]
+        if client_id is not None:
+            filters.append(ValidationLog.client_id == client_id)
+
         # Get total count
-        count_query = select(func.count(ValidationLog.id)).where(
-            ValidationLog.user_id == user_id
-        )
+        count_query = select(func.count(ValidationLog.id)).where(*filters)
         total_result = await self.db.execute(count_query)
         total = total_result.scalar() or 0
 
         # Get items
         query = (
             select(ValidationLog)
-            .where(ValidationLog.user_id == user_id)
+            .where(*filters)
             .order_by(ValidationLog.created_at.desc())
             .offset(offset)
             .limit(page_size)

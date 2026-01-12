@@ -304,6 +304,17 @@ RechnungsChecker - E-Rechnung Validierung & Konvertierung
         """
         reset_url = f"http://localhost:3000/passwort-zuruecksetzen?token={token}"
 
+        # In dev mode, print reset URL prominently
+        if not self.is_configured:
+            print("\n" + "*" * 60)
+            print("*  PASSWORD RESET LINK (DEV MODE)")
+            print("*" * 60)
+            print(f"*  Email: {to}")
+            print(f"*  ")
+            print(f"*  Click here to reset password:")
+            print(f"*  {reset_url}")
+            print("*" * 60 + "\n")
+
         subject = "Passwort zurücksetzen - RechnungsChecker"
 
         html_content = f"""

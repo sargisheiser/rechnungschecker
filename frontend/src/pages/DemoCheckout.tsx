@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { CreditCard, Lock, CheckCircle, Loader2, AlertTriangle } from 'lucide-react'
+import { CreditCard, Lock, Loader2, AlertTriangle } from 'lucide-react'
 import { useMutation } from '@tanstack/react-query'
 import api from '@/lib/api'
 import { cn, formatCurrency } from '@/lib/utils'

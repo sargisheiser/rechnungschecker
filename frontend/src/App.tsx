@@ -6,6 +6,8 @@ import { Pricing } from '@/pages/Pricing'
 import { Login } from '@/pages/Login'
 import { Register } from '@/pages/Register'
 import { EmailVerificationPending } from '@/pages/EmailVerificationPending'
+import { ForgotPassword } from '@/pages/ForgotPassword'
+import { ResetPassword } from '@/pages/ResetPassword'
 import { Impressum } from '@/pages/Impressum'
 import { Datenschutz } from '@/pages/Datenschutz'
 import { AGB } from '@/pages/AGB'
@@ -14,6 +16,8 @@ import { ValidationDetailPage } from '@/pages/ValidationDetail'
 import { DemoCheckout } from '@/pages/DemoCheckout'
 import { DemoPortal } from '@/pages/DemoPortal'
 import { APIKeysPage } from '@/pages/APIKeys'
+import { ClientsPage } from '@/pages/Clients'
+import { ConversionPage } from '@/pages/Conversion'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 
 function App() {
@@ -25,6 +29,8 @@ function App() {
         <Route path="login" element={<Login />} />
         <Route path="registrieren" element={<Register />} />
         <Route path="email-bestaetigung" element={<EmailVerificationPending />} />
+        <Route path="passwort-vergessen" element={<ForgotPassword />} />
+        <Route path="passwort-zuruecksetzen" element={<ResetPassword />} />
         <Route path="verifizieren" element={<Navigate to="/email-bestaetigung" replace />} />
         <Route path="impressum" element={<Impressum />} />
         <Route path="datenschutz" element={<Datenschutz />} />
@@ -67,6 +73,22 @@ function App() {
           element={
             <ProtectedRoute>
               <APIKeysPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="mandanten"
+          element={
+            <ProtectedRoute>
+              <ClientsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="konvertierung"
+          element={
+            <ProtectedRoute>
+              <ConversionPage />
             </ProtectedRoute>
           }
         />

@@ -4,9 +4,9 @@ import enum
 from datetime import datetime
 from uuid import uuid4
 
-from sqlalchemy import DateTime, Enum, Integer, String, Boolean, func
+from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String, Boolean, func
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 
@@ -28,6 +28,12 @@ class ValidationLog(Base):
     )
     user_id: Mapped[UUID | None] = mapped_column(
         UUID(as_uuid=True), nullable=True, index=True
+    )
+    client_id: Mapped[UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("clients.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
     )
 
     # Validation details (no content stored)
@@ -58,3 +64,6 @@ class ValidationLog(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), index=True
     )
+
+    # Relationships
+    client = relationship("Client", back_populates="validations")

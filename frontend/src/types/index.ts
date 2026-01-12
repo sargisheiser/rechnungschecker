@@ -216,3 +216,125 @@ export interface APIKeyCreateRequest {
   description?: string
   expires_in_days?: number
 }
+
+// Client types (Mandantenverwaltung)
+export interface Client {
+  id: string
+  name: string
+  client_number?: string
+  tax_number?: string
+  vat_id?: string
+  contact_name?: string
+  contact_email?: string
+  contact_phone?: string
+  street?: string
+  postal_code?: string
+  city?: string
+  country: string
+  notes?: string
+  is_active: boolean
+  validation_count: number
+  last_validation_at?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface ClientListItem {
+  id: string
+  name: string
+  client_number?: string
+  is_active: boolean
+  validation_count: number
+  last_validation_at?: string
+  created_at: string
+}
+
+export interface ClientList {
+  items: ClientListItem[]
+  total: number
+  page: number
+  page_size: number
+  max_clients: number
+}
+
+export interface ClientStats {
+  total_clients: number
+  active_clients: number
+  total_validations: number
+  max_clients: number
+}
+
+export interface ClientCreateRequest {
+  name: string
+  client_number?: string
+  tax_number?: string
+  vat_id?: string
+  contact_name?: string
+  contact_email?: string
+  contact_phone?: string
+  street?: string
+  postal_code?: string
+  city?: string
+  country?: string
+  notes?: string
+}
+
+export interface ClientUpdateRequest extends Partial<ClientCreateRequest> {
+  is_active?: boolean
+}
+
+// Conversion types
+export type OutputFormat = 'xrechnung' | 'zugferd'
+export type ZUGFeRDProfileType = 'MINIMUM' | 'BASIC' | 'EN16931' | 'EXTENDED'
+
+export interface ExtractedData {
+  invoice_number?: string
+  invoice_date?: string
+  due_date?: string
+  delivery_date?: string
+  seller_name?: string
+  seller_street?: string
+  seller_postal_code?: string
+  seller_city?: string
+  seller_vat_id?: string
+  seller_tax_id?: string
+  buyer_name?: string
+  buyer_street?: string
+  buyer_postal_code?: string
+  buyer_city?: string
+  buyer_reference?: string
+  net_amount?: number
+  vat_amount?: number
+  gross_amount?: number
+  currency: string
+  iban?: string
+  bic?: string
+  bank_name?: string
+  payment_reference?: string
+  leitweg_id?: string
+  order_reference?: string
+  confidence: number
+  warnings: string[]
+}
+
+export interface PreviewResponse {
+  extracted_data: ExtractedData
+  ocr_used: boolean
+  ocr_available: boolean
+}
+
+export interface ConversionResponse {
+  success: boolean
+  conversion_id: string
+  filename: string
+  output_format: OutputFormat
+  extracted_data: ExtractedData
+  warnings: string[]
+  error?: string
+}
+
+export interface ConversionStatusResponse {
+  ocr_available: boolean
+  supported_formats: OutputFormat[]
+  supported_profiles: ZUGFeRDProfileType[]
+}

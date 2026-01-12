@@ -1,20 +1,24 @@
+import { useState } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import {
   FileCheck,
   CheckCircle,
   XCircle,
-  Clock,
   TrendingUp,
   CreditCard,
   ArrowRight,
   Loader2,
   Key,
+  Users,
+  Building2,
+  ChevronDown,
 } from 'lucide-react'
 import { FileUpload } from '@/components/FileUpload'
 import { ValidationResults } from '@/components/ValidationResults'
 import { useValidationStore, useValidationHistory } from '@/hooks/useValidation'
 import { useUser } from '@/hooks/useAuth'
 import { useUsage, useSubscription, usePortalSession } from '@/hooks/useBilling'
+import { useClients, useClientContext } from '@/hooks/useClients'
 import { cn, formatDate, formatDateTime } from '@/lib/utils'
 
 export function Dashboard() {
@@ -23,11 +27,18 @@ export function Dashboard() {
   const { data: user } = useUser()
   const { data: usage, isLoading: usageLoading } = useUsage()
   const { data: subscription } = useSubscription()
+  const { selectedClientId, setSelectedClientId } = useClientContext()
+  const { data: clients } = useClients(1, 100, true) // Get active clients for dropdown
   const { data: history, isLoading: historyLoading } = useValidationHistory(1, 5)
   const portalSession = usePortalSession()
+  const [showClientDropdown, setShowClientDropdown] = useState(false)
 
   // Check for checkout success
   const checkoutStatus = searchParams.get('checkout')
+
+  // Check if user can manage clients (Steuerberater plan)
+  const canManageClients = user?.plan === 'steuerberater'
+  const selectedClient = clients?.items.find((c) => c.id === selectedClientId)
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -48,10 +59,82 @@ export function Dashboard() {
 
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600 mt-1">
-          Willkommen zurueck, {user?.company_name || user?.email}
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+            <p className="text-gray-600 mt-1">
+              Willkommen zurueck, {user?.company_name || user?.email}
+            </p>
+          </div>
+
+          {/* Client Selector (Steuerberater only) */}
+          {canManageClients && clients && clients.items.length > 0 && (
+            <div className="relative">
+              <button
+                onClick={() => setShowClientDropdown(!showClientDropdown)}
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <Building2 className="h-4 w-4 text-gray-500" />
+                <span className="text-sm font-medium text-gray-700">
+                  {selectedClient?.name || 'Alle Mandanten'}
+                </span>
+                <ChevronDown className="h-4 w-4 text-gray-400" />
+              </button>
+
+              {showClientDropdown && (
+                <>
+                  <div
+                    className="fixed inset-0"
+                    onClick={() => setShowClientDropdown(false)}
+                  />
+                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10 max-h-80 overflow-y-auto">
+                    <button
+                      onClick={() => {
+                        setSelectedClientId(null)
+                        setShowClientDropdown(false)
+                      }}
+                      className={cn(
+                        'w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2',
+                        !selectedClientId && 'bg-primary-50 text-primary-700'
+                      )}
+                    >
+                      <Users className="h-4 w-4" />
+                      Alle Mandanten
+                    </button>
+                    <hr className="my-1" />
+                    {clients.items.map((client) => (
+                      <button
+                        key={client.id}
+                        onClick={() => {
+                          setSelectedClientId(client.id)
+                          setShowClientDropdown(false)
+                        }}
+                        className={cn(
+                          'w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2',
+                          selectedClientId === client.id && 'bg-primary-50 text-primary-700'
+                        )}
+                      >
+                        <Building2 className="h-4 w-4" />
+                        <span className="truncate">{client.name}</span>
+                        {client.client_number && (
+                          <span className="text-xs text-gray-400">#{client.client_number}</span>
+                        )}
+                      </button>
+                    ))}
+                    <hr className="my-1" />
+                    <Link
+                      to="/mandanten"
+                      onClick={() => setShowClientDropdown(false)}
+                      className="w-full px-4 py-2 text-left text-sm text-primary-600 hover:bg-primary-50 flex items-center gap-2"
+                    >
+                      Mandanten verwalten
+                    </Link>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
@@ -176,6 +259,27 @@ export function Dashboard() {
               </button>
             )}
           </div>
+
+          {/* Mandantenverwaltung (Steuerberater only) */}
+          {user?.plan === 'steuerberater' && (
+            <div className="card p-6">
+              <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">
+                Mandantenverwaltung
+              </h3>
+              <div className="flex items-center gap-3 mb-4">
+                <Users className="h-8 w-8 text-primary-500" />
+                <div>
+                  <p className="font-medium text-gray-900">Mandanten</p>
+                  <p className="text-sm text-gray-500">
+                    {clients?.total || 0} Mandanten
+                  </p>
+                </div>
+              </div>
+              <Link to="/mandanten" className="btn-secondary w-full">
+                Mandanten verwalten
+              </Link>
+            </div>
+          )}
 
           {/* API Keys (Pro and Steuerberater only) */}
           {(user?.plan === 'pro' || user?.plan === 'steuerberater') && (

@@ -118,6 +118,21 @@ class User(Base):
 
     # Relationships
     api_keys = relationship("APIKey", back_populates="user", cascade="all, delete-orphan")
+    clients = relationship("Client", back_populates="user", cascade="all, delete-orphan")
+
+    def can_manage_clients(self) -> bool:
+        """Check if user's plan allows client management."""
+        return self.plan == PlanType.STEUERBERATER
+
+    def get_max_clients(self) -> int:
+        """Return maximum number of clients allowed based on plan."""
+        limits = {
+            PlanType.FREE: 0,
+            PlanType.STARTER: 0,
+            PlanType.PRO: 0,
+            PlanType.STEUERBERATER: 100,
+        }
+        return limits[self.plan]
 
 
 class EmailVerificationToken(Base):

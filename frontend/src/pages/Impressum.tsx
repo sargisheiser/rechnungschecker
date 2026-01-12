@@ -1,4 +1,4 @@
-import { FileCheck, Mail, Phone, MapPin } from 'lucide-react'
+import { Mail, Phone, MapPin } from 'lucide-react'
 
 export function Impressum() {
   return (

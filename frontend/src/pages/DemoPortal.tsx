@@ -3,7 +3,6 @@ import { useNavigate, Link } from 'react-router-dom'
 import {
   CreditCard,
   AlertTriangle,
-  CheckCircle,
   ArrowLeft,
   Loader2,
   Calendar,
@@ -13,7 +12,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
 import { useUser } from '@/hooks/useAuth'
 import { useSubscription } from '@/hooks/useBilling'
-import { cn, formatCurrency, formatDate } from '@/lib/utils'
+import { formatCurrency, formatDate } from '@/lib/utils'
 
 const PLAN_INFO: Record<string, { name: string; priceMonthly: number }> = {
   free: { name: 'Kostenlos', priceMonthly: 0 },

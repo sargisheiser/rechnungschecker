@@ -81,6 +81,7 @@ async def validate_file(
     db: DbSession,
     file: Annotated[UploadFile, File(description="Invoice file (XML or PDF)")],
     current_user: OptionalUser,
+    client_id: Annotated[Optional[UUID], Form(description="Optional client ID for Steuerberater")] = None,
 ) -> ValidationResponse:
     """Validate an invoice file with auto-detection.
 
@@ -90,6 +91,30 @@ async def validate_file(
     # Check usage limits for authenticated users
     if current_user:
         await check_and_update_user_usage(current_user, db)
+
+    # Validate client_id if provided
+    validated_client_id = None
+    if client_id and current_user:
+        if not current_user.can_manage_clients():
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Mandantenverwaltung erfordert den Steuerberater-Plan.",
+            )
+        # Verify client belongs to user
+        from app.models.client import Client
+        result = await db.execute(
+            select(Client).where(
+                Client.id == client_id,
+                Client.user_id == current_user.id,
+            )
+        )
+        client = result.scalar_one_or_none()
+        if not client:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Mandant nicht gefunden.",
+            )
+        validated_client_id = client_id
 
     # Check file size
     content = await file.read()
@@ -135,6 +160,7 @@ async def validate_file(
             await history_service.store_validation(
                 result=result,
                 user_id=current_user.id,
+                client_id=validated_client_id,
                 file_name=filename,
                 file_size_bytes=len(content),
             )
@@ -370,6 +396,7 @@ async def get_validation_history(
     current_user: CurrentUser,
     page: int = 1,
     page_size: int = 20,
+    client_id: Optional[UUID] = None,
 ) -> ValidationHistoryResponse:
     """Get validation history for the authenticated user.
 
@@ -381,9 +408,34 @@ async def get_validation_history(
     - Error and warning counts
     - Timestamp
     """
+    # Validate client_id if provided
+    validated_client_id = None
+    if client_id:
+        if not current_user.can_manage_clients():
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Mandantenverwaltung erfordert den Steuerberater-Plan.",
+            )
+        # Verify client belongs to user
+        from app.models.client import Client
+        result = await db.execute(
+            select(Client).where(
+                Client.id == client_id,
+                Client.user_id == current_user.id,
+            )
+        )
+        client = result.scalar_one_or_none()
+        if not client:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Mandant nicht gefunden.",
+            )
+        validated_client_id = client_id
+
     history_service = ValidationHistoryService(db)
     return await history_service.get_user_history(
         user_id=current_user.id,
+        client_id=validated_client_id,
         page=page,
         page_size=page_size,
     )
