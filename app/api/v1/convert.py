@@ -26,7 +26,7 @@ from app.services.converter.service import (
 )
 from app.services.converter.extractor import Address, InvoiceData
 
-router = APIRouter(prefix="/convert", tags=["conversion"])
+router = APIRouter(tags=["conversion"])
 
 # Initialize conversion service
 conversion_service = ConversionService()
