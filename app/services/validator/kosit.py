@@ -107,13 +107,16 @@ class KoSITValidator:
 
     async def _run_kosit(self, file_path: Path) -> KoSITResult:
         """Run KoSIT validator subprocess."""
-        # Build command
+        # Build command - use absolute path for repository
+        kosit_dir = self.jar_path.parent.resolve()
         cmd = [
             "java",
             "-jar",
-            str(self.jar_path),
+            str(self.jar_path.resolve()),
             "-s",
-            str(self.scenarios_path),
+            str(self.scenarios_path.resolve()),
+            "-r",
+            str(kosit_dir),  # Repository is the kosit directory
             "-o",
             str(file_path.parent),  # Output report to same directory
             str(file_path),

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import {
   CheckCircle,
   XCircle,
@@ -5,9 +6,11 @@ import {
   Info,
   Download,
   RefreshCw,
+  UserPlus,
 } from 'lucide-react'
 import { cn, formatDateTime } from '@/lib/utils'
 import { useValidationStore, useDownloadReport } from '@/hooks/useValidation'
+import { useAuthStore } from '@/hooks/useAuth'
 import type { ValidationError, ValidationStatus } from '@/types'
 
 interface ValidationResultsProps {
@@ -16,6 +19,7 @@ interface ValidationResultsProps {
 
 export function ValidationResults({ className }: ValidationResultsProps) {
   const { currentResult, clearResult } = useValidationStore()
+  const { isAuthenticated } = useAuthStore()
   const downloadReport = useDownloadReport()
 
   if (!currentResult) return null
@@ -184,6 +188,37 @@ export function ValidationResults({ className }: ValidationResultsProps) {
         <p className="text-xs text-gray-400 mt-4">
           Validiert am {formatDateTime(validated_at)}
         </p>
+
+        {/* Register prompt for guests */}
+        {!isAuthenticated && (
+          <div className="mt-6 p-4 bg-primary-50 rounded-lg border border-primary-200">
+            <div className="flex items-start gap-3">
+              <UserPlus className="h-6 w-6 text-primary-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h4 className="font-medium text-gray-900">
+                  Das war Ihre kostenlose Validierung
+                </h4>
+                <p className="text-sm text-gray-600 mt-1">
+                  Registrieren Sie sich kostenlos fuer 5 Validierungen pro Monat, oder waehlen Sie einen Plan fuer mehr.
+                </p>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  <Link
+                    to="/registrieren"
+                    className="btn-primary btn-sm"
+                  >
+                    Kostenlos registrieren
+                  </Link>
+                  <Link
+                    to="/login"
+                    className="btn-secondary btn-sm"
+                  >
+                    Anmelden
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

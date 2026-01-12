@@ -19,7 +19,7 @@ class FileType(str, enum.Enum):
 
 
 class ValidationLog(Base):
-    """Anonymized validation log for analytics and debugging."""
+    """Validation log for tracking user validation history."""
 
     __tablename__ = "validation_logs"
 
@@ -31,7 +31,10 @@ class ValidationLog(Base):
     )
 
     # Validation details (no content stored)
-    file_type: Mapped[FileType] = mapped_column(Enum(FileType))
+    file_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    file_type: Mapped[FileType] = mapped_column(
+        Enum(FileType, name='filetype', values_callable=lambda x: [e.value for e in x])
+    )
     file_hash: Mapped[str] = mapped_column(String(64))  # SHA256
     file_size_bytes: Mapped[int] = mapped_column(Integer)
 
@@ -44,6 +47,9 @@ class ValidationLog(Base):
     # Metadata
     xrechnung_version: Mapped[str | None] = mapped_column(String(20), nullable=True)
     zugferd_profile: Mapped[str | None] = mapped_column(String(50), nullable=True)
+
+    # User notes
+    notes: Mapped[str | None] = mapped_column(String(2000), nullable=True)
 
     # Performance
     processing_time_ms: Mapped[int] = mapped_column(Integer)

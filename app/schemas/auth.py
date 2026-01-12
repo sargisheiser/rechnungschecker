@@ -73,9 +73,10 @@ class PasswordResetConfirm(BaseModel):
 
 
 class EmailVerification(BaseModel):
-    """Schema for email verification."""
+    """Schema for email verification with code."""
 
-    token: str
+    email: EmailStr
+    code: str = Field(min_length=6, max_length=6)
 
 
 class UserResponse(BaseModel):

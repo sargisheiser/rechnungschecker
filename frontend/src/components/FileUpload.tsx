@@ -1,6 +1,7 @@
 import { useCallback } from 'react'
+import { Link } from 'react-router-dom'
 import { useDropzone } from 'react-dropzone'
-import { Upload, FileText, AlertCircle, Loader2 } from 'lucide-react'
+import { Upload, FileText, AlertCircle, Loader2, UserPlus } from 'lucide-react'
 import { cn, isValidInvoiceFile } from '@/lib/utils'
 import { useValidate, useValidationStore } from '@/hooks/useValidation'
 
@@ -10,7 +11,7 @@ interface FileUploadProps {
 
 export function FileUpload({ className }: FileUploadProps) {
   const validate = useValidate()
-  const { isValidating } = useValidationStore()
+  const { isValidating, guestLimitReached } = useValidationStore()
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
@@ -32,10 +33,46 @@ export function FileUpload({ className }: FileUploadProps) {
       },
       maxFiles: 1,
       maxSize: 10 * 1024 * 1024, // 10MB
-      disabled: isValidating,
+      disabled: isValidating || guestLimitReached,
     })
 
-  const hasError = fileRejections.length > 0 || validate.isError
+  const hasError = fileRejections.length > 0 || (validate.isError && !guestLimitReached)
+
+  // Show register prompt if guest limit reached
+  if (guestLimitReached) {
+    return (
+      <div className={className}>
+        <div className="border-2 border-dashed border-primary-300 rounded-xl p-8 bg-primary-50">
+          <div className="flex flex-col items-center text-center">
+            <div className="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center mb-4">
+              <UserPlus className="h-8 w-8 text-primary-600" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              Ihre kostenlose Validierung wurde genutzt
+            </h3>
+            <p className="text-gray-600 mb-6 max-w-md">
+              Registrieren Sie sich kostenlos, um 5 Validierungen pro Monat zu erhalten.
+              Oder waehlen Sie einen unserer Plaene fuer unbegrenzte Validierungen.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link
+                to="/registrieren"
+                className="btn-primary"
+              >
+                Kostenlos registrieren
+              </Link>
+              <Link
+                to="/login"
+                className="btn-secondary"
+              >
+                Anmelden
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className={className}>

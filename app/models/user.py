@@ -6,7 +6,7 @@ from uuid import uuid4
 
 from sqlalchemy import Boolean, Date, DateTime, Enum, Index, Integer, String, func
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 
@@ -33,9 +33,14 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
 
+    # Email verification
+    verification_code: Mapped[str | None] = mapped_column(String(6), nullable=True)
+    verification_code_expires: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
     # Subscription
     plan: Mapped[PlanType] = mapped_column(
-        Enum(PlanType), default=PlanType.FREE
+        Enum(PlanType, values_callable=lambda x: [e.value for e in x]),
+        default=PlanType.FREE
     )
     stripe_customer_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     stripe_subscription_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
@@ -86,6 +91,60 @@ class User(Base):
         """Check if user can perform another conversion."""
         limit = self.get_conversion_limit()
         return self.conversions_this_month < limit
+
+    def can_use_api(self) -> bool:
+        """Check if user's plan allows API access."""
+        return self.plan in (PlanType.PRO, PlanType.STEUERBERATER)
+
+    def get_api_calls_limit(self) -> int:
+        """Return monthly API call limit based on plan."""
+        limits = {
+            PlanType.FREE: 0,
+            PlanType.STARTER: 0,
+            PlanType.PRO: 1000,
+            PlanType.STEUERBERATER: 5000,
+        }
+        return limits[self.plan]
+
+    def get_max_api_keys(self) -> int:
+        """Return maximum number of API keys allowed based on plan."""
+        limits = {
+            PlanType.FREE: 0,
+            PlanType.STARTER: 0,
+            PlanType.PRO: 5,
+            PlanType.STEUERBERATER: 20,
+        }
+        return limits[self.plan]
+
+    # Relationships
+    api_keys = relationship("APIKey", back_populates="user", cascade="all, delete-orphan")
+
+
+class EmailVerificationToken(Base):
+    """Email verification tokens for new users."""
+
+    __tablename__ = "email_verification_tokens"
+
+    id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid4
+    )
+    user_id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True), index=True
+    )
+    token: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now()
+    )
+    used_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+    def is_expired(self) -> bool:
+        """Check if token has expired."""
+        return datetime.utcnow() > self.expires_at
+
+    def is_valid(self) -> bool:
+        """Check if token is valid (not expired and not used)."""
+        return not self.is_expired() and self.used_at is None
 
 
 class GuestUsage(Base):

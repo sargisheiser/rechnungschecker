@@ -61,11 +61,16 @@ class ValidationResponse(BaseModel):
     # Report
     report_url: str | None = Field(default=None, description="URL to download PDF report")
 
+    # Usage info (for authenticated users)
+    validations_used: int | None = Field(default=None, description="Validations used this month")
+    validations_limit: int | None = Field(default=None, description="Monthly validation limit (null = unlimited)")
+
 
 class ValidationHistoryItem(BaseModel):
     """Single item in validation history."""
 
     id: UUID
+    file_name: str | None = None
     file_type: str
     is_valid: bool
     error_count: int
@@ -80,3 +85,36 @@ class ValidationHistoryResponse(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+class GuestValidationResponse(ValidationResponse):
+    """Response from guest validation endpoint with usage tracking."""
+
+    guest_id: str = Field(description="Guest identifier for tracking")
+    validations_used: int = Field(description="Number of validations used by this guest")
+    validations_limit: int = Field(description="Maximum validations allowed for guests")
+
+
+class ValidationDetailResponse(BaseModel):
+    """Detailed validation information for history view."""
+
+    id: UUID
+    file_name: str | None = None
+    file_type: str
+    file_hash: str
+    is_valid: bool
+    error_count: int
+    warning_count: int
+    info_count: int
+    xrechnung_version: str | None = None
+    zugferd_profile: str | None = None
+    processing_time_ms: int
+    validator_version: str
+    notes: str | None = None
+    validated_at: datetime
+
+
+class UpdateNotesRequest(BaseModel):
+    """Request to update validation notes."""
+
+    notes: str | None = Field(default=None, max_length=2000)

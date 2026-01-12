@@ -62,6 +62,9 @@ class Settings(BaseSettings):
     stripe_price_pro: str = Field(default="")
     stripe_price_steuerberater: str = Field(default="")
 
+    # Demo mode (for testing without Stripe)
+    demo_mode: bool = Field(default=True, description="Enable demo payment mode for testing")
+
     # Email (Mailgun)
     mailgun_api_key: str = Field(default="")
     mailgun_domain: str = Field(default="")

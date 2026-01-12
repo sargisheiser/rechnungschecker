@@ -94,3 +94,21 @@ export function useResetPassword() {
       authApi.resetPassword(token, password),
   })
 }
+
+export function useVerifyEmail() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: { email: string; code: string }) => authApi.verifyEmail(data),
+    onSuccess: () => {
+      // Refetch user to update is_verified status
+      queryClient.invalidateQueries({ queryKey: ['user'] })
+    },
+  })
+}
+
+export function useResendVerification() {
+  return useMutation({
+    mutationFn: (email: string) => authApi.resendVerification(email),
+  })
+}

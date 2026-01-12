@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { FileCheck, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
-import { useRegister, useLogin } from '@/hooks/useAuth'
+import { useRegister } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
 
 export function Register() {
@@ -13,8 +13,23 @@ export function Register() {
   const [error, setError] = useState('')
 
   const register = useRegister()
-  const login = useLogin()
   const navigate = useNavigate()
+
+  const validatePassword = (pwd: string): string | null => {
+    if (pwd.length < 8) {
+      return 'Das Passwort muss mindestens 8 Zeichen lang sein'
+    }
+    if (!/[A-Z]/.test(pwd)) {
+      return 'Das Passwort muss mindestens einen Grossbuchstaben enthalten'
+    }
+    if (!/[a-z]/.test(pwd)) {
+      return 'Das Passwort muss mindestens einen Kleinbuchstaben enthalten'
+    }
+    if (!/[0-9]/.test(pwd)) {
+      return 'Das Passwort muss mindestens eine Zahl enthalten'
+    }
+    return null
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -25,8 +40,9 @@ export function Register() {
       return
     }
 
-    if (password.length < 8) {
-      setError('Das Passwort muss mindestens 8 Zeichen lang sein')
+    const passwordError = validatePassword(password)
+    if (passwordError) {
+      setError(passwordError)
       return
     }
 
@@ -42,11 +58,16 @@ export function Register() {
         company_name: companyName || undefined,
       })
 
-      // Auto-login after registration
-      await login.mutateAsync({ email, password })
-      navigate('/dashboard')
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Registrierung fehlgeschlagen')
+      // Redirect to email verification pending page
+      navigate('/email-bestaetigung', { state: { email } })
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { detail?: string | Array<{ msg?: string }> } } }
+      const detail = error.response?.data?.detail
+      if (Array.isArray(detail)) {
+        setError(detail[0]?.msg || 'Registrierung fehlgeschlagen')
+      } else {
+        setError(detail || 'Registrierung fehlgeschlagen')
+      }
     }
   }
 
@@ -118,11 +139,14 @@ export function Register() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="input"
-                placeholder="Mindestens 8 Zeichen"
+                placeholder="Min. 8 Zeichen, Gross-/Kleinbuchstaben, Zahl"
                 required
                 minLength={8}
                 autoComplete="new-password"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Mindestens 8 Zeichen mit Gross-, Kleinbuchstaben und einer Zahl
+              </p>
             </div>
 
             <div>
@@ -166,10 +190,10 @@ export function Register() {
 
             <button
               type="submit"
-              disabled={register.isPending || login.isPending}
+              disabled={register.isPending}
               className="btn-primary w-full"
             >
-              {register.isPending || login.isPending ? (
+              {register.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Konto wird erstellt...

@@ -1,19 +1,87 @@
 """API dependencies for dependency injection."""
 
+import logging
+from datetime import date, datetime
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
 from app.core.security import verify_access_token
+from app.models.api_key import APIKey, generate_key_hash
 from app.models.user import User
+
+logger = logging.getLogger(__name__)
 
 # HTTP Bearer security scheme
 security = HTTPBearer(auto_error=False)
+
+
+async def _authenticate_with_api_key(
+    token: str,
+    db: AsyncSession,
+) -> User | None:
+    """Authenticate using an API key.
+
+    Args:
+        token: The API key (rc_live_xxx format)
+        db: Database session
+
+    Returns:
+        The authenticated User or None if invalid
+    """
+    # Hash the key to look it up
+    key_hash = generate_key_hash(token)
+
+    # Find the API key
+    result = await db.execute(
+        select(APIKey)
+        .options(selectinload(APIKey.user))
+        .where(APIKey.key_hash == key_hash)
+    )
+    api_key = result.scalar_one_or_none()
+
+    if api_key is None:
+        return None
+
+    # Check if key is valid
+    if not api_key.is_valid():
+        logger.warning(f"Invalid API key used: {api_key.key_prefix}")
+        return None
+
+    # Check if user is active and can use API
+    user = api_key.user
+    if not user.is_active:
+        return None
+
+    if not user.can_use_api():
+        logger.warning(f"API key used by user without API access: {user.email}")
+        return None
+
+    # Check monthly API call limits
+    today = date.today()
+    if api_key.requests_reset_date.month != today.month or api_key.requests_reset_date.year != today.year:
+        api_key.requests_this_month = 0
+        api_key.requests_reset_date = datetime.utcnow()
+
+    # Check if user has reached API call limit
+    api_limit = user.get_api_calls_limit()
+    if api_key.requests_this_month >= api_limit:
+        logger.warning(f"API call limit reached for user: {user.email}")
+        return None
+
+    # Record usage
+    api_key.record_usage()
+    await db.commit()
+
+    logger.debug(f"API key authenticated: user={user.email}, key={api_key.key_prefix}")
+
+    return user
 
 
 async def get_current_user(
@@ -21,6 +89,8 @@ async def get_current_user(
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> User:
     """Get the current authenticated user.
+
+    Supports both JWT tokens and API keys (rc_live_xxx format).
 
     Args:
         credentials: Bearer token credentials
@@ -40,6 +110,19 @@ async def get_current_user(
         )
 
     token = credentials.credentials
+
+    # Check if it's an API key (starts with rc_live_)
+    if token.startswith("rc_live_"):
+        user = await _authenticate_with_api_key(token, db)
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Ungueltiger oder abgelaufener API-Schluessel",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        return user
+
+    # Otherwise treat as JWT token
     payload = verify_access_token(token)
 
     if payload is None:
@@ -83,6 +166,7 @@ async def get_current_user_optional(
 ) -> User | None:
     """Get the current user if authenticated, otherwise None.
 
+    Supports both JWT tokens and API keys (rc_live_xxx format).
     This is useful for endpoints that work differently for
     authenticated vs guest users.
 
@@ -97,6 +181,12 @@ async def get_current_user_optional(
         return None
 
     token = credentials.credentials
+
+    # Check if it's an API key
+    if token.startswith("rc_live_"):
+        return await _authenticate_with_api_key(token, db)
+
+    # Otherwise treat as JWT token
     payload = verify_access_token(token)
 
     if payload is None:

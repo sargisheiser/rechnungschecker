@@ -7,8 +7,8 @@ from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import Response
 
 from app.api.deps import DbSession, OptionalUser
+from app.core.cache import get_cached_validation
 from app.services.reports.pdf import ReportService
-from app.services.validation_history import ValidationHistoryService
 
 logger = logging.getLogger(__name__)
 
@@ -29,18 +29,23 @@ async def get_report(
     db: DbSession,
     current_user: OptionalUser,
 ) -> dict:
-    """Get validation report details.
+    """Get validation report details."""
+    # Try to get from cache
+    result = get_cached_validation(report_id)
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Bericht nicht gefunden oder abgelaufen. Bitte fuehren Sie die Validierung erneut durch.",
+        )
 
-    Note: Full report retrieval requires storing validation results,
-    which is implemented for authenticated users in the history service.
-    For now, this returns a placeholder for the report endpoint.
-    """
-    # For MVP, we generate reports on-demand rather than storing them
-    # In production, we would retrieve from database or cache
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="Bericht nicht gefunden. Berichte werden direkt nach der Validierung generiert.",
-    )
+    return {
+        "id": str(result.id),
+        "is_valid": result.is_valid,
+        "file_type": result.file_type,
+        "error_count": result.error_count,
+        "warning_count": result.warning_count,
+        "validated_at": result.validated_at.isoformat(),
+    }
 
 
 @router.get(
@@ -53,38 +58,38 @@ async def get_report(
             "content": {"application/pdf": {}},
         },
         404: {"description": "Report not found"},
+        503: {"description": "PDF generation not available"},
     },
 )
 async def download_report_pdf(
     report_id: UUID,
-    db: DbSession,
-    current_user: OptionalUser,
 ) -> Response:
-    """Download validation report as PDF.
-
-    Note: For MVP, reports need to be generated immediately after validation.
-    This endpoint serves as a placeholder for when we implement report caching.
-    """
-    # Check if user has access to this report
-    history_service = ValidationHistoryService(db)
-
-    user_id = current_user.id if current_user else None
-    validation_log = await history_service.get_validation_by_id(report_id, user_id)
-
-    if validation_log is None:
+    """Download validation report as PDF."""
+    # Try to get from cache
+    result = get_cached_validation(report_id)
+    if result is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Bericht nicht gefunden oder kein Zugriff.",
+            detail="Bericht nicht gefunden oder abgelaufen (30 Min). Bitte fuehren Sie die Validierung erneut durch.",
         )
 
-    # For MVP, we cannot regenerate the full report from just the log
-    # In production, we would either:
-    # 1. Cache the full validation result temporarily
-    # 2. Store enough data to regenerate the report
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="Bericht abgelaufen. Bitte führen Sie die Validierung erneut durch.",
-    )
+    try:
+        report_service = ReportService()
+        pdf_bytes = report_service.generate_pdf(result)
+
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="validierungsbericht-{report_id}.pdf"',
+            },
+        )
+    except Exception as e:
+        logger.error(f"PDF generation failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"PDF-Generierung fehlgeschlagen: {str(e)}",
+        )
 
 
 # Helper function to generate PDF response (used by validation endpoints)

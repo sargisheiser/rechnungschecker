@@ -28,12 +28,16 @@ class ValidationHistoryService:
         self,
         result: ValidationResponse,
         user_id: UUID | None = None,
+        file_name: str | None = None,
+        file_size_bytes: int = 0,
     ) -> ValidationLog:
         """Store a validation result in the database.
 
         Args:
             result: The validation response to store
             user_id: Optional user ID who performed the validation
+            file_name: Original filename of the validated file
+            file_size_bytes: Size of the file in bytes
 
         Returns:
             The created ValidationLog entry
@@ -46,9 +50,10 @@ class ValidationHistoryService:
         log_entry = ValidationLog(
             id=result.id,
             user_id=user_id,
+            file_name=file_name,
             file_type=file_type,
             file_hash=result.file_hash,
-            file_size_bytes=0,  # We don't store the actual size for privacy
+            file_size_bytes=file_size_bytes,
             is_valid=result.is_valid,
             error_count=result.error_count,
             warning_count=result.warning_count,
@@ -106,6 +111,7 @@ class ValidationHistoryService:
         items = [
             ValidationHistoryItem(
                 id=log.id,
+                file_name=log.file_name,
                 file_type=log.file_type.value,
                 is_valid=log.is_valid,
                 error_count=log.error_count,

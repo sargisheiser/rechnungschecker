@@ -2,13 +2,26 @@
 
 import hashlib
 import logging
-from typing import Annotated
+from datetime import date
+from typing import Annotated, Optional
+from uuid import UUID, uuid4
 
-from fastapi import APIRouter, File, HTTPException, Request, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
+from sqlalchemy import select
 
+from app.api.deps import DbSession, get_current_user_optional, CurrentUser, OptionalUser
 from app.config import get_settings
+from app.core.cache import cache_validation_result
 from app.core.exceptions import FileProcessingError, KoSITError, ValidationError
-from app.schemas.validation import ValidationHistoryResponse, ValidationResponse
+from app.models.user import GuestUsage, User
+from app.schemas.validation import (
+    GuestValidationResponse,
+    ValidationHistoryResponse,
+    ValidationResponse,
+    ValidationDetailResponse,
+    UpdateNotesRequest,
+)
+from app.services.validation_history import ValidationHistoryService
 from app.services.validator.xrechnung import XRechnungValidator
 from app.services.validator.zugferd import ZUGFeRDValidator
 
@@ -16,6 +29,152 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 router = APIRouter()
+
+# Guest validation limit
+GUEST_VALIDATION_LIMIT = 1
+
+
+async def check_and_update_user_usage(user: User, db) -> None:
+    """Check if user can validate and update usage counter.
+
+    Raises HTTPException if limit exceeded.
+    """
+    # Reset monthly counter if needed
+    today = date.today()
+    if user.usage_reset_date.month != today.month or user.usage_reset_date.year != today.year:
+        user.validations_this_month = 0
+        user.conversions_this_month = 0
+        user.usage_reset_date = today
+
+    # Check if user can validate
+    if not user.can_validate():
+        limit = user.get_validation_limit()
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": "VALIDATION_LIMIT_REACHED",
+                "message": f"Sie haben Ihr monatliches Limit von {limit} Validierungen erreicht. Bitte upgraden Sie Ihren Plan für mehr Validierungen.",
+                "validations_used": user.validations_this_month,
+                "validations_limit": limit,
+            }
+        )
+
+    # Increment validation counter
+    user.validations_this_month += 1
+
+
+@router.post(
+    "/",
+    response_model=ValidationResponse,
+    summary="Validate invoice file",
+    description="Upload an invoice file (XML or PDF) to validate. Auto-detects file type.",
+    responses={
+        200: {"description": "Validation completed (check is_valid field)"},
+        400: {"description": "Invalid file format or processing error"},
+        413: {"description": "File too large"},
+        429: {"description": "Rate limit exceeded"},
+        500: {"description": "Internal server error"},
+    },
+)
+async def validate_file(
+    request: Request,
+    db: DbSession,
+    file: Annotated[UploadFile, File(description="Invoice file (XML or PDF)")],
+    current_user: OptionalUser,
+) -> ValidationResponse:
+    """Validate an invoice file with auto-detection.
+
+    Automatically detects if the file is XRechnung (XML) or ZUGFeRD (PDF)
+    and validates accordingly.
+    """
+    # Check usage limits for authenticated users
+    if current_user:
+        await check_and_update_user_usage(current_user, db)
+
+    # Check file size
+    content = await file.read()
+    if len(content) > settings.max_upload_size_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"Datei zu groß. Maximum: {settings.max_upload_size_mb}MB",
+        )
+
+    filename = file.filename or "unknown"
+    is_pdf = filename.lower().endswith(".pdf")
+    is_xml = filename.lower().endswith(".xml")
+
+    if not is_pdf and not is_xml:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Ungültiger Dateityp. Bitte laden Sie eine XML- oder PDF-Datei hoch.",
+        )
+
+    try:
+        if is_pdf:
+            validator = ZUGFeRDValidator()
+        else:
+            validator = XRechnungValidator()
+
+        user_id = current_user.id if current_user else None
+
+        result = await validator.validate(
+            content=content,
+            filename=filename,
+            user_id=user_id,
+        )
+
+        # Set report URL
+        result.report_url = f"/api/v1/reports/{result.id}/pdf"
+
+        # Cache result for PDF generation
+        cache_validation_result(result)
+
+        # Store validation in history for authenticated users
+        if current_user:
+            history_service = ValidationHistoryService(db)
+            await history_service.store_validation(
+                result=result,
+                user_id=current_user.id,
+                file_name=filename,
+                file_size_bytes=len(content),
+            )
+            await db.commit()
+
+            # Include usage info in response
+            result.validations_used = current_user.validations_this_month
+            result.validations_limit = current_user.get_validation_limit()
+
+        logger.info(
+            f"Validation completed: id={result.id}, valid={result.is_valid}, "
+            f"errors={result.error_count}, warnings={result.warning_count}"
+        )
+
+        return result
+
+    except FileProcessingError as e:
+        logger.warning(f"File processing error: {e.message}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=e.message,
+        )
+    except KoSITError as e:
+        logger.error(f"KoSIT validation error: {e.message}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Validierung fehlgeschlagen. Bitte versuchen Sie es später erneut.",
+        )
+    except ValidationError as e:
+        logger.warning(f"Validation error: {e.message}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=e.message,
+        )
+    except Exception as e:
+        logger.exception(f"Unexpected error during validation: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Ein unerwarteter Fehler ist aufgetreten.",
+        )
 
 
 @router.post(
@@ -207,6 +366,8 @@ async def validate_zugferd(
 )
 async def get_validation_history(
     request: Request,
+    db: DbSession,
+    current_user: CurrentUser,
     page: int = 1,
     page_size: int = 20,
 ) -> ValidationHistoryResponse:
@@ -214,16 +375,266 @@ async def get_validation_history(
 
     Returns a paginated list of past validations including:
     - Validation ID
+    - File name
     - File type (xrechnung/zugferd)
     - Validation result (valid/invalid)
     - Error and warning counts
     - Timestamp
     """
-    # TODO: Implement with auth - for now return empty
-    # This will be fully implemented when authentication is added
-    return ValidationHistoryResponse(
-        items=[],
-        total=0,
+    history_service = ValidationHistoryService(db)
+    return await history_service.get_user_history(
+        user_id=current_user.id,
         page=page,
         page_size=page_size,
+    )
+
+
+@router.post(
+    "/guest",
+    response_model=GuestValidationResponse,
+    summary="Validate as guest (1 free validation)",
+    description="Upload an invoice file to validate. Guests get 1 free validation.",
+    responses={
+        200: {"description": "Validation completed"},
+        400: {"description": "Invalid file format"},
+        403: {"description": "Guest validation limit reached - please register"},
+        413: {"description": "File too large"},
+    },
+)
+async def validate_guest(
+    request: Request,
+    db: DbSession,
+    file: Annotated[UploadFile, File(description="Invoice file (XML or PDF)")],
+    guest_id: Annotated[Optional[str], Form()] = None,
+) -> GuestValidationResponse:
+    """Validate an invoice file as a guest.
+
+    Guests can validate 1 invoice for free. After that, they need to register.
+    The guest is tracked by IP address and optional guest_id cookie.
+    """
+    # Get client IP
+    client_ip = request.client.host if request.client else "unknown"
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    if forwarded_for:
+        client_ip = forwarded_for.split(",")[0].strip()
+
+    # Check if guest has already used their free validation
+    query = select(GuestUsage).where(GuestUsage.ip_address == client_ip)
+    if guest_id:
+        query = query.where(GuestUsage.cookie_id == guest_id)
+
+    result = await db.execute(query)
+    guest_usage = result.scalar_one_or_none()
+
+    # Generate guest_id if not provided
+    new_guest_id = guest_id or str(uuid4())[:16]
+
+    if guest_usage and guest_usage.validations_used >= GUEST_VALIDATION_LIMIT:
+        # Limit reached
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": "GUEST_LIMIT_REACHED",
+                "message": "Sie haben Ihre kostenlose Validierung bereits genutzt. Bitte registrieren Sie sich für weitere Validierungen.",
+                "guest_id": new_guest_id,
+                "validations_used": guest_usage.validations_used,
+                "validations_limit": GUEST_VALIDATION_LIMIT,
+            }
+        )
+
+    # Check file size
+    content = await file.read()
+    if len(content) > settings.max_upload_size_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"Datei zu groß. Maximum: {settings.max_upload_size_mb}MB",
+        )
+
+    # Detect file type and validate
+    filename = file.filename or "unknown"
+    is_pdf = filename.lower().endswith(".pdf")
+    is_xml = filename.lower().endswith(".xml")
+
+    if not is_pdf and not is_xml:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Ungültiger Dateityp. Bitte laden Sie eine XML- oder PDF-Datei hoch.",
+        )
+
+    try:
+        if is_pdf:
+            validator = ZUGFeRDValidator()
+        else:
+            validator = XRechnungValidator()
+
+        validation_result = await validator.validate(
+            content=content,
+            filename=filename,
+            user_id=None,
+        )
+
+        # Track guest usage
+        if guest_usage:
+            guest_usage.validations_used += 1
+        else:
+            guest_usage = GuestUsage(
+                ip_address=client_ip,
+                cookie_id=new_guest_id,
+                validations_used=1,
+            )
+            db.add(guest_usage)
+
+        await db.flush()
+
+        # Set report URL
+        validation_result.report_url = f"/api/v1/reports/{validation_result.id}/pdf"
+
+        logger.info(
+            f"Guest validation completed: id={validation_result.id}, "
+            f"valid={validation_result.is_valid}, ip={client_ip}"
+        )
+
+        # Return response with guest tracking info
+        return GuestValidationResponse(
+            **validation_result.model_dump(),
+            guest_id=new_guest_id,
+            validations_used=guest_usage.validations_used,
+            validations_limit=GUEST_VALIDATION_LIMIT,
+        )
+
+    except FileProcessingError as e:
+        logger.warning(f"File processing error: {e.message}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=e.message,
+        )
+    except KoSITError as e:
+        logger.error(f"KoSIT validation error: {e.message}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Validierung fehlgeschlagen. Bitte versuchen Sie es später erneut.",
+        )
+    except ValidationError as e:
+        logger.warning(f"Validation error: {e.message}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=e.message,
+        )
+    except Exception as e:
+        logger.exception(f"Unexpected error during guest validation: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Ein unerwarteter Fehler ist aufgetreten.",
+        )
+
+
+@router.get(
+    "/{validation_id}",
+    response_model=ValidationDetailResponse,
+    summary="Get validation details",
+    description="Get detailed information about a specific validation.",
+    responses={
+        200: {"description": "Validation details"},
+        404: {"description": "Validation not found"},
+    },
+)
+async def get_validation_detail(
+    validation_id: UUID,
+    db: DbSession,
+    current_user: CurrentUser,
+) -> ValidationDetailResponse:
+    """Get detailed information about a specific validation.
+
+    Returns full validation details including notes.
+    Only accessible by the user who performed the validation.
+    """
+    from app.models.validation import ValidationLog
+
+    result = await db.execute(
+        select(ValidationLog).where(
+            ValidationLog.id == validation_id,
+            ValidationLog.user_id == current_user.id,
+        )
+    )
+    validation = result.scalar_one_or_none()
+
+    if validation is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Validierung nicht gefunden.",
+        )
+
+    return ValidationDetailResponse(
+        id=validation.id,
+        file_name=validation.file_name,
+        file_type=validation.file_type.value,
+        file_hash=validation.file_hash,
+        is_valid=validation.is_valid,
+        error_count=validation.error_count,
+        warning_count=validation.warning_count,
+        info_count=validation.info_count,
+        xrechnung_version=validation.xrechnung_version,
+        zugferd_profile=validation.zugferd_profile,
+        processing_time_ms=validation.processing_time_ms,
+        validator_version=validation.validator_version,
+        notes=validation.notes,
+        validated_at=validation.created_at,
+    )
+
+
+@router.patch(
+    "/{validation_id}/notes",
+    response_model=ValidationDetailResponse,
+    summary="Update validation notes",
+    description="Add or update notes for a validation.",
+    responses={
+        200: {"description": "Notes updated"},
+        404: {"description": "Validation not found"},
+    },
+)
+async def update_validation_notes(
+    validation_id: UUID,
+    request: UpdateNotesRequest,
+    db: DbSession,
+    current_user: CurrentUser,
+) -> ValidationDetailResponse:
+    """Update notes for a specific validation.
+
+    Only the user who performed the validation can update notes.
+    """
+    from app.models.validation import ValidationLog
+
+    result = await db.execute(
+        select(ValidationLog).where(
+            ValidationLog.id == validation_id,
+            ValidationLog.user_id == current_user.id,
+        )
+    )
+    validation = result.scalar_one_or_none()
+
+    if validation is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Validierung nicht gefunden.",
+        )
+
+    validation.notes = request.notes
+    await db.commit()
+    await db.refresh(validation)
+
+    return ValidationDetailResponse(
+        id=validation.id,
+        file_name=validation.file_name,
+        file_type=validation.file_type.value,
+        file_hash=validation.file_hash,
+        is_valid=validation.is_valid,
+        error_count=validation.error_count,
+        warning_count=validation.warning_count,
+        info_count=validation.info_count,
+        xrechnung_version=validation.xrechnung_version,
+        zugferd_profile=validation.zugferd_profile,
+        processing_time_ms=validation.processing_time_ms,
+        validator_version=validation.validator_version,
+        notes=validation.notes,
+        validated_at=validation.created_at,
     )

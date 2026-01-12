@@ -8,6 +8,7 @@ import {
   CreditCard,
   ArrowRight,
   Loader2,
+  Key,
 } from 'lucide-react'
 import { FileUpload } from '@/components/FileUpload'
 import { ValidationResults } from '@/components/ValidationResults'
@@ -15,7 +16,6 @@ import { useValidationStore, useValidationHistory } from '@/hooks/useValidation'
 import { useUser } from '@/hooks/useAuth'
 import { useUsage, useSubscription, usePortalSession } from '@/hooks/useBilling'
 import { cn, formatDate, formatDateTime } from '@/lib/utils'
-import type { ValidationStatus } from '@/types'
 
 export function Dashboard() {
   const [searchParams] = useSearchParams()
@@ -177,14 +177,36 @@ export function Dashboard() {
             )}
           </div>
 
+          {/* API Keys (Pro and Steuerberater only) */}
+          {(user?.plan === 'pro' || user?.plan === 'steuerberater') && (
+            <div className="card p-6">
+              <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">
+                API-Zugang
+              </h3>
+              <div className="flex items-center gap-3 mb-4">
+                <Key className="h-8 w-8 text-primary-500" />
+                <div>
+                  <p className="font-medium text-gray-900">API-Schluessel</p>
+                  <p className="text-sm text-gray-500">
+                    Programmatischer Zugriff
+                  </p>
+                </div>
+              </div>
+              <Link to="/api-keys" className="btn-secondary w-full">
+                Schluessel verwalten
+              </Link>
+            </div>
+          )}
+
           {/* Quick tips */}
           <div className="card p-6 bg-primary-50 border-primary-100">
             <h3 className="text-sm font-medium text-primary-900 mb-2">
               Tipp
             </h3>
             <p className="text-sm text-primary-700">
-              Mit dem Pro-Plan erhalten Sie API-Zugang und koennen Validierungen
-              direkt in Ihre Systeme integrieren.
+              {user?.plan === 'pro' || user?.plan === 'steuerberater'
+                ? 'Nutzen Sie die API, um Validierungen direkt in Ihre Systeme zu integrieren.'
+                : 'Mit dem Pro-Plan erhalten Sie API-Zugang und koennen Validierungen direkt in Ihre Systeme integrieren.'}
             </p>
           </div>
         </div>
@@ -240,47 +262,41 @@ function ValidationHistoryItem({
 }: {
   item: {
     id: string
-    file_name: string
-    status: ValidationStatus
+    file_name?: string
     file_type: string
+    is_valid: boolean
+    error_count: number
+    warning_count: number
     validated_at: string
   }
 }) {
-  const statusConfig: Record<
-    ValidationStatus,
-    { icon: typeof CheckCircle; color: string; label: string }
-  > = {
-    valid: { icon: CheckCircle, color: 'text-success-500', label: 'Gueltig' },
-    invalid: { icon: XCircle, color: 'text-error-500', label: 'Ungueltig' },
-    error: { icon: Clock, color: 'text-warning-500', label: 'Fehler' },
-  }
-
-  const config = statusConfig[item.status]
-  const StatusIcon = config.icon
+  const isValid = item.is_valid
+  const StatusIcon = isValid ? CheckCircle : XCircle
+  const statusColor = isValid ? 'text-success-500' : 'text-error-500'
+  const statusLabel = isValid ? 'Gueltig' : 'Ungueltig'
+  const statusBg = isValid ? 'bg-success-50 text-success-700' : 'bg-error-50 text-error-700'
 
   return (
-    <div className="px-6 py-4 flex items-center justify-between hover:bg-gray-50">
+    <Link
+      to={`/validierung/${item.id}`}
+      className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 cursor-pointer transition-colors"
+    >
       <div className="flex items-center gap-3 min-w-0">
-        <StatusIcon className={cn('h-5 w-5 flex-shrink-0', config.color)} />
+        <StatusIcon className={cn('h-5 w-5 flex-shrink-0', statusColor)} />
         <div className="min-w-0">
           <p className="text-sm font-medium text-gray-900 truncate">
-            {item.file_name}
+            {item.file_name || 'Unbekannte Datei'}
           </p>
           <p className="text-xs text-gray-500">
             {item.file_type.toUpperCase()} • {formatDateTime(item.validated_at)}
+            {item.error_count > 0 && ` • ${item.error_count} Fehler`}
+            {item.warning_count > 0 && ` • ${item.warning_count} Warnungen`}
           </p>
         </div>
       </div>
-      <span
-        className={cn(
-          'text-xs font-medium px-2 py-1 rounded',
-          item.status === 'valid' && 'bg-success-50 text-success-700',
-          item.status === 'invalid' && 'bg-error-50 text-error-700',
-          item.status === 'error' && 'bg-warning-50 text-warning-700'
-        )}
-      >
-        {config.label}
+      <span className={cn('text-xs font-medium px-2 py-1 rounded', statusBg)}>
+        {statusLabel}
       </span>
-    </div>
+    </Link>
   )
 }

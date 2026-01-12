@@ -1,7 +1,7 @@
 """Authentication API endpoints."""
 
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
@@ -10,16 +10,16 @@ from app.api.deps import CurrentUser, DbSession
 from app.config import get_settings
 from app.core.security import (
     create_access_token,
-    create_email_verification_token,
     create_password_reset_token,
     create_refresh_token,
+    generate_verification_code,
     get_password_hash,
-    verify_email_verification_token,
     verify_password,
     verify_password_reset_token,
     verify_refresh_token,
 )
 from app.models.user import User
+from app.services.email import email_service
 from app.schemas.auth import (
     EmailVerification,
     PasswordChange,
@@ -66,21 +66,27 @@ async def register(
             detail="Ein Konto mit dieser E-Mail-Adresse existiert bereits",
         )
 
+    # Generate verification code
+    verification_code = generate_verification_code()
+    code_expires = datetime.utcnow() + timedelta(minutes=15)
+
     # Create new user
     user = User(
         email=data.email,
         password_hash=get_password_hash(data.password),
         is_active=True,
-        is_verified=False,  # Requires email verification
+        is_verified=False,
+        verification_code=verification_code,
+        verification_code_expires=code_expires,
     )
 
     db.add(user)
     await db.flush()
     await db.refresh(user)
 
-    # TODO: Send verification email
-    verification_token = create_email_verification_token(data.email)
-    logger.info(f"User registered: {user.email}, verification token: {verification_token[:20]}...")
+    # Send verification email with code
+    await email_service.send_verification_code_email(data.email, verification_code)
+    logger.info(f"User registered: {user.email}, verification code sent")
 
     return user
 
@@ -175,23 +181,15 @@ async def refresh_token(
     "/verify-email",
     status_code=status.HTTP_200_OK,
     summary="Verify email address",
-    description="Verify email address using the token sent via email.",
+    description="Verify email address using the 6-digit code sent via email.",
 )
 async def verify_email(
     data: EmailVerification,
     db: DbSession,
 ) -> dict[str, str]:
-    """Verify user's email address."""
-    email = verify_email_verification_token(data.token)
-
-    if email is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Ungültiger oder abgelaufener Verifizierungslink",
-        )
-
-    # Find and update user
-    result = await db.execute(select(User).where(User.email == email))
+    """Verify user's email address using verification code."""
+    # Find user by email
+    result = await db.execute(select(User).where(User.email == data.email))
     user = result.scalar_one_or_none()
 
     if user is None:
@@ -203,12 +201,61 @@ async def verify_email(
     if user.is_verified:
         return {"message": "E-Mail-Adresse bereits verifiziert"}
 
+    # Check verification code
+    if user.verification_code != data.code:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Ungültiger Verifizierungscode",
+        )
+
+    # Check if code has expired
+    if user.verification_code_expires and datetime.utcnow() > user.verification_code_expires:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Verifizierungscode abgelaufen. Bitte fordern Sie einen neuen an.",
+        )
+
+    # Mark as verified and clear code
     user.is_verified = True
+    user.verification_code = None
+    user.verification_code_expires = None
     await db.flush()
 
-    logger.info(f"Email verified: {email}")
+    logger.info(f"Email verified: {data.email}")
 
     return {"message": "E-Mail-Adresse erfolgreich verifiziert"}
+
+
+@router.post(
+    "/resend-verification",
+    status_code=status.HTTP_200_OK,
+    summary="Resend verification email",
+    description="Resend the email verification code.",
+)
+async def resend_verification(
+    data: PasswordReset,  # Reuse schema - just needs email
+    db: DbSession,
+) -> dict[str, str]:
+    """Resend verification code email.
+
+    Always returns success to prevent email enumeration.
+    """
+    result = await db.execute(select(User).where(User.email == data.email))
+    user = result.scalar_one_or_none()
+
+    if user and user.is_active and not user.is_verified:
+        # Generate new verification code
+        verification_code = generate_verification_code()
+        user.verification_code = verification_code
+        user.verification_code_expires = datetime.utcnow() + timedelta(minutes=15)
+        await db.flush()
+
+        await email_service.send_verification_code_email(data.email, verification_code)
+        logger.info(f"Verification code resent to: {data.email}")
+
+    return {
+        "message": "Falls das Konto existiert und nicht verifiziert ist, wurde ein neuer Code gesendet"
+    }
 
 
 @router.post(
@@ -230,10 +277,10 @@ async def forgot_password(
     user = result.scalar_one_or_none()
 
     if user and user.is_active:
-        # Create reset token
+        # Create reset token and send email
         reset_token = create_password_reset_token(data.email)
-        # TODO: Send password reset email
-        logger.info(f"Password reset requested for: {data.email}, token: {reset_token[:20]}...")
+        await email_service.send_password_reset_email(data.email, reset_token)
+        logger.info(f"Password reset requested for: {data.email}")
 
     # Always return success to prevent email enumeration
     return {

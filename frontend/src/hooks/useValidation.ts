@@ -8,21 +8,25 @@ import { useAuthStore } from './useAuth'
 interface ValidationState {
   currentResult: ValidationResult | null
   isValidating: boolean
+  guestLimitReached: boolean
   setResult: (result: ValidationResult | null) => void
   setValidating: (validating: boolean) => void
+  setGuestLimitReached: (reached: boolean) => void
   clearResult: () => void
 }
 
 export const useValidationStore = create<ValidationState>((set) => ({
   currentResult: null,
   isValidating: false,
+  guestLimitReached: false,
   setResult: (result) => set({ currentResult: result, isValidating: false }),
   setValidating: (isValidating) => set({ isValidating }),
-  clearResult: () => set({ currentResult: null }),
+  setGuestLimitReached: (guestLimitReached) => set({ guestLimitReached }),
+  clearResult: () => set({ currentResult: null, guestLimitReached: false }),
 }))
 
 export function useValidate() {
-  const { setResult, setValidating } = useValidationStore()
+  const { setResult, setValidating, setGuestLimitReached } = useValidationStore()
   const { isAuthenticated } = useAuthStore()
   const queryClient = useQueryClient()
 
@@ -48,8 +52,15 @@ export function useValidate() {
         queryClient.invalidateQueries({ queryKey: ['validation-history'] })
       }
     },
-    onError: () => {
+    onError: (error: any) => {
       setValidating(false)
+      // Check if guest limit reached (403 with code GUEST_LIMIT_REACHED)
+      if (error.response?.status === 403) {
+        const detail = error.response?.data?.detail
+        if (detail?.code === 'GUEST_LIMIT_REACHED') {
+          setGuestLimitReached(true)
+        }
+      }
     },
   })
 }

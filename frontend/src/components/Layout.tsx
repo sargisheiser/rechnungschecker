@@ -204,25 +204,30 @@ export function Layout() {
               <h3 className="text-white font-semibold mb-4">Rechtliches</h3>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <a href="#" className="hover:text-white">
+                  <Link to="/impressum" className="hover:text-white">
                     Impressum
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white">
+                  <Link to="/datenschutz" className="hover:text-white">
                     Datenschutz
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white">
+                  <Link to="/agb" className="hover:text-white">
                     AGB
-                  </a>
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/kontakt" className="hover:text-white">
+                    Kontakt
+                  </Link>
                 </li>
               </ul>
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-sm text-center">
-            <p>&copy; 2024 RechnungsChecker. Alle Rechte vorbehalten.</p>
+            <p>&copy; {new Date().getFullYear()} RechnungsChecker. Alle Rechte vorbehalten.</p>
           </div>
         </div>
       </footer>

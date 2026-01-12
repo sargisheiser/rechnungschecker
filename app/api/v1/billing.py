@@ -98,6 +98,28 @@ async def get_subscription(
     )
 
 
+@router.get(
+    "/usage",
+    summary="Get usage statistics",
+    description="Get the current user's usage statistics and limits.",
+)
+async def get_usage(
+    current_user: CurrentUser,
+) -> dict:
+    """Get current user's usage statistics."""
+    return {
+        "plan": current_user.plan.value,
+        "validations_used": current_user.validations_this_month,
+        "validations_limit": current_user.get_validation_limit(),
+        "conversions_used": current_user.conversions_this_month,
+        "conversions_limit": current_user.get_conversion_limit(),
+        "usage_reset_date": datetime.combine(
+            current_user.usage_reset_date,
+            datetime.min.time(),
+        ).isoformat(),
+    }
+
+
 @router.post(
     "/checkout",
     response_model=CheckoutResponse,
@@ -123,6 +145,18 @@ async def create_checkout(
             detail="Sie haben bereits ein aktives Abonnement. Nutzen Sie das Kundenportal zum Ändern.",
         )
 
+    # Demo mode - redirect to demo checkout page
+    if settings.demo_mode:
+        from urllib.parse import urlencode
+        params = urlencode({
+            "plan": data.plan.value,
+            "annual": str(data.annual).lower(),
+            "success_url": str(data.success_url),
+            "cancel_url": str(data.cancel_url),
+        })
+        demo_url = f"/demo-checkout?{params}"
+        return CheckoutResponse(checkout_url=demo_url)
+
     try:
         # Map PlanTier to PlanType
         plan_type = PlanType(data.plan.value)
@@ -146,6 +180,57 @@ async def create_checkout(
 
 
 @router.post(
+    "/demo-confirm",
+    summary="Confirm demo checkout",
+    description="Confirm a demo checkout and upgrade the user's plan (demo mode only).",
+)
+async def confirm_demo_checkout(
+    plan: PlanTier,
+    annual: bool,
+    current_user: CurrentUser,
+    db: DbSession,
+) -> dict:
+    """Confirm demo checkout and upgrade user plan.
+
+    This endpoint only works in demo mode and immediately upgrades the user.
+    """
+    if not settings.demo_mode:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Demo mode is not enabled",
+        )
+
+    if plan == PlanTier.FREE:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot checkout for free plan",
+        )
+
+    # Upgrade the user's plan
+    plan_type = PlanType(plan.value)
+    current_user.plan = plan_type
+    current_user.stripe_customer_id = f"demo_cus_{current_user.id}"
+    current_user.stripe_subscription_id = f"demo_sub_{current_user.id}"
+
+    # Set plan validity (1 year for annual, 1 month for monthly)
+    from datetime import timedelta
+    if annual:
+        current_user.plan_valid_until = datetime.utcnow() + timedelta(days=365)
+    else:
+        current_user.plan_valid_until = datetime.utcnow() + timedelta(days=30)
+
+    await db.commit()
+
+    logger.info(f"Demo checkout completed: user={current_user.email}, plan={plan.value}, annual={annual}")
+
+    return {
+        "status": "success",
+        "message": f"Plan erfolgreich auf {plan.value} aktualisiert (Demo-Modus)",
+        "plan": plan.value,
+    }
+
+
+@router.post(
     "/portal",
     response_model=BillingPortalResponse,
     summary="Open billing portal",
@@ -162,6 +247,10 @@ async def create_portal_session(
             detail="Kein Stripe-Konto vorhanden. Bitte schließen Sie zuerst ein Abonnement ab.",
         )
 
+    # Demo mode - redirect to demo portal page
+    if settings.demo_mode:
+        return BillingPortalResponse(portal_url="/demo-portal")
+
     try:
         portal_url = await stripe_service.create_billing_portal_session(
             user=current_user,
@@ -176,6 +265,43 @@ async def create_portal_session(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=e.message,
         )
+
+
+@router.post(
+    "/demo-cancel",
+    summary="Cancel subscription in demo mode",
+    description="Cancel the subscription and downgrade to free plan (demo mode only).",
+)
+async def demo_cancel_subscription(
+    current_user: CurrentUser,
+    db: DbSession,
+) -> dict:
+    """Cancel subscription in demo mode."""
+    if not settings.demo_mode:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Demo mode is not enabled",
+        )
+
+    if current_user.plan == PlanType.FREE:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Kein aktives Abonnement vorhanden",
+        )
+
+    # Downgrade to free
+    current_user.plan = PlanType.FREE
+    current_user.stripe_subscription_id = None
+    current_user.plan_valid_until = None
+
+    await db.commit()
+
+    logger.info(f"Demo subscription cancelled: user={current_user.email}")
+
+    return {
+        "status": "success",
+        "message": "Abonnement wurde gekuendigt (Demo-Modus)",
+    }
 
 
 @router.post(

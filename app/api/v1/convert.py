@@ -6,7 +6,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import Response
 
-from app.core.auth import get_current_user, get_optional_user
+from app.api.deps import get_current_user, get_current_user_optional as get_optional_user
 from app.core.limits import check_user_conversion_limit, increment_user_conversion
 from app.core.exceptions import UsageLimitError
 from app.models.user import User

@@ -5,11 +5,12 @@ import { Loader2 } from 'lucide-react'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
+  requireVerified?: boolean
 }
 
-export function ProtectedRoute({ children }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, requireVerified = true }: ProtectedRouteProps) {
   const location = useLocation()
-  const { isAuthenticated } = useAuthStore()
+  const { isAuthenticated, user } = useAuthStore()
   const { isLoading, isError } = useUser()
   const hasToken = !!getAccessToken()
 
@@ -25,6 +26,17 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   // If no token or error loading user, redirect to login
   if (!hasToken || isError || !isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />
+  }
+
+  // If email verification is required and user is not verified, redirect to verification pending
+  if (requireVerified && user && !user.is_verified) {
+    return (
+      <Navigate
+        to="/email-bestaetigung"
+        state={{ email: user.email }}
+        replace
+      />
+    )
   }
 
   return <>{children}</>

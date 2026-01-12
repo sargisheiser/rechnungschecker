@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { FileCheck, Loader2, AlertCircle } from 'lucide-react'
+import { FileCheck, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
 import { useLogin } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
 
@@ -12,6 +12,7 @@ export function Login() {
   const location = useLocation()
 
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard'
+  const justVerified = (location.state as { verified?: boolean })?.verified
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -43,6 +44,13 @@ export function Login() {
 
         <div className="card p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
+            {justVerified && (
+              <div className="flex items-center gap-2 p-3 bg-success-50 rounded-lg text-success-600 text-sm">
+                <CheckCircle className="h-4 w-4 flex-shrink-0" />
+                <span>E-Mail erfolgreich verifiziert! Sie koennen sich jetzt anmelden.</span>
+              </div>
+            )}
+
             {login.isError && (
               <div className="flex items-center gap-2 p-3 bg-error-50 rounded-lg text-error-600 text-sm">
                 <AlertCircle className="h-4 w-4 flex-shrink-0" />

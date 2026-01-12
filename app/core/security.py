@@ -1,5 +1,7 @@
 """Security utilities for authentication and authorization."""
 
+import random
+import string
 from datetime import datetime, timedelta
 from typing import Any
 from uuid import UUID
@@ -214,3 +216,15 @@ def verify_password_reset_token(token: str) -> str | None:
         return None
 
     return payload.get("sub")
+
+
+def generate_verification_code(length: int = 6) -> str:
+    """Generate a random numeric verification code.
+
+    Args:
+        length: Length of the code (default 6)
+
+    Returns:
+        Random numeric code string
+    """
+    return ''.join(random.choices(string.digits, k=length))
