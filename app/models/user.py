@@ -119,6 +119,7 @@ class User(Base):
     # Relationships
     api_keys = relationship("APIKey", back_populates="user", cascade="all, delete-orphan")
     clients = relationship("Client", back_populates="user", cascade="all, delete-orphan")
+    webhooks = relationship("WebhookSubscription", back_populates="user", cascade="all, delete-orphan")
 
     def can_manage_clients(self) -> bool:
         """Check if user's plan allows client management."""
@@ -131,6 +132,20 @@ class User(Base):
             PlanType.STARTER: 0,
             PlanType.PRO: 0,
             PlanType.STEUERBERATER: 100,
+        }
+        return limits[self.plan]
+
+    def can_use_webhooks(self) -> bool:
+        """Check if user's plan allows webhook access."""
+        return self.plan in (PlanType.PRO, PlanType.STEUERBERATER)
+
+    def get_max_webhooks(self) -> int:
+        """Return maximum number of webhooks allowed based on plan."""
+        limits = {
+            PlanType.FREE: 0,
+            PlanType.STARTER: 0,
+            PlanType.PRO: 5,
+            PlanType.STEUERBERATER: 20,
         }
         return limits[self.plan]
 

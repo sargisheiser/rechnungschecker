@@ -32,6 +32,15 @@ import type { ExtractedData, OutputFormat, ZUGFeRDProfileType } from '@/types'
 
 type ConversionStep = 'upload' | 'preview' | 'result'
 
+// Helper to format amount values that can be string or number from backend
+function formatAmount(value: string | number | undefined | null): string | undefined {
+  if (value === undefined || value === null) return undefined
+  if (typeof value === 'number') return value.toFixed(2)
+  // Already a string, try to format it
+  const num = parseFloat(value)
+  return isNaN(num) ? value : num.toFixed(2)
+}
+
 export function ConversionPage() {
   useUser() // Ensure user is loaded
   const { data: usage } = useUsage()
@@ -344,17 +353,17 @@ export function ConversionPage() {
                   <div className="space-y-3">
                     <DataField
                       label="Nettobetrag"
-                      value={extractedData.net_amount?.toFixed(2)}
+                      value={formatAmount(extractedData.net_amount)}
                       suffix={extractedData.currency}
                     />
                     <DataField
                       label="MwSt."
-                      value={extractedData.vat_amount?.toFixed(2)}
+                      value={formatAmount(extractedData.vat_amount)}
                       suffix={extractedData.currency}
                     />
                     <DataField
                       label="Bruttobetrag"
-                      value={extractedData.gross_amount?.toFixed(2)}
+                      value={formatAmount(extractedData.gross_amount)}
                       suffix={extractedData.currency}
                       highlight
                     />

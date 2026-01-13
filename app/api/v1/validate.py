@@ -6,7 +6,7 @@ from datetime import date
 from typing import Annotated, Optional
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Request, UploadFile, status
 from sqlalchemy import select
 
 from app.api.deps import DbSession, get_current_user_optional, CurrentUser, OptionalUser
@@ -24,6 +24,7 @@ from app.schemas.validation import (
 from app.services.validation_history import ValidationHistoryService
 from app.services.validator.xrechnung import XRechnungValidator
 from app.services.validator.zugferd import ZUGFeRDValidator
+from app.services.webhook import WebhookService
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -32,6 +33,20 @@ router = APIRouter()
 
 # Guest validation limit
 GUEST_VALIDATION_LIMIT = 1
+
+
+async def deliver_webhook_background(delivery_id: UUID) -> None:
+    """Background task to deliver a webhook."""
+    from app.core.database import async_session_maker
+
+    async with async_session_maker() as db:
+        try:
+            service = WebhookService(db)
+            await service.deliver_webhook(delivery_id)
+            await db.commit()
+        except Exception as e:
+            logger.exception(f"Webhook delivery failed: {delivery_id}, error: {e}")
+            await db.rollback()
 
 
 async def check_and_update_user_usage(user: User, db) -> None:
@@ -79,6 +94,7 @@ async def check_and_update_user_usage(user: User, db) -> None:
 async def validate_file(
     request: Request,
     db: DbSession,
+    background_tasks: BackgroundTasks,
     file: Annotated[UploadFile, File(description="Invoice file (XML or PDF)")],
     current_user: OptionalUser,
     client_id: Annotated[Optional[UUID], Form(description="Optional client ID for Steuerberater")] = None,
@@ -164,6 +180,35 @@ async def validate_file(
                 file_name=filename,
                 file_size_bytes=len(content),
             )
+
+            # Trigger webhooks for PRO+ users
+            if current_user.can_use_webhooks():
+                webhook_service = WebhookService(db)
+                # Get client name if applicable
+                client_name = client.name if validated_client_id and client else None
+
+                delivery_ids = await webhook_service.trigger_webhooks(
+                    user_id=current_user.id,
+                    validation_id=result.id,
+                    file_name=filename,
+                    file_type=result.file_type,
+                    file_hash=result.file_hash,
+                    is_valid=result.is_valid,
+                    error_count=result.error_count,
+                    warning_count=result.warning_count,
+                    info_count=result.info_count,
+                    processing_time_ms=result.processing_time_ms,
+                    validated_at=result.validated_at,
+                    xrechnung_version=result.xrechnung_version,
+                    zugferd_profile=result.zugferd_profile,
+                    client_id=validated_client_id,
+                    client_name=client_name,
+                )
+
+                # Schedule background delivery for each webhook
+                for delivery_id in delivery_ids:
+                    background_tasks.add_task(deliver_webhook_background, delivery_id)
+
             await db.commit()
 
             # Include usage info in response

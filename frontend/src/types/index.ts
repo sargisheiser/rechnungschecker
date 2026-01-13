@@ -303,9 +303,9 @@ export interface ExtractedData {
   buyer_postal_code?: string
   buyer_city?: string
   buyer_reference?: string
-  net_amount?: number
-  vat_amount?: number
-  gross_amount?: number
+  net_amount?: string | number
+  vat_amount?: string | number
+  gross_amount?: string | number
   currency: string
   iban?: string
   bic?: string
