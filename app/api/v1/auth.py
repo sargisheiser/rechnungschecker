@@ -28,6 +28,7 @@ from app.schemas.auth import (
     TokenRefresh,
     TokenResponse,
     UsageResponse,
+    UserUpdate,
     UserLogin,
     UserRegister,
     UserResponse,
@@ -54,7 +55,7 @@ async def register(
 
     - Email must be unique
     - Password must be at least 8 characters with upper, lower, and digit
-    - Verification email will be sent (TODO)
+    - Verification email with 6-digit code will be sent
     """
     # Check if email already exists
     result = await db.execute(select(User).where(User.email == data.email))
@@ -335,6 +336,29 @@ async def get_me(
     current_user: CurrentUser,
 ) -> User:
     """Get current user profile."""
+    return current_user
+
+
+@router.patch(
+    "/me",
+    response_model=UserResponse,
+    summary="Update profile",
+    description="Update the current user's profile information.",
+)
+async def update_profile(
+    data: UserUpdate,
+    current_user: CurrentUser,
+    db: DbSession,
+) -> User:
+    """Update current user profile."""
+    if data.company_name is not None:
+        current_user.company_name = data.company_name
+
+    await db.flush()
+    await db.refresh(current_user)
+
+    logger.info(f"Profile updated for: {current_user.email}")
+
     return current_user
 
 

@@ -9,12 +9,14 @@ import {
   Building2,
   Users,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { FileUpload } from '@/components/FileUpload'
 import { ValidationResults } from '@/components/ValidationResults'
 import { useValidationStore } from '@/hooks/useValidation'
 
 export function Landing() {
   const { currentResult } = useValidationStore()
+  const { t } = useTranslation()
 
   return (
     <div>
@@ -23,12 +25,11 @@ export function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 text-balance">
-              E-Rechnungen validieren in{' '}
-              <span className="text-primary-600">Sekunden</span>
+              {t('landing.hero.title')}{' '}
+              <span className="text-primary-600">{t('landing.hero.titleHighlight')}</span>
             </h1>
             <p className="mt-6 text-lg md:text-xl text-gray-600 text-balance">
-              Pruefen Sie Ihre XRechnung und ZUGFeRD Dateien sofort auf
-              Konformitaet. Kostenlos und ohne Registrierung.
+              {t('landing.hero.subtitle')}
             </p>
 
             {/* Upload Area */}
@@ -44,15 +45,15 @@ export function Landing() {
             <div className="mt-8 flex flex-wrap justify-center gap-6 text-sm text-gray-500">
               <div className="flex items-center gap-2">
                 <Shield className="h-5 w-5 text-success-500" />
-                DSGVO-konform
+                {t('landing.hero.badges.gdpr')}
               </div>
               <div className="flex items-center gap-2">
                 <Zap className="h-5 w-5 text-warning-500" />
-                Sofortige Ergebnisse
+                {t('landing.hero.badges.instant')}
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="h-5 w-5 text-primary-500" />
-                24/7 verfuegbar
+                {t('landing.hero.badges.available')}
               </div>
             </div>
           </div>
@@ -64,43 +65,43 @@ export function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-              Alles was Sie brauchen
+              {t('landing.features.title')}
             </h2>
             <p className="mt-4 text-lg text-gray-600">
-              Umfassende E-Rechnungspruefung fuer deutsche Unternehmen
+              {t('landing.features.subtitle')}
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             <FeatureCard
               icon={FileCheck}
-              title="XRechnung Validierung"
-              description="Vollstaendige Pruefung nach XRechnung Standard 3.0 mit detaillierten Fehlermeldungen auf Deutsch."
+              title={t('landing.features.xrechnung.title')}
+              description={t('landing.features.xrechnung.description')}
             />
             <FeatureCard
               icon={FileCheck}
-              title="ZUGFeRD Unterstuetzung"
-              description="Validierung von ZUGFeRD 2.0, 2.1 und Factur-X Profilen von MINIMUM bis EXTENDED."
+              title={t('landing.features.zugferd.title')}
+              description={t('landing.features.zugferd.description')}
             />
             <FeatureCard
               icon={Shield}
-              title="Datenschutz"
-              description="Ihre Rechnungsdaten werden niemals gespeichert. Verarbeitung erfolgt DSGVO-konform in Deutschland."
+              title={t('landing.features.privacy.title')}
+              description={t('landing.features.privacy.description')}
             />
             <FeatureCard
               icon={Zap}
-              title="Schnelle Ergebnisse"
-              description="Erhalten Sie Validierungsergebnisse in wenigen Sekunden mit klaren, verstaendlichen Fehlerbeschreibungen."
+              title={t('landing.features.fast.title')}
+              description={t('landing.features.fast.description')}
             />
             <FeatureCard
               icon={Building2}
-              title="API-Zugang"
-              description="Integrieren Sie die Validierung direkt in Ihre Systeme mit unserer REST-API (Pro-Plan)."
+              title={t('landing.features.api.title')}
+              description={t('landing.features.api.description')}
             />
             <FeatureCard
               icon={Users}
-              title="Mandantenverwaltung"
-              description="Verwalten Sie mehrere Mandanten in einem Account - ideal fuer Steuerberater."
+              title={t('landing.features.clients.title')}
+              description={t('landing.features.clients.description')}
             />
           </div>
         </div>
@@ -111,25 +112,25 @@ export function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-              So funktioniert's
+              {t('landing.howItWorks.title')}
             </h2>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
             <StepCard
               number="1"
-              title="Datei hochladen"
-              description="Laden Sie Ihre XRechnung (XML) oder ZUGFeRD (PDF) Datei hoch."
+              title={t('landing.howItWorks.step1.title')}
+              description={t('landing.howItWorks.step1.description')}
             />
             <StepCard
               number="2"
-              title="Automatische Pruefung"
-              description="Unsere Engine prueft alle Regeln des deutschen E-Rechnungsstandards."
+              title={t('landing.howItWorks.step2.title')}
+              description={t('landing.howItWorks.step2.description')}
             />
             <StepCard
               number="3"
-              title="Ergebnis erhalten"
-              description="Sie erhalten sofort eine detaillierte Auswertung mit Handlungsempfehlungen."
+              title={t('landing.howItWorks.step3.title')}
+              description={t('landing.howItWorks.step3.description')}
             />
           </div>
         </div>
@@ -140,10 +141,10 @@ export function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-              Unterstuetzte Standards
+              {t('landing.standards.title')}
             </h2>
             <p className="mt-4 text-lg text-gray-600">
-              Vollstaendige Abdeckung aller relevanten deutschen E-Rechnungsformate
+              {t('landing.standards.subtitle')}
             </p>
           </div>
 
@@ -153,10 +154,10 @@ export function Landing() {
                 XRechnung
               </h3>
               <ul className="space-y-3">
-                <CheckItem text="XRechnung Standard 2.3 und 3.0" />
-                <CheckItem text="UBL und CII Syntax" />
-                <CheckItem text="EN 16931 konform" />
-                <CheckItem text="Leitweg-ID Validierung" />
+                <CheckItem text={t('landing.standards.xrechnung.item1')} />
+                <CheckItem text={t('landing.standards.xrechnung.item2')} />
+                <CheckItem text={t('landing.standards.xrechnung.item3')} />
+                <CheckItem text={t('landing.standards.xrechnung.item4')} />
               </ul>
             </div>
             <div className="card p-6">
@@ -164,10 +165,10 @@ export function Landing() {
                 ZUGFeRD / Factur-X
               </h3>
               <ul className="space-y-3">
-                <CheckItem text="ZUGFeRD 2.0, 2.1, 2.2" />
-                <CheckItem text="Factur-X 1.0" />
-                <CheckItem text="Alle Profile: MINIMUM bis EXTENDED" />
-                <CheckItem text="Automatische Profilerkennung" />
+                <CheckItem text={t('landing.standards.zugferd.item1')} />
+                <CheckItem text={t('landing.standards.zugferd.item2')} />
+                <CheckItem text={t('landing.standards.zugferd.item3')} />
+                <CheckItem text={t('landing.standards.zugferd.item4')} />
               </ul>
             </div>
           </div>
@@ -178,24 +179,24 @@ export function Landing() {
       <section className="py-16 lg:py-24 bg-primary-600">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white">
-            Bereit Ihre E-Rechnungen zu pruefen?
+            {t('landing.cta.title')}
           </h2>
           <p className="mt-4 text-lg text-primary-100">
-            Starten Sie jetzt kostenlos - keine Kreditkarte erforderlich.
+            {t('landing.cta.subtitle')}
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               to="/registrieren"
               className="btn btn-lg bg-white text-primary-600 hover:bg-gray-100"
             >
-              Kostenlos registrieren
+              {t('landing.cta.register')}
               <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
             <Link
               to="/preise"
               className="btn btn-lg bg-primary-700 text-white hover:bg-primary-800"
             >
-              Preise ansehen
+              {t('landing.cta.viewPricing')}
             </Link>
           </div>
         </div>

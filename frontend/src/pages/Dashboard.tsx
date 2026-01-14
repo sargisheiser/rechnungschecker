@@ -13,6 +13,7 @@ import {
   Building2,
   ChevronDown,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { FileUpload } from '@/components/FileUpload'
 import { ValidationResults } from '@/components/ValidationResults'
 import { useValidationStore, useValidationHistory } from '@/hooks/useValidation'
@@ -22,6 +23,7 @@ import { useClients, useClientContext } from '@/hooks/useClients'
 import { cn, formatDate, formatDateTime } from '@/lib/utils'
 
 export function Dashboard() {
+  const { t } = useTranslation()
   const [searchParams] = useSearchParams()
   const { currentResult } = useValidationStore()
   const { data: user } = useUser()
@@ -48,10 +50,10 @@ export function Dashboard() {
           <CheckCircle className="h-5 w-5 text-success-600" />
           <div>
             <p className="font-medium text-success-700">
-              Zahlung erfolgreich!
+              {t('dashboard.paymentSuccess')}
             </p>
             <p className="text-sm text-success-600">
-              Ihr Abonnement wurde aktiviert.
+              {t('dashboard.subscriptionActivated')}
             </p>
           </div>
         </div>
@@ -61,9 +63,9 @@ export function Dashboard() {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('nav.dashboard')}</h1>
             <p className="text-gray-600 mt-1">
-              Willkommen zurueck, {user?.company_name || user?.email}
+              {t('dashboard.welcomeBack')}, {user?.company_name || user?.email}
             </p>
           </div>
 
@@ -143,7 +145,7 @@ export function Dashboard() {
           {/* Upload section */}
           <div className="card p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              Neue Validierung
+              {t('dashboard.newValidation')}
             </h2>
             {currentResult ? <ValidationResults /> : <FileUpload />}
           </div>
@@ -152,13 +154,13 @@ export function Dashboard() {
           <div className="card">
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900">
-                Letzte Validierungen
+                {t('dashboard.recentValidations')}
               </h2>
               <Link
                 to="/dashboard/verlauf"
                 className="text-sm text-primary-600 hover:text-primary-700"
               >
-                Alle anzeigen
+                {t('common.viewAll')}
               </Link>
             </div>
 
@@ -169,7 +171,7 @@ export function Dashboard() {
             ) : history?.items.length === 0 ? (
               <div className="p-6 text-center text-gray-500">
                 <FileCheck className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                <p>Noch keine Validierungen durchgefuehrt</p>
+                <p>{t('dashboard.noValidations')}</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-200">
@@ -186,7 +188,7 @@ export function Dashboard() {
           {/* Usage stats */}
           <div className="card p-6">
             <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">
-              Nutzung diesen Monat
+              {t('dashboard.usageThisMonth')}
             </h3>
 
             {usageLoading ? (
@@ -194,13 +196,13 @@ export function Dashboard() {
             ) : (
               <div className="space-y-4">
                 <UsageStat
-                  label="Validierungen"
+                  label={t('dashboard.validations')}
                   used={usage?.validations_used || 0}
                   limit={usage?.validations_limit}
                   icon={FileCheck}
                 />
                 <UsageStat
-                  label="Konvertierungen"
+                  label={t('dashboard.conversions')}
                   used={usage?.conversions_used || 0}
                   limit={usage?.conversions_limit || 0}
                   icon={TrendingUp}
@@ -211,9 +213,9 @@ export function Dashboard() {
             {usage && usage.validations_limit && usage.validations_used >= usage.validations_limit && (
               <div className="mt-4 p-3 bg-warning-50 rounded-lg">
                 <p className="text-sm text-warning-700">
-                  Limit erreicht.{' '}
+                  {t('dashboard.limitReached')}{' '}
                   <Link to="/preise" className="font-medium underline">
-                    Jetzt upgraden
+                    {t('dashboard.upgradeNow')}
                   </Link>
                 </p>
               </div>
@@ -223,7 +225,7 @@ export function Dashboard() {
           {/* Current plan */}
           <div className="card p-6">
             <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">
-              Aktueller Plan
+              {t('dashboard.currentPlan')}
             </h3>
 
             <div className="flex items-center justify-between mb-4">
@@ -233,7 +235,7 @@ export function Dashboard() {
                 </p>
                 {subscription && (
                   <p className="text-sm text-gray-500">
-                    Erneuert am {formatDate(subscription.current_period_end)}
+                    {t('dashboard.renewsOn')} {formatDate(subscription.current_period_end)}
                   </p>
                 )}
               </div>
@@ -242,7 +244,7 @@ export function Dashboard() {
 
             {user?.plan === 'free' ? (
               <Link to="/preise" className="btn-primary w-full">
-                Upgraden
+                {t('common.upgrade')}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             ) : (
@@ -254,7 +256,7 @@ export function Dashboard() {
                 {portalSession.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  'Abo verwalten'
+                  t('dashboard.manageSubscription')
                 )}
               </button>
             )}
@@ -264,19 +266,19 @@ export function Dashboard() {
           {user?.plan === 'steuerberater' && (
             <div className="card p-6">
               <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">
-                Mandantenverwaltung
+                {t('clients.title')}
               </h3>
               <div className="flex items-center gap-3 mb-4">
                 <Users className="h-8 w-8 text-primary-500" />
                 <div>
-                  <p className="font-medium text-gray-900">Mandanten</p>
+                  <p className="font-medium text-gray-900">{t('clients.clients')}</p>
                   <p className="text-sm text-gray-500">
-                    {clients?.total || 0} Mandanten
+                    {clients?.total || 0} {t('clients.clients')}
                   </p>
                 </div>
               </div>
               <Link to="/mandanten" className="btn-secondary w-full">
-                Mandanten verwalten
+                {t('clients.manageClients')}
               </Link>
             </div>
           )}
@@ -285,19 +287,19 @@ export function Dashboard() {
           {(user?.plan === 'pro' || user?.plan === 'steuerberater') && (
             <div className="card p-6">
               <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">
-                API-Zugang
+                {t('apiKeys.title')}
               </h3>
               <div className="flex items-center gap-3 mb-4">
                 <Key className="h-8 w-8 text-primary-500" />
                 <div>
-                  <p className="font-medium text-gray-900">API-Schluessel</p>
+                  <p className="font-medium text-gray-900">{t('apiKeys.apiKeys')}</p>
                   <p className="text-sm text-gray-500">
-                    Programmatischer Zugriff
+                    {t('apiKeys.programmaticAccess')}
                   </p>
                 </div>
               </div>
               <Link to="/api-keys" className="btn-secondary w-full">
-                Schluessel verwalten
+                {t('apiKeys.manageKeys')}
               </Link>
             </div>
           )}
@@ -305,12 +307,12 @@ export function Dashboard() {
           {/* Quick tips */}
           <div className="card p-6 bg-primary-50 border-primary-100">
             <h3 className="text-sm font-medium text-primary-900 mb-2">
-              Tipp
+              {t('dashboard.tip')}
             </h3>
             <p className="text-sm text-primary-700">
               {user?.plan === 'pro' || user?.plan === 'steuerberater'
-                ? 'Nutzen Sie die API, um Validierungen direkt in Ihre Systeme zu integrieren.'
-                : 'Mit dem Pro-Plan erhalten Sie API-Zugang und koennen Validierungen direkt in Ihre Systeme integrieren.'}
+                ? t('dashboard.tipPro')
+                : t('dashboard.tipFree')}
             </p>
           </div>
         </div>

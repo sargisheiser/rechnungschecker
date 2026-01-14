@@ -399,5 +399,125 @@ RechnungsChecker - E-Rechnung Validierung & Konvertierung
         return await self.send_email(to, subject, html_content, text_content)
 
 
+    async def send_payment_failed_email(self, to: str, invoice_id: str) -> bool:
+        """
+        Send payment failed notification email.
+
+        Args:
+            to: Recipient email address
+            invoice_id: Stripe invoice ID
+
+        Returns:
+            True if email was sent successfully
+        """
+        # In dev mode, print notification prominently
+        if not self.is_configured:
+            print("\n" + "*" * 60)
+            print("*  PAYMENT FAILED NOTIFICATION (DEV MODE)")
+            print("*" * 60)
+            print(f"*  Email: {to}")
+            print(f"*  Invoice: {invoice_id}")
+            print("*" * 60 + "\n")
+
+        subject = "Zahlung fehlgeschlagen - RechnungsChecker"
+
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body {{ font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ text-align: center; padding: 20px 0; border-bottom: 2px solid #dc2626; }}
+                .logo {{ font-size: 24px; font-weight: bold; color: #2563eb; }}
+                .content {{ padding: 30px 0; }}
+                .alert {{
+                    background-color: #fef2f2;
+                    border: 1px solid #fecaca;
+                    border-radius: 8px;
+                    padding: 16px;
+                    margin: 20px 0;
+                }}
+                .alert-title {{
+                    color: #dc2626;
+                    font-weight: 600;
+                    margin-bottom: 8px;
+                }}
+                .button {{
+                    display: inline-block;
+                    padding: 14px 30px;
+                    background-color: #2563eb;
+                    color: white !important;
+                    text-decoration: none;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    margin: 20px 0;
+                }}
+                .footer {{
+                    padding-top: 20px;
+                    border-top: 1px solid #eee;
+                    font-size: 12px;
+                    color: #666;
+                    text-align: center;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <div class="logo">RechnungsChecker</div>
+                </div>
+                <div class="content">
+                    <div class="alert">
+                        <div class="alert-title">Zahlung fehlgeschlagen</div>
+                        <p>Leider konnte Ihre letzte Zahlung nicht verarbeitet werden.</p>
+                    </div>
+
+                    <p>Bitte aktualisieren Sie Ihre Zahlungsinformationen, um eine Unterbrechung
+                    Ihres Dienstes zu vermeiden.</p>
+
+                    <p style="text-align: center;">
+                        <a href="http://localhost:3000/dashboard/abrechnung" class="button">
+                            Zahlungsmethode aktualisieren
+                        </a>
+                    </p>
+
+                    <p>Falls Sie Fragen haben, kontaktieren Sie uns unter
+                    <a href="mailto:support@rechnungschecker.de">support@rechnungschecker.de</a>.</p>
+
+                    <p><small>Rechnungsnummer: {invoice_id}</small></p>
+                </div>
+                <div class="footer">
+                    <p>Diese E-Mail wurde automatisch generiert. Bitte antworten Sie nicht darauf.</p>
+                    <p>&copy; 2024 RechnungsChecker - E-Rechnung Validierung & Konvertierung</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        text_content = f"""
+Zahlung fehlgeschlagen
+
+Leider konnte Ihre letzte Zahlung nicht verarbeitet werden.
+
+Bitte aktualisieren Sie Ihre Zahlungsinformationen, um eine Unterbrechung
+Ihres Dienstes zu vermeiden.
+
+Zahlungsmethode aktualisieren:
+http://localhost:3000/dashboard/abrechnung
+
+Falls Sie Fragen haben, kontaktieren Sie uns unter support@rechnungschecker.de.
+
+Rechnungsnummer: {invoice_id}
+
+---
+RechnungsChecker - E-Rechnung Validierung & Konvertierung
+        """
+
+        return await self.send_email(to, subject, html_content, text_content)
+
+
 # Singleton instance
 email_service = EmailService()

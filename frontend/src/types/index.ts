@@ -338,3 +338,124 @@ export interface ConversionStatusResponse {
   supported_formats: OutputFormat[]
   supported_profiles: ZUGFeRDProfileType[]
 }
+
+// Integration types
+export type IntegrationType = 'lexoffice' | 'slack' | 'teams'
+
+export interface Integration {
+  id: string
+  integration_type: IntegrationType
+  is_enabled: boolean
+  notify_on_valid: boolean
+  notify_on_invalid: boolean
+  notify_on_warning: boolean
+  last_used_at?: string
+  total_requests: number
+  successful_requests: number
+  failed_requests: number
+  created_at: string
+  updated_at: string
+  config_hint?: string
+}
+
+export interface IntegrationList {
+  items: Integration[]
+}
+
+export interface IntegrationCreateRequest {
+  config: Record<string, string>
+  notify_on_valid?: boolean
+  notify_on_invalid?: boolean
+  notify_on_warning?: boolean
+}
+
+export interface IntegrationUpdateRequest {
+  is_enabled?: boolean
+  notify_on_valid?: boolean
+  notify_on_invalid?: boolean
+  notify_on_warning?: boolean
+}
+
+export interface IntegrationTestResponse {
+  success: boolean
+  message: string
+}
+
+// Webhook types
+export type WebhookEventType = 'validation.completed' | 'validation.failed' | 'test'
+
+export interface Webhook {
+  id: string
+  url: string
+  events: string[]
+  description?: string
+  is_active: boolean
+  total_deliveries: number
+  successful_deliveries: number
+  failed_deliveries: number
+  last_triggered_at?: string
+  last_success_at?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface WebhookCreated extends Webhook {
+  secret: string
+}
+
+export interface WebhookList {
+  items: Webhook[]
+  total: number
+  max_webhooks: number
+}
+
+export interface WebhookDelivery {
+  id: string
+  event_type: string
+  event_id: string
+  status: 'pending' | 'success' | 'failed' | 'retrying'
+  attempt_count: number
+  response_status_code?: number
+  response_time_ms?: number
+  error_message?: string
+  created_at: string
+  last_attempt_at?: string
+  completed_at?: string
+}
+
+export interface WebhookWithDeliveries extends Webhook {
+  recent_deliveries: WebhookDelivery[]
+}
+
+export interface WebhookCreateRequest {
+  url: string
+  events: WebhookEventType[]
+  description?: string
+}
+
+export interface WebhookUpdateRequest {
+  url?: string
+  events?: WebhookEventType[]
+  description?: string
+  is_active?: boolean
+}
+
+export interface WebhookTestResponse {
+  success: boolean
+  delivery_id: string
+  message: string
+  response_status_code?: number
+  response_time_ms?: number
+}
+
+// Export types
+export type ExportFormat = 'datev' | 'excel'
+export type ExportValidationStatus = 'all' | 'valid' | 'invalid'
+
+export interface ExportParams {
+  client_id?: string
+  date_from?: string
+  date_to?: string
+  status?: ExportValidationStatus
+  format?: ExportFormat
+}

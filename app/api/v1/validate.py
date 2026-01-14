@@ -209,6 +209,21 @@ async def validate_file(
                 for delivery_id in delivery_ids:
                     background_tasks.add_task(deliver_webhook_background, delivery_id)
 
+            # Trigger Slack/Teams notifications for PRO+ users
+            if current_user.can_use_integrations():
+                from app.api.v1.integrations import send_notifications_background
+
+                background_tasks.add_task(
+                    send_notifications_background,
+                    user_id=current_user.id,
+                    validation_id=result.id,
+                    file_name=filename,
+                    is_valid=result.is_valid,
+                    error_count=result.error_count,
+                    warning_count=result.warning_count,
+                    info_count=result.info_count,
+                )
+
             await db.commit()
 
             # Include usage info in response
@@ -264,6 +279,7 @@ async def validate_file(
 async def validate_xrechnung(
     request: Request,
     file: Annotated[UploadFile, File(description="XRechnung XML file to validate")],
+    current_user: OptionalUser,
 ) -> ValidationResponse:
     """Validate an XRechnung XML file.
 
@@ -297,10 +313,11 @@ async def validate_xrechnung(
 
     try:
         validator = XRechnungValidator()
+        user_id = current_user.id if current_user else None
         result = await validator.validate(
             content=content,
             filename=filename,
-            user_id=None,  # TODO: Get from auth context
+            user_id=user_id,
         )
 
         # Set report URL
@@ -355,6 +372,7 @@ async def validate_xrechnung(
 async def validate_zugferd(
     request: Request,
     file: Annotated[UploadFile, File(description="ZUGFeRD PDF file to validate")],
+    current_user: OptionalUser,
 ) -> ValidationResponse:
     """Validate a ZUGFeRD PDF file.
 
@@ -383,10 +401,11 @@ async def validate_zugferd(
 
     try:
         validator = ZUGFeRDValidator()
+        user_id = current_user.id if current_user else None
         result = await validator.validate(
             content=content,
             filename=filename,
-            user_id=None,  # TODO: Get from auth context
+            user_id=user_id,
         )
 
         # Set report URL

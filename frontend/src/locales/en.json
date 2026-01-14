@@ -1,0 +1,606 @@
+{
+  "common": {
+    "appName": "RechnungsChecker",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "back": "Back",
+    "next": "Next",
+    "close": "Close",
+    "search": "Search",
+    "filter": "Filter",
+    "all": "All",
+    "active": "Active",
+    "inactive": "Inactive",
+    "yes": "Yes",
+    "no": "No",
+    "or": "or",
+    "and": "and",
+    "optional": "optional",
+    "viewAll": "View all",
+    "upgrade": "Upgrade"
+  },
+  "nav": {
+    "home": "Home",
+    "pricing": "Pricing",
+    "dashboard": "Dashboard",
+    "conversion": "Conversion",
+    "settings": "Settings",
+    "logout": "Log out",
+    "login": "Log in",
+    "register": "Get started free",
+    "getStarted": "Get started free"
+  },
+  "landing": {
+    "hero": {
+      "title": "Validate e-invoices in",
+      "titleHighlight": "seconds",
+      "subtitle": "Check your XRechnung and ZUGFeRD files for compliance instantly. Free and without registration.",
+      "badges": {
+        "gdpr": "GDPR compliant",
+        "instant": "Instant results",
+        "available": "Available 24/7"
+      }
+    },
+    "badges": {
+      "gdpr": "GDPR compliant",
+      "instant": "Instant results",
+      "available": "Available 24/7"
+    },
+    "features": {
+      "title": "Everything you need",
+      "subtitle": "Comprehensive e-invoice validation for German businesses",
+      "xrechnung": {
+        "title": "XRechnung Validation",
+        "description": "Complete validation according to XRechnung Standard 3.0 with detailed error messages in German."
+      },
+      "zugferd": {
+        "title": "ZUGFeRD Support",
+        "description": "Validation of ZUGFeRD 2.0, 2.1 and Factur-X profiles from MINIMUM to EXTENDED."
+      },
+      "privacy": {
+        "title": "Data Privacy",
+        "description": "Your invoice data is never stored. Processing is GDPR-compliant in Germany."
+      },
+      "fast": {
+        "title": "Fast Results",
+        "description": "Get validation results in seconds with clear, understandable error descriptions."
+      },
+      "api": {
+        "title": "API Access",
+        "description": "Integrate validation directly into your systems with our REST API (Pro plan)."
+      },
+      "clients": {
+        "title": "Client Management",
+        "description": "Manage multiple clients in one account - ideal for tax advisors."
+      }
+    },
+    "howItWorks": {
+      "title": "How it works",
+      "step1": {
+        "title": "Upload file",
+        "description": "Upload your XRechnung (XML) or ZUGFeRD (PDF) file."
+      },
+      "step2": {
+        "title": "Automatic validation",
+        "description": "Our engine checks all rules of the German e-invoice standard."
+      },
+      "step3": {
+        "title": "Get results",
+        "description": "You immediately receive a detailed analysis with recommendations."
+      }
+    },
+    "standards": {
+      "title": "Supported Standards",
+      "subtitle": "Complete coverage of all relevant German e-invoice formats",
+      "xrechnung": {
+        "title": "XRechnung",
+        "item1": "XRechnung Standard 2.3 and 3.0",
+        "item2": "UBL and CII syntax",
+        "item3": "EN 16931 compliant",
+        "item4": "Leitweg-ID validation"
+      },
+      "zugferd": {
+        "title": "ZUGFeRD / Factur-X",
+        "item1": "ZUGFeRD 2.0, 2.1, 2.2",
+        "item2": "Factur-X 1.0",
+        "item3": "All profiles: MINIMUM to EXTENDED",
+        "item4": "Automatic profile detection"
+      }
+    },
+    "cta": {
+      "title": "Ready to validate your e-invoices?",
+      "subtitle": "Start free now - no credit card required.",
+      "registerButton": "Sign up free",
+      "pricingButton": "View pricing",
+      "register": "Sign up free",
+      "viewPricing": "View pricing"
+    }
+  },
+  "upload": {
+    "title": "Upload e-invoice here",
+    "dragDrop": "Drag and drop file here or click to select",
+    "dragOrClick": "Drag XML (XRechnung) or PDF (ZUGFeRD) or click",
+    "supportedFormats": "Supported formats: XML (XRechnung), PDF (ZUGFeRD)",
+    "maxSize": "Maximum file size: 10 MB",
+    "maxFileSize": "Maximum file size: 10 MB",
+    "uploading": "Uploading...",
+    "validating": "Invoice is being validated...",
+    "pleaseWait": "Please wait a moment",
+    "dropHere": "Drop file here",
+    "validationError": "Validation error",
+    "invalidFile": "Invalid file",
+    "uploadXmlOrPdf": "Please upload an XML or PDF file",
+    "error": {
+      "invalidType": "Invalid file type. Please upload an XML or PDF file.",
+      "tooLarge": "File too large. Maximum size: 10 MB",
+      "failed": "Upload failed. Please try again."
+    },
+    "limitReached": {
+      "title": "Your free validation has been used",
+      "description": "Sign up for free to get 5 validations per month. Or choose one of our plans for unlimited validations.",
+      "register": "Sign up free"
+    }
+  },
+  "validation": {
+    "title": "Validation Result",
+    "valid": "Valid",
+    "invalid": "Invalid",
+    "errors": "Errors",
+    "warnings": "Warnings",
+    "info": "Information",
+    "noErrors": "No errors found",
+    "noWarnings": "No warnings",
+    "downloadReport": "Download report",
+    "validateAnother": "Validate another file",
+    "history": "Validation history",
+    "details": {
+      "fileName": "File name",
+      "fileType": "File type",
+      "fileSize": "File size",
+      "validatedAt": "Validated at",
+      "processingTime": "Processing time",
+      "version": "Version"
+    }
+  },
+  "auth": {
+    "email": "Email address",
+    "password": "Password",
+    "emailPlaceholder": "your@email.com",
+    "passwordPlaceholder": "Your password",
+    "forgotPassword": "Forgot password?",
+    "login": {
+      "title": "Welcome back",
+      "subtitle": "Sign in to your account",
+      "email": "Email address",
+      "password": "Password",
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot password?",
+      "submit": "Log in",
+      "noAccount": "Don't have an account?",
+      "registerLink": "Sign up now",
+      "registerNow": "Sign up now",
+      "emailVerified": "Email successfully verified! You can now log in.",
+      "invalidCredentials": "Email or password is incorrect",
+      "loggingIn": "Logging in..."
+    },
+    "register": {
+      "title": "Create account",
+      "subtitle": "Sign up for a free account",
+      "email": "Email address",
+      "password": "Password",
+      "confirmPassword": "Confirm password",
+      "passwordHint": "At least 8 characters, with uppercase, lowercase letters and a number",
+      "agreeTerms": "I agree to the",
+      "termsLink": "Terms of Service",
+      "privacyLink": "Privacy Policy",
+      "submit": "Sign up",
+      "hasAccount": "Already have an account?",
+      "loginLink": "Log in now"
+    },
+    "forgotPassword": {
+      "title": "Forgot password",
+      "subtitle": "Enter your email address and we'll send you a reset link.",
+      "email": "Email address",
+      "submit": "Send link",
+      "backToLogin": "Back to login",
+      "success": "If an account with this email exists, reset instructions have been sent."
+    },
+    "resetPassword": {
+      "title": "Set new password",
+      "subtitle": "Enter your new password",
+      "password": "New password",
+      "confirmPassword": "Confirm password",
+      "submit": "Change password",
+      "success": "Your password has been successfully changed."
+    },
+    "verifyEmail": {
+      "title": "Verify email",
+      "subtitle": "We've sent a verification code to your email.",
+      "code": "Verification code",
+      "submit": "Verify",
+      "resend": "Resend code",
+      "success": "Email successfully verified!"
+    },
+    "errors": {
+      "invalidCredentials": "Invalid email address or password",
+      "emailExists": "An account with this email address already exists",
+      "passwordMismatch": "Passwords do not match",
+      "weakPassword": "Password is too weak",
+      "invalidToken": "Invalid or expired link",
+      "notVerified": "Please verify your email address first"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome",
+    "welcomeBack": "Welcome back",
+    "newValidation": "New Validation",
+    "recentValidations": "Recent Validations",
+    "noValidations": "No validations performed yet",
+    "usageThisMonth": "Usage this month",
+    "validations": "Validations",
+    "conversions": "Conversions",
+    "limitReached": "Limit reached.",
+    "upgradeNow": "Upgrade now",
+    "currentPlan": "Current Plan",
+    "renewsOn": "Renews on",
+    "manageSubscription": "Manage subscription",
+    "paymentSuccess": "Payment successful!",
+    "subscriptionActivated": "Your subscription has been activated.",
+    "tip": "Tip",
+    "tipPro": "Use the API to integrate validations directly into your systems.",
+    "tipFree": "With the Pro plan you get API access and can integrate validations directly into your systems.",
+    "stats": {
+      "validationsThisMonth": "Validations this month",
+      "conversionsThisMonth": "Conversions this month",
+      "plan": "Current plan",
+      "usage": "Usage"
+    },
+    "quickActions": {
+      "title": "Quick actions",
+      "validate": "Validate file",
+      "convert": "Convert PDF",
+      "apiKeys": "API keys",
+      "clients": "Clients"
+    }
+  },
+  "pricing": {
+    "title": "Pricing",
+    "subtitle": "Choose the right plan for your needs",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "yearlyDiscount": "2 months free",
+    "perMonth": "/ month",
+    "currentPlan": "Current plan",
+    "upgrade": "Upgrade",
+    "downgrade": "Downgrade",
+    "choosePlan": "Choose plan",
+    "features": "Features",
+    "plans": {
+      "free": {
+        "name": "Free",
+        "description": "For occasional use",
+        "price": "0",
+        "features": {
+          "validations": "5 validations / day",
+          "conversion": "No conversion",
+          "api": "No API access",
+          "support": "Community support"
+        }
+      },
+      "starter": {
+        "name": "Starter",
+        "description": "For small businesses",
+        "price": "29",
+        "features": {
+          "validations": "100 validations / month",
+          "conversion": "10 conversions / month",
+          "api": "No API access",
+          "support": "Email support"
+        }
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "For growing businesses",
+        "price": "79",
+        "popular": "Popular",
+        "features": {
+          "validations": "Unlimited validations",
+          "conversion": "50 conversions / month",
+          "api": "API access",
+          "webhooks": "Webhooks",
+          "support": "Priority support"
+        }
+      },
+      "taxAdvisor": {
+        "name": "Tax Advisor",
+        "description": "For tax advisors and firms",
+        "price": "199",
+        "features": {
+          "validations": "Unlimited validations",
+          "conversion": "200 conversions / month",
+          "api": "API access",
+          "webhooks": "Webhooks",
+          "clients": "Client management",
+          "export": "DATEV export",
+          "support": "Phone support"
+        }
+      }
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Manage your profile and security settings",
+    "backToDashboard": "Back to dashboard",
+    "profile": {
+      "title": "Profile",
+      "subtitle": "Your personal information",
+      "email": "Email address",
+      "emailHint": "Email address cannot be changed",
+      "companyName": "Company name",
+      "companyNamePlaceholder": "Your company name (optional)",
+      "plan": "Plan",
+      "changePlan": "Change plan",
+      "saved": "Saved"
+    },
+    "password": {
+      "title": "Change password",
+      "subtitle": "Update your password",
+      "current": "Current password",
+      "new": "New password",
+      "confirm": "Confirm password",
+      "hint": "At least 8 characters, with uppercase, lowercase letters and a number",
+      "submit": "Change password",
+      "success": "Password changed",
+      "errors": {
+        "mismatch": "Passwords do not match",
+        "tooShort": "Password must be at least 8 characters long",
+        "wrongCurrent": "Current password is incorrect"
+      }
+    },
+    "dangerZone": {
+      "title": "Danger Zone",
+      "subtitle": "Irreversible actions",
+      "deleteAccount": {
+        "title": "Delete account",
+        "description": "If you delete your account, all your data will be permanently removed. This action cannot be undone.",
+        "button": "Delete account",
+        "confirmTitle": "Really delete account?",
+        "confirmDescription": "This action cannot be undone. All your data, including validation history and settings, will be permanently deleted.",
+        "confirmInput": "Type DELETE to confirm",
+        "confirmPlaceholder": "DELETE",
+        "cancelButton": "Cancel",
+        "deleteButton": "Delete permanently"
+      }
+    }
+  },
+  "apiKeys": {
+    "title": "API Access",
+    "subtitle": "Manage your API keys for integration",
+    "apiKeys": "API Keys",
+    "programmaticAccess": "Programmatic access",
+    "manageKeys": "Manage keys",
+    "create": "Create new key",
+    "empty": "No API keys",
+    "emptyHint": "Create your first API key to use the API.",
+    "usage": "API calls",
+    "of": "of",
+    "table": {
+      "name": "Name",
+      "key": "Key",
+      "created": "Created",
+      "lastUsed": "Last used",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "modal": {
+      "createTitle": "Create API key",
+      "name": "Name",
+      "namePlaceholder": "e.g. Production API",
+      "description": "Description",
+      "descriptionPlaceholder": "Optional description",
+      "expiresIn": "Valid for",
+      "expiresOptions": {
+        "never": "Never expires",
+        "30days": "30 days",
+        "90days": "90 days",
+        "1year": "1 year"
+      },
+      "create": "Create",
+      "successTitle": "Key created!",
+      "successHint": "Copy the key now. It will only be shown once!",
+      "copy": "Copy"
+    },
+    "delete": {
+      "title": "Delete key",
+      "confirm": "Are you sure you want to delete this API key?"
+    }
+  },
+  "clients": {
+    "title": "Client Management",
+    "subtitle": "Manage your clients",
+    "clients": "Clients",
+    "manageClients": "Manage clients",
+    "create": "Create new client",
+    "empty": "No clients",
+    "emptyHint": "Create your first client.",
+    "stats": {
+      "total": "Total",
+      "active": "Active",
+      "validations": "Validations"
+    },
+    "table": {
+      "name": "Name",
+      "clientNumber": "Client number",
+      "validations": "Validations",
+      "lastValidation": "Last validation",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "form": {
+      "name": "Name",
+      "clientNumber": "Client number",
+      "taxNumber": "Tax number",
+      "vatId": "VAT ID",
+      "contact": "Contact",
+      "contactName": "Contact person",
+      "contactEmail": "Email",
+      "contactPhone": "Phone",
+      "address": "Address",
+      "street": "Street",
+      "postalCode": "Postal code",
+      "city": "City",
+      "country": "Country",
+      "notes": "Notes"
+    }
+  },
+  "integrations": {
+    "title": "Integrations",
+    "subtitle": "Connect RechnungsChecker with your tools",
+    "available": "Available integrations",
+    "configured": "Configured",
+    "notConfigured": "Not configured",
+    "configure": "Configure",
+    "test": "Test",
+    "disconnect": "Disconnect",
+    "lexoffice": {
+      "name": "Lexoffice",
+      "description": "Import invoices directly from Lexoffice for validation."
+    },
+    "slack": {
+      "name": "Slack",
+      "description": "Receive notifications about validation results in Slack."
+    },
+    "teams": {
+      "name": "Microsoft Teams",
+      "description": "Receive notifications about validation results in Teams."
+    },
+    "notifications": {
+      "title": "Notifications",
+      "onValid": "On valid validation",
+      "onInvalid": "On invalid validation",
+      "onWarning": "On warnings"
+    }
+  },
+  "webhooks": {
+    "title": "Webhooks",
+    "subtitle": "Receive real-time notifications about validation results",
+    "create": "Create webhook",
+    "empty": "No webhooks configured",
+    "emptyHint": "Create a webhook to receive notifications.",
+    "table": {
+      "url": "URL",
+      "events": "Events",
+      "status": "Status",
+      "deliveries": "Deliveries",
+      "lastTriggered": "Last triggered"
+    },
+    "events": {
+      "validationCompleted": "Validation completed",
+      "validationValid": "Validation valid",
+      "validationInvalid": "Validation invalid",
+      "validationWarning": "Validation with warnings"
+    },
+    "form": {
+      "url": "Webhook URL",
+      "urlPlaceholder": "https://example.com/webhook",
+      "events": "Events",
+      "description": "Description"
+    },
+    "secret": {
+      "title": "Webhook secret",
+      "hint": "Use this secret to verify the webhook signature.",
+      "rotate": "Rotate secret"
+    }
+  },
+  "export": {
+    "title": "Export",
+    "subtitle": "Export your data as CSV",
+    "validations": {
+      "title": "Export validations",
+      "description": "Export your validation history as a CSV file."
+    },
+    "clients": {
+      "title": "Export clients",
+      "description": "Export your client list with validation statistics."
+    },
+    "filters": {
+      "dateFrom": "From",
+      "dateTo": "To",
+      "client": "Client",
+      "status": "Status",
+      "format": "Format"
+    },
+    "formats": {
+      "datev": "DATEV (semicolon-separated)",
+      "excel": "Excel (comma-separated)"
+    },
+    "download": "Download"
+  },
+  "conversion": {
+    "title": "PDF Conversion",
+    "subtitle": "Convert PDF invoices to XRechnung",
+    "upload": {
+      "title": "Upload PDF",
+      "description": "Upload a PDF invoice to convert it to XRechnung."
+    },
+    "review": {
+      "title": "Review data",
+      "description": "Review and edit the extracted data."
+    },
+    "download": {
+      "title": "Download XRechnung",
+      "description": "Download the generated XRechnung file."
+    },
+    "fields": {
+      "invoiceNumber": "Invoice number",
+      "invoiceDate": "Invoice date",
+      "dueDate": "Due date",
+      "seller": "Seller",
+      "buyer": "Buyer",
+      "lineItems": "Line items",
+      "total": "Total amount",
+      "tax": "Tax amount"
+    }
+  },
+  "footer": {
+    "description": "The easiest solution for validating and converting e-invoices according to German standards. XRechnung and ZUGFeRD compliant.",
+    "product": "Product",
+    "features": "Features",
+    "pricing": "Pricing",
+    "apiDocs": "API Documentation",
+    "legal": "Legal",
+    "imprint": "Imprint",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "contact": "Contact",
+    "copyright": "All rights reserved.",
+    "allRights": "All rights reserved."
+  },
+  "contact": {
+    "title": "Contact",
+    "subtitle": "Have questions? We're here to help!",
+    "form": {
+      "name": "Name",
+      "email": "Email",
+      "subject": "Subject",
+      "message": "Message",
+      "submit": "Send message",
+      "success": "Thank you! Your message has been sent."
+    }
+  },
+  "errors": {
+    "notFound": "Page not found",
+    "serverError": "A server error occurred",
+    "networkError": "Network error. Please check your connection.",
+    "unauthorized": "You are not authorized to perform this action",
+    "forbidden": "Access denied",
+    "validation": "Please check your input"
+  }
+}

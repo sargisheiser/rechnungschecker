@@ -12,7 +12,7 @@ from app.main import app
 @pytest.fixture
 def sample_xrechnung_valid() -> bytes:
     """Return a valid minimal XRechnung XML for testing."""
-    return b"""<?xml version="1.0" encoding="UTF-8"?>
+    return """<?xml version="1.0" encoding="UTF-8"?>
 <ubl:Invoice xmlns:ubl="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
              xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
              xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
@@ -29,7 +29,7 @@ def sample_xrechnung_valid() -> bytes:
                 <cbc:Name>Test Lieferant GmbH</cbc:Name>
             </cac:PartyName>
             <cac:PostalAddress>
-                <cbc:StreetName>Teststraße 1</cbc:StreetName>
+                <cbc:StreetName>Teststrasse 1</cbc:StreetName>
                 <cbc:CityName>Berlin</cbc:CityName>
                 <cbc:PostalZone>10115</cbc:PostalZone>
                 <cac:Country>
@@ -55,7 +55,7 @@ def sample_xrechnung_valid() -> bytes:
             </cac:PartyName>
             <cac:PostalAddress>
                 <cbc:StreetName>Kundenweg 2</cbc:StreetName>
-                <cbc:CityName>München</cbc:CityName>
+                <cbc:CityName>Muenchen</cbc:CityName>
                 <cbc:PostalZone>80331</cbc:PostalZone>
                 <cac:Country>
                     <cbc:IdentificationCode>DE</cbc:IdentificationCode>
@@ -107,7 +107,7 @@ def sample_xrechnung_valid() -> bytes:
             <cbc:PriceAmount currencyID="EUR">100.00</cbc:PriceAmount>
         </cac:Price>
     </cac:InvoiceLine>
-</ubl:Invoice>"""
+</ubl:Invoice>""".encode("utf-8")
 
 
 @pytest.fixture

@@ -1,14 +1,17 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom'
-import { FileCheck, Menu, X, User, LogOut } from 'lucide-react'
+import { FileCheck, Menu, X, User, LogOut, Settings } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuthStore, useLogout } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
+import { LanguageSwitcher } from './LanguageSwitcher'
 
 export function Layout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { user, isAuthenticated } = useAuthStore()
   const logout = useLogout()
   const navigate = useNavigate()
+  const { t } = useTranslation()
 
   const handleLogout = () => {
     logout.mutate()
@@ -37,25 +40,25 @@ export function Layout() {
                 to="/"
                 className="text-gray-600 hover:text-gray-900 font-medium"
               >
-                Startseite
+                {t('nav.home')}
               </Link>
               <Link
                 to="/preise"
                 className="text-gray-600 hover:text-gray-900 font-medium"
               >
-                Preise
+                {t('nav.pricing')}
               </Link>
 
               {isAuthenticated ? (
                 <div className="flex items-center gap-4">
                   <Link to="/dashboard" className="btn-secondary">
-                    Dashboard
+                    {t('nav.dashboard')}
                   </Link>
                   <Link
                     to="/konvertierung"
                     className="text-gray-600 hover:text-gray-900 font-medium"
                   >
-                    Konvertierung
+                    {t('nav.conversion')}
                   </Link>
                   <div className="relative group">
                     <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
@@ -63,12 +66,19 @@ export function Layout() {
                       <span className="text-sm">{user?.email}</span>
                     </button>
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                      <Link
+                        to="/einstellungen"
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        <Settings className="h-4 w-4" />
+                        {t('nav.settings')}
+                      </Link>
                       <button
                         onClick={handleLogout}
                         className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                       >
                         <LogOut className="h-4 w-4" />
-                        Abmelden
+                        {t('nav.logout')}
                       </button>
                     </div>
                   </div>
@@ -76,13 +86,14 @@ export function Layout() {
               ) : (
                 <div className="flex items-center gap-3">
                   <Link to="/login" className="btn-ghost">
-                    Anmelden
+                    {t('nav.login')}
                   </Link>
                   <Link to="/registrieren" className="btn-primary">
-                    Kostenlos starten
+                    {t('nav.getStarted')}
                   </Link>
                 </div>
               )}
+              <LanguageSwitcher />
             </div>
 
             {/* Mobile menu button */}
@@ -113,14 +124,14 @@ export function Layout() {
                 className="block px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Startseite
+                {t('nav.home')}
               </Link>
               <Link
                 to="/preise"
                 className="block px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Preise
+                {t('nav.pricing')}
               </Link>
               {isAuthenticated ? (
                 <>
@@ -129,14 +140,21 @@ export function Layout() {
                     className="block px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    Dashboard
+                    {t('nav.dashboard')}
                   </Link>
                   <Link
                     to="/konvertierung"
                     className="block px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    Konvertierung
+                    {t('nav.conversion')}
+                  </Link>
+                  <Link
+                    to="/einstellungen"
+                    className="block px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {t('nav.settings')}
                   </Link>
                   <button
                     onClick={() => {
@@ -145,7 +163,7 @@ export function Layout() {
                     }}
                     className="block w-full text-left px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
                   >
-                    Abmelden
+                    {t('nav.logout')}
                   </button>
                 </>
               ) : (
@@ -155,17 +173,20 @@ export function Layout() {
                     className="block px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    Anmelden
+                    {t('nav.login')}
                   </Link>
                   <Link
                     to="/registrieren"
                     className="block px-3 py-2 rounded-lg bg-primary-600 text-white text-center"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    Kostenlos starten
+                    {t('nav.getStarted')}
                   </Link>
                 </>
               )}
+              <div className="px-3 py-2">
+                <LanguageSwitcher />
+              </div>
             </div>
           </div>
         </nav>
@@ -188,59 +209,57 @@ export function Layout() {
                 </span>
               </div>
               <p className="text-sm max-w-md">
-                Die einfachste Loesung zur Validierung und Konvertierung von
-                E-Rechnungen nach deutschen Standards. XRechnung und ZUGFeRD
-                konform.
+                {t('footer.description')}
               </p>
             </div>
             <div>
-              <h3 className="text-white font-semibold mb-4">Produkt</h3>
+              <h3 className="text-white font-semibold mb-4">{t('footer.product')}</h3>
               <ul className="space-y-2 text-sm">
                 <li>
                   <Link to="/" className="hover:text-white">
-                    Funktionen
+                    {t('footer.features')}
                   </Link>
                 </li>
                 <li>
                   <Link to="/preise" className="hover:text-white">
-                    Preise
+                    {t('nav.pricing')}
                   </Link>
                 </li>
                 <li>
                   <a href="#" className="hover:text-white">
-                    API Dokumentation
+                    {t('footer.apiDocs')}
                   </a>
                 </li>
               </ul>
             </div>
             <div>
-              <h3 className="text-white font-semibold mb-4">Rechtliches</h3>
+              <h3 className="text-white font-semibold mb-4">{t('footer.legal')}</h3>
               <ul className="space-y-2 text-sm">
                 <li>
                   <Link to="/impressum" className="hover:text-white">
-                    Impressum
+                    {t('footer.imprint')}
                   </Link>
                 </li>
                 <li>
                   <Link to="/datenschutz" className="hover:text-white">
-                    Datenschutz
+                    {t('footer.privacy')}
                   </Link>
                 </li>
                 <li>
                   <Link to="/agb" className="hover:text-white">
-                    AGB
+                    {t('footer.terms')}
                   </Link>
                 </li>
                 <li>
                   <Link to="/kontakt" className="hover:text-white">
-                    Kontakt
+                    {t('footer.contact')}
                   </Link>
                 </li>
               </ul>
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-sm text-center">
-            <p>&copy; {new Date().getFullYear()} RechnungsChecker. Alle Rechte vorbehalten.</p>
+            <p>&copy; {new Date().getFullYear()} RechnungsChecker. {t('footer.allRights')}</p>
           </div>
         </div>
       </footer>

@@ -84,6 +84,7 @@ class UserResponse(BaseModel):
 
     id: UUID
     email: str
+    company_name: str | None = None
     is_active: bool
     is_verified: bool
     plan: str
@@ -98,7 +99,7 @@ class UserResponse(BaseModel):
 class UserUpdate(BaseModel):
     """Schema for user profile update."""
 
-    email: EmailStr | None = None
+    company_name: str | None = Field(None, max_length=255)
 
 
 class PasswordChange(BaseModel):

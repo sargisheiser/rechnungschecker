@@ -27,6 +27,20 @@ import type {
   ConversionStatusResponse,
   OutputFormat,
   ZUGFeRDProfileType,
+  Integration,
+  IntegrationList,
+  IntegrationCreateRequest,
+  IntegrationUpdateRequest,
+  IntegrationTestResponse,
+  IntegrationType,
+  Webhook,
+  WebhookCreated,
+  WebhookList,
+  WebhookWithDeliveries,
+  WebhookCreateRequest,
+  WebhookUpdateRequest,
+  WebhookTestResponse,
+  ExportParams,
 } from '@/types'
 
 const api = axios.create({
@@ -126,6 +140,22 @@ export const authApi = {
 
   logout: async (): Promise<void> => {
     await api.post('/auth/logout')
+  },
+
+  updateProfile: async (data: { company_name?: string }): Promise<User> => {
+    const response = await api.patch<User>('/auth/me', data)
+    return response.data
+  },
+
+  changePassword: async (currentPassword: string, newPassword: string): Promise<void> => {
+    await api.post('/auth/change-password', {
+      current_password: currentPassword,
+      new_password: newPassword,
+    })
+  },
+
+  deleteAccount: async (): Promise<void> => {
+    await api.delete('/auth/me')
   },
 
   forgotPassword: async (email: string): Promise<void> => {
@@ -402,6 +432,105 @@ export const conversionApi = {
 
   download: async (conversionId: string): Promise<Blob> => {
     const response = await api.get(`/convert/${conversionId}/download`, {
+      responseType: 'blob',
+    })
+    return response.data
+  },
+}
+
+// Integrations API
+export const integrationsApi = {
+  list: async (): Promise<IntegrationList> => {
+    const response = await api.get<IntegrationList>('/integrations/')
+    return response.data
+  },
+
+  create: async (type: IntegrationType, data: IntegrationCreateRequest): Promise<Integration> => {
+    const response = await api.post<Integration>(`/integrations/${type}`, data)
+    return response.data
+  },
+
+  update: async (type: IntegrationType, data: IntegrationUpdateRequest): Promise<Integration> => {
+    const response = await api.patch<Integration>(`/integrations/${type}`, data)
+    return response.data
+  },
+
+  delete: async (type: IntegrationType): Promise<void> => {
+    await api.delete(`/integrations/${type}`)
+  },
+
+  test: async (type: IntegrationType): Promise<IntegrationTestResponse> => {
+    const response = await api.post<IntegrationTestResponse>(`/integrations/${type}/test`)
+    return response.data
+  },
+}
+
+// Webhooks API
+export const webhooksApi = {
+  list: async (): Promise<WebhookList> => {
+    const response = await api.get<WebhookList>('/webhooks/')
+    return response.data
+  },
+
+  create: async (data: WebhookCreateRequest): Promise<WebhookCreated> => {
+    const response = await api.post<WebhookCreated>('/webhooks/', data)
+    return response.data
+  },
+
+  get: async (id: string): Promise<WebhookWithDeliveries> => {
+    const response = await api.get<WebhookWithDeliveries>(`/webhooks/${id}`)
+    return response.data
+  },
+
+  update: async (id: string, data: WebhookUpdateRequest): Promise<Webhook> => {
+    const response = await api.patch<Webhook>(`/webhooks/${id}`, data)
+    return response.data
+  },
+
+  delete: async (id: string): Promise<void> => {
+    await api.delete(`/webhooks/${id}`)
+  },
+
+  test: async (id: string): Promise<WebhookTestResponse> => {
+    const response = await api.post<WebhookTestResponse>(`/webhooks/${id}/test`)
+    return response.data
+  },
+
+  rotateSecret: async (id: string): Promise<WebhookCreated> => {
+    const response = await api.post<WebhookCreated>(`/webhooks/${id}/rotate-secret`)
+    return response.data
+  },
+}
+
+// Export API
+export const exportApi = {
+  downloadValidations: async (params: ExportParams = {}): Promise<Blob> => {
+    const queryParams = new URLSearchParams()
+    if (params.client_id) queryParams.set('client_id', params.client_id)
+    if (params.date_from) queryParams.set('date_from', params.date_from)
+    if (params.date_to) queryParams.set('date_to', params.date_to)
+    if (params.status) queryParams.set('status', params.status)
+    if (params.format) queryParams.set('format', params.format)
+
+    const response = await api.get(`/export/validations?${queryParams}`, {
+      responseType: 'blob',
+    })
+    return response.data
+  },
+
+  downloadClients: async (params: {
+    include_inactive?: boolean
+    date_from?: string
+    date_to?: string
+    format?: 'datev' | 'excel'
+  } = {}): Promise<Blob> => {
+    const queryParams = new URLSearchParams()
+    if (params.include_inactive) queryParams.set('include_inactive', 'true')
+    if (params.date_from) queryParams.set('date_from', params.date_from)
+    if (params.date_to) queryParams.set('date_to', params.date_to)
+    if (params.format) queryParams.set('format', params.format)
+
+    const response = await api.get(`/export/clients?${queryParams}`, {
       responseType: 'blob',
     })
     return response.data

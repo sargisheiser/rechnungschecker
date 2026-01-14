@@ -18,6 +18,10 @@ import { DemoPortal } from '@/pages/DemoPortal'
 import { APIKeysPage } from '@/pages/APIKeys'
 import { ClientsPage } from '@/pages/Clients'
 import { ConversionPage } from '@/pages/Conversion'
+import { IntegrationsPage } from '@/pages/Integrations'
+import { WebhooksPage } from '@/pages/Webhooks'
+import { ExportPage } from '@/pages/Export'
+import { SettingsPage } from '@/pages/Settings'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 
 function App() {
@@ -89,6 +93,38 @@ function App() {
           element={
             <ProtectedRoute>
               <ConversionPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="integrationen"
+          element={
+            <ProtectedRoute>
+              <IntegrationsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="webhooks"
+          element={
+            <ProtectedRoute>
+              <WebhooksPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="export"
+          element={
+            <ProtectedRoute>
+              <ExportPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="einstellungen"
+          element={
+            <ProtectedRoute>
+              <SettingsPage />
             </ProtectedRoute>
           }
         />

@@ -112,3 +112,36 @@ export function useResendVerification() {
     mutationFn: (email: string) => authApi.resendVerification(email),
   })
 }
+
+export function useUpdateProfile() {
+  const queryClient = useQueryClient()
+  const { setUser } = useAuthStore()
+
+  return useMutation({
+    mutationFn: (data: { company_name?: string }) => authApi.updateProfile(data),
+    onSuccess: (user) => {
+      setUser(user)
+      queryClient.setQueryData(['user'], user)
+    },
+  })
+}
+
+export function useChangePassword() {
+  return useMutation({
+    mutationFn: ({ currentPassword, newPassword }: { currentPassword: string; newPassword: string }) =>
+      authApi.changePassword(currentPassword, newPassword),
+  })
+}
+
+export function useDeleteAccount() {
+  const queryClient = useQueryClient()
+  const { logout } = useAuthStore()
+
+  return useMutation({
+    mutationFn: () => authApi.deleteAccount(),
+    onSuccess: () => {
+      logout()
+      queryClient.clear()
+    },
+  })
+}

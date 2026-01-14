@@ -27,6 +27,7 @@ from app.schemas.billing import (
     PlanTier,
 )
 from app.services.billing.stripe import StripeService, WebhookHandler
+from app.services.email import email_service
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -435,12 +436,14 @@ async def _process_webhook_result(result: dict, db: DbSession) -> None:
 
     elif action == "payment_failed":
         subscription_id = result.get("subscription_id")
+        invoice_id = result.get("invoice_id", "unknown")
 
-        # Find user and potentially notify
+        # Find user and send notification
         query = select(User).where(User.stripe_subscription_id == subscription_id)
         user_result = await db.execute(query)
         user = user_result.scalar_one_or_none()
 
         if user:
-            # TODO: Send payment failed email notification
-            logger.warning(f"Payment failed for user {user.email}")
+            # Send payment failed email notification
+            await email_service.send_payment_failed_email(user.email, invoice_id)
+            logger.warning(f"Payment failed for user {user.email}, notification sent")

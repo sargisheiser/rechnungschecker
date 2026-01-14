@@ -30,6 +30,7 @@ class User(Base):
     )
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(255))
+    company_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
 
@@ -120,6 +121,7 @@ class User(Base):
     api_keys = relationship("APIKey", back_populates="user", cascade="all, delete-orphan")
     clients = relationship("Client", back_populates="user", cascade="all, delete-orphan")
     webhooks = relationship("WebhookSubscription", back_populates="user", cascade="all, delete-orphan")
+    integrations = relationship("IntegrationSettings", back_populates="user", cascade="all, delete-orphan")
 
     def can_manage_clients(self) -> bool:
         """Check if user's plan allows client management."""
@@ -148,6 +150,10 @@ class User(Base):
             PlanType.STEUERBERATER: 20,
         }
         return limits[self.plan]
+
+    def can_use_integrations(self) -> bool:
+        """Check if user's plan allows third-party integrations."""
+        return self.plan in (PlanType.PRO, PlanType.STEUERBERATER)
 
 
 class EmailVerificationToken(Base):

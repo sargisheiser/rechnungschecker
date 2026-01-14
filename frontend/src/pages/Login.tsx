@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { FileCheck, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useLogin } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
 
@@ -10,6 +11,7 @@ export function Login() {
   const login = useLogin()
   const navigate = useNavigate()
   const location = useLocation()
+  const { t } = useTranslation()
 
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard'
   const justVerified = (location.state as { verified?: boolean })?.verified
@@ -35,10 +37,10 @@ export function Login() {
             </span>
           </Link>
           <h1 className="text-2xl font-bold text-gray-900">
-            Willkommen zurueck
+            {t('auth.login.title')}
           </h1>
           <p className="text-gray-600 mt-2">
-            Melden Sie sich bei Ihrem Konto an
+            {t('auth.login.subtitle')}
           </p>
         </div>
 
@@ -47,20 +49,20 @@ export function Login() {
             {justVerified && (
               <div className="flex items-center gap-2 p-3 bg-success-50 rounded-lg text-success-600 text-sm">
                 <CheckCircle className="h-4 w-4 flex-shrink-0" />
-                <span>E-Mail erfolgreich verifiziert! Sie koennen sich jetzt anmelden.</span>
+                <span>{t('auth.login.emailVerified')}</span>
               </div>
             )}
 
             {login.isError && (
               <div className="flex items-center gap-2 p-3 bg-error-50 rounded-lg text-error-600 text-sm">
                 <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                <span>E-Mail oder Passwort ist falsch</span>
+                <span>{t('auth.login.invalidCredentials')}</span>
               </div>
             )}
 
             <div>
               <label htmlFor="email" className="label">
-                E-Mail Adresse
+                {t('auth.email')}
               </label>
               <input
                 id="email"
@@ -68,7 +70,7 @@ export function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className={cn('input', login.isError && 'input-error')}
-                placeholder="ihre@email.de"
+                placeholder={t('auth.emailPlaceholder')}
                 required
                 autoComplete="email"
               />
@@ -77,13 +79,13 @@ export function Login() {
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label htmlFor="password" className="label mb-0">
-                  Passwort
+                  {t('auth.password')}
                 </label>
                 <Link
                   to="/passwort-vergessen"
                   className="text-sm text-primary-600 hover:text-primary-700"
                 >
-                  Passwort vergessen?
+                  {t('auth.forgotPassword')}
                 </Link>
               </div>
               <input
@@ -92,7 +94,7 @@ export function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className={cn('input', login.isError && 'input-error')}
-                placeholder="Ihr Passwort"
+                placeholder={t('auth.passwordPlaceholder')}
                 required
                 autoComplete="current-password"
               />
@@ -106,21 +108,21 @@ export function Login() {
               {login.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Anmelden...
+                  {t('auth.login.loggingIn')}
                 </>
               ) : (
-                'Anmelden'
+                t('nav.login')
               )}
             </button>
           </form>
 
           <div className="mt-6 text-center text-sm text-gray-600">
-            Noch kein Konto?{' '}
+            {t('auth.login.noAccount')}{' '}
             <Link
               to="/registrieren"
               className="text-primary-600 hover:text-primary-700 font-medium"
             >
-              Jetzt registrieren
+              {t('auth.login.registerNow')}
             </Link>
           </div>
         </div>

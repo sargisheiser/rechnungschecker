@@ -12,8 +12,23 @@ export function Kontakt() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // For now, just show success message
-    // TODO: Implement actual form submission
+
+    // Create mailto link with form data
+    const subjectMap: Record<string, string> = {
+      general: 'Allgemeine Anfrage',
+      technical: 'Technische Frage',
+      billing: 'Fragen zur Abrechnung',
+      partnership: 'Partnerschaft / Kooperation',
+      feedback: 'Feedback / Verbesserungsvorschlag',
+      other: 'Sonstiges',
+    }
+
+    const emailSubject = `[RechnungsChecker] ${subjectMap[formData.subject] || formData.subject}`
+    const emailBody = `Name: ${formData.name}\nE-Mail: ${formData.email}\n\nNachricht:\n${formData.message}`
+
+    // Open email client with pre-filled data
+    window.location.href = `mailto:support@rechnungschecker.de?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`
+
     setSubmitted(true)
   }
 

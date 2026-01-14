@@ -424,7 +424,7 @@ class WebhookHandler:
             f"Payment failed: invoice={invoice_id}, subscription={subscription_id}"
         )
 
-        # TODO: Send notification email to user
+        # Email notification is sent in billing.py _process_webhook_result
 
         return {
             "status": "success",

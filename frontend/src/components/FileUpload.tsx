@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { useDropzone } from 'react-dropzone'
 import { Upload, FileText, AlertCircle, Loader2, UserPlus } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { cn, isValidInvoiceFile } from '@/lib/utils'
 import { useValidate, useValidationStore } from '@/hooks/useValidation'
 
@@ -12,6 +13,7 @@ interface FileUploadProps {
 export function FileUpload({ className }: FileUploadProps) {
   const validate = useValidate()
   const { isValidating, guestLimitReached } = useValidationStore()
+  const { t } = useTranslation()
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
@@ -48,24 +50,23 @@ export function FileUpload({ className }: FileUploadProps) {
               <UserPlus className="h-8 w-8 text-primary-600" />
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              Ihre kostenlose Validierung wurde genutzt
+              {t('upload.limitReached.title')}
             </h3>
             <p className="text-gray-600 mb-6 max-w-md">
-              Registrieren Sie sich kostenlos, um 5 Validierungen pro Monat zu erhalten.
-              Oder waehlen Sie einen unserer Plaene fuer unbegrenzte Validierungen.
+              {t('upload.limitReached.description')}
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <Link
                 to="/registrieren"
                 className="btn-primary"
               >
-                Kostenlos registrieren
+                {t('upload.limitReached.register')}
               </Link>
               <Link
                 to="/login"
                 className="btn-secondary"
               >
-                Anmelden
+                {t('nav.login')}
               </Link>
             </div>
           </div>
@@ -94,17 +95,17 @@ export function FileUpload({ className }: FileUploadProps) {
             <>
               <Loader2 className="h-12 w-12 text-primary-600 animate-spin mb-4" />
               <p className="text-lg font-medium text-gray-900">
-                Rechnung wird validiert...
+                {t('upload.validating')}
               </p>
               <p className="text-sm text-gray-500 mt-1">
-                Bitte warten Sie einen Moment
+                {t('upload.pleaseWait')}
               </p>
             </>
           ) : isDragActive ? (
             <>
               <Upload className="h-12 w-12 text-primary-600 mb-4" />
               <p className="text-lg font-medium text-primary-700">
-                Datei hier ablegen
+                {t('upload.dropHere')}
               </p>
             </>
           ) : hasError ? (
@@ -112,12 +113,12 @@ export function FileUpload({ className }: FileUploadProps) {
               <AlertCircle className="h-12 w-12 text-error-500 mb-4" />
               <p className="text-lg font-medium text-error-600">
                 {validate.isError
-                  ? 'Fehler bei der Validierung'
-                  : 'Ungueltige Datei'}
+                  ? t('upload.validationError')
+                  : t('upload.invalidFile')}
               </p>
               <p className="text-sm text-gray-500 mt-1">
                 {validate.error?.message ||
-                  'Bitte laden Sie eine XML- oder PDF-Datei hoch'}
+                  t('upload.uploadXmlOrPdf')}
               </p>
             </>
           ) : (
@@ -127,13 +128,13 @@ export function FileUpload({ className }: FileUploadProps) {
                 <Upload className="h-6 w-6 text-primary-600" />
               </div>
               <p className="text-lg font-medium text-gray-900">
-                E-Rechnung hier hochladen
+                {t('upload.title')}
               </p>
               <p className="text-sm text-gray-500 mt-1">
-                XML (XRechnung) oder PDF (ZUGFeRD) ziehen oder klicken
+                {t('upload.dragOrClick')}
               </p>
               <p className="text-xs text-gray-400 mt-2">
-                Maximale Dateigrösse: 10 MB
+                {t('upload.maxFileSize')}
               </p>
             </>
           )}
