@@ -22,6 +22,8 @@ import { IntegrationsPage } from '@/pages/Integrations'
 import { WebhooksPage } from '@/pages/Webhooks'
 import { ExportPage } from '@/pages/Export'
 import { SettingsPage } from '@/pages/Settings'
+import AnalyticsPage from '@/pages/Analytics'
+import BatchUploadPage from '@/pages/BatchUpload'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 
 function App() {
@@ -125,6 +127,22 @@ function App() {
           element={
             <ProtectedRoute>
               <SettingsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="analytik"
+          element={
+            <ProtectedRoute>
+              <AnalyticsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="batch"
+          element={
+            <ProtectedRoute>
+              <BatchUploadPage />
             </ProtectedRoute>
           }
         />

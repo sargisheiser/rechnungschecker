@@ -518,6 +518,291 @@ RechnungsChecker - E-Rechnung Validierung & Konvertierung
 
         return await self.send_email(to, subject, html_content, text_content)
 
+    async def send_usage_alert_email(self, to: str, usage_percent: int, plan: str, limit: int) -> bool:
+        """
+        Send usage alert when approaching limit.
+
+        Args:
+            to: Recipient email address
+            usage_percent: Current usage percentage
+            plan: User's plan name
+            limit: Monthly limit
+
+        Returns:
+            True if email was sent successfully
+        """
+        # In dev mode, print notification prominently
+        if not self.is_configured:
+            print("\n" + "*" * 60)
+            print("*  USAGE ALERT NOTIFICATION (DEV MODE)")
+            print("*" * 60)
+            print(f"*  Email: {to}")
+            print(f"*  Usage: {usage_percent}%")
+            print(f"*  Plan: {plan}")
+            print("*" * 60 + "\n")
+
+        subject = f"Nutzungslimit fast erreicht ({usage_percent}%) - RechnungsChecker"
+
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body {{ font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ text-align: center; padding: 20px 0; border-bottom: 2px solid #f59e0b; }}
+                .logo {{ font-size: 24px; font-weight: bold; color: #2563eb; }}
+                .content {{ padding: 30px 0; }}
+                .alert {{
+                    background-color: #fffbeb;
+                    border: 1px solid #fcd34d;
+                    border-radius: 8px;
+                    padding: 16px;
+                    margin: 20px 0;
+                }}
+                .progress-bar {{
+                    background-color: #e5e7eb;
+                    border-radius: 9999px;
+                    height: 24px;
+                    overflow: hidden;
+                    margin: 16px 0;
+                }}
+                .progress-fill {{
+                    background-color: #f59e0b;
+                    height: 100%;
+                    width: {usage_percent}%;
+                    border-radius: 9999px;
+                }}
+                .button {{
+                    display: inline-block;
+                    padding: 14px 30px;
+                    background-color: #2563eb;
+                    color: white !important;
+                    text-decoration: none;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    margin: 20px 0;
+                }}
+                .footer {{
+                    padding-top: 20px;
+                    border-top: 1px solid #eee;
+                    font-size: 12px;
+                    color: #666;
+                    text-align: center;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <div class="logo">RechnungsChecker</div>
+                </div>
+                <div class="content">
+                    <div class="alert">
+                        <h2 style="margin-top: 0;">Ihr monatliches Limit ist fast erreicht</h2>
+                        <p>Sie haben <strong>{usage_percent}%</strong> Ihres monatlichen Validierungskontingents verbraucht.</p>
+                    </div>
+
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+
+                    <p><strong>Ihr aktueller Plan:</strong> {plan}</p>
+                    <p><strong>Monatliches Limit:</strong> {limit} Validierungen</p>
+
+                    <p>Upgraden Sie Ihren Plan, um unbegrenzte Validierungen zu erhalten:</p>
+
+                    <p style="text-align: center;">
+                        <a href="http://localhost:3000/preise" class="button">Jetzt upgraden</a>
+                    </p>
+                </div>
+                <div class="footer">
+                    <p>Diese E-Mail wurde automatisch generiert. Bitte antworten Sie nicht darauf.</p>
+                    <p>&copy; 2024 RechnungsChecker - E-Rechnung Validierung & Konvertierung</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        text_content = f"""
+Ihr monatliches Limit ist fast erreicht
+
+Sie haben {usage_percent}% Ihres monatlichen Validierungskontingents verbraucht.
+
+Ihr aktueller Plan: {plan}
+Monatliches Limit: {limit} Validierungen
+
+Upgraden Sie Ihren Plan, um unbegrenzte Validierungen zu erhalten:
+http://localhost:3000/preise
+
+---
+RechnungsChecker - E-Rechnung Validierung & Konvertierung
+        """
+
+        return await self.send_email(to, subject, html_content, text_content)
+
+    async def send_batch_complete_email(
+        self,
+        to: str,
+        job_name: str,
+        total_files: int,
+        successful_count: int,
+        failed_count: int,
+        valid_count: int,
+        invalid_count: int,
+    ) -> bool:
+        """
+        Send batch validation completion notification.
+
+        Args:
+            to: Recipient email address
+            job_name: Name of the batch job
+            total_files: Total number of files
+            successful_count: Successfully processed files
+            failed_count: Failed files
+            valid_count: Valid invoices
+            invalid_count: Invalid invoices
+
+        Returns:
+            True if email was sent successfully
+        """
+        # In dev mode, print notification prominently
+        if not self.is_configured:
+            print("\n" + "*" * 60)
+            print("*  BATCH COMPLETE NOTIFICATION (DEV MODE)")
+            print("*" * 60)
+            print(f"*  Email: {to}")
+            print(f"*  Job: {job_name}")
+            print(f"*  Total: {total_files}, Valid: {valid_count}, Invalid: {invalid_count}")
+            print("*" * 60 + "\n")
+
+        status_emoji = "🎉" if failed_count == 0 else "⚠️"
+        subject = f"{status_emoji} Stapelvalidierung abgeschlossen: {job_name}"
+
+        success_rate = round(successful_count / total_files * 100, 1) if total_files > 0 else 0
+        valid_rate = round(valid_count / successful_count * 100, 1) if successful_count > 0 else 0
+
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body {{ font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ text-align: center; padding: 20px 0; border-bottom: 2px solid #22c55e; }}
+                .logo {{ font-size: 24px; font-weight: bold; color: #2563eb; }}
+                .content {{ padding: 30px 0; }}
+                .stats {{
+                    display: grid;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 16px;
+                    margin: 20px 0;
+                }}
+                .stat-box {{
+                    background-color: #f9fafb;
+                    border-radius: 8px;
+                    padding: 16px;
+                    text-align: center;
+                }}
+                .stat-value {{
+                    font-size: 28px;
+                    font-weight: bold;
+                    color: #111827;
+                }}
+                .stat-label {{
+                    font-size: 14px;
+                    color: #6b7280;
+                }}
+                .success {{ color: #22c55e; }}
+                .error {{ color: #ef4444; }}
+                .button {{
+                    display: inline-block;
+                    padding: 14px 30px;
+                    background-color: #2563eb;
+                    color: white !important;
+                    text-decoration: none;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    margin: 20px 0;
+                }}
+                .footer {{
+                    padding-top: 20px;
+                    border-top: 1px solid #eee;
+                    font-size: 12px;
+                    color: #666;
+                    text-align: center;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <div class="logo">RechnungsChecker</div>
+                </div>
+                <div class="content">
+                    <h2>Stapelvalidierung abgeschlossen</h2>
+                    <p><strong>Auftrag:</strong> {job_name}</p>
+
+                    <div class="stats">
+                        <div class="stat-box">
+                            <div class="stat-value">{total_files}</div>
+                            <div class="stat-label">Dateien gesamt</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value success">{successful_count}</div>
+                            <div class="stat-label">Verarbeitet</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value success">{valid_count}</div>
+                            <div class="stat-label">Gueltig</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value error">{invalid_count}</div>
+                            <div class="stat-label">Ungueltig</div>
+                        </div>
+                    </div>
+
+                    <p><strong>Erfolgsrate:</strong> {success_rate}% verarbeitet, {valid_rate}% gueltig</p>
+
+                    <p style="text-align: center;">
+                        <a href="http://localhost:3000/batch" class="button">Ergebnisse anzeigen</a>
+                    </p>
+                </div>
+                <div class="footer">
+                    <p>Diese E-Mail wurde automatisch generiert. Bitte antworten Sie nicht darauf.</p>
+                    <p>&copy; 2024 RechnungsChecker - E-Rechnung Validierung & Konvertierung</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        text_content = f"""
+Stapelvalidierung abgeschlossen
+
+Auftrag: {job_name}
+
+Ergebnis:
+- Dateien gesamt: {total_files}
+- Verarbeitet: {successful_count}
+- Fehlgeschlagen: {failed_count}
+- Gueltig: {valid_count}
+- Ungueltig: {invalid_count}
+
+Erfolgsrate: {success_rate}% verarbeitet, {valid_rate}% gueltig
+
+Ergebnisse anzeigen:
+http://localhost:3000/batch
+
+---
+RechnungsChecker - E-Rechnung Validierung & Konvertierung
+        """
+
+        return await self.send_email(to, subject, html_content, text_content)
+
 
 # Singleton instance
 email_service = EmailService()

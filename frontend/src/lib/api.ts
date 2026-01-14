@@ -502,6 +502,69 @@ export const webhooksApi = {
   },
 }
 
+// Analytics API
+export interface AnalyticsDashboard {
+  period: {
+    start: string
+    end: string
+    days: number
+  }
+  summary: {
+    total_validations: number
+    valid_count: number
+    invalid_count: number
+    success_rate: number
+    avg_processing_time_ms: number
+    total_errors: number
+    total_warnings: number
+  }
+  by_type: {
+    xrechnung: number
+    zugferd: number
+  }
+  by_day: Array<{
+    date: string
+    valid: number
+    invalid: number
+  }>
+  top_errors: Array<{
+    file_name: string
+    error_count: number
+    warning_count: number
+    file_type: string
+  }>
+  usage: {
+    validations_used: number
+    validations_limit: number | null
+    conversions_used: number
+    conversions_limit: number | null
+    plan: string
+  }
+}
+
+export interface ClientComparison {
+  client_id: string
+  client_name: string
+  total_validations: number
+  valid_count: number
+  invalid_count: number
+  success_rate: number
+}
+
+export const analyticsApi = {
+  getDashboard: async (days = 30, clientId?: string): Promise<AnalyticsDashboard> => {
+    const params = new URLSearchParams({ days: days.toString() })
+    if (clientId) params.set('client_id', clientId)
+    const response = await api.get<AnalyticsDashboard>(`/analytics/dashboard?${params}`)
+    return response.data
+  },
+
+  getClientComparison: async (days = 30): Promise<ClientComparison[]> => {
+    const response = await api.get<ClientComparison[]>(`/analytics/clients?days=${days}`)
+    return response.data
+  },
+}
+
 // Export API
 export const exportApi = {
   downloadValidations: async (params: ExportParams = {}): Promise<Blob> => {
@@ -534,6 +597,113 @@ export const exportApi = {
       responseType: 'blob',
     })
     return response.data
+  },
+}
+
+// Batch API
+export type BatchJobStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled'
+export type BatchFileStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'skipped'
+
+export interface BatchFile {
+  id: string
+  filename: string
+  file_size_bytes: number
+  status: BatchFileStatus
+  validation_id: string | null
+  error_message: string | null
+  processed_at: string | null
+}
+
+export interface BatchJob {
+  id: string
+  name: string
+  status: BatchJobStatus
+  total_files: number
+  processed_files: number
+  successful_count: number
+  failed_count: number
+  progress_percent: number
+  error_message: string | null
+  created_at: string
+  started_at: string | null
+  completed_at: string | null
+  client_id: string | null
+}
+
+export interface BatchJobCreated {
+  id: string
+  name: string
+  total_files: number
+  status: BatchJobStatus
+  message: string
+}
+
+export interface BatchJobWithFiles extends BatchJob {
+  files: BatchFile[]
+}
+
+export interface BatchJobList {
+  items: BatchJob[]
+  total: number
+  page: number
+  page_size: number
+}
+
+export interface BatchFileResult {
+  filename: string
+  is_valid: boolean | null
+  error_count: number
+  warning_count: number
+  validation_id: string | null
+  error_message: string | null
+}
+
+export interface BatchResultsSummary {
+  job_id: string
+  job_name: string
+  status: BatchJobStatus
+  total_files: number
+  successful_count: number
+  failed_count: number
+  valid_count: number
+  invalid_count: number
+  results: BatchFileResult[]
+}
+
+export const batchApi = {
+  create: async (files: File[], name?: string, clientId?: string): Promise<BatchJobCreated> => {
+    const formData = new FormData()
+    files.forEach((file) => formData.append('files', file))
+    if (name) formData.append('name', name)
+    if (clientId) formData.append('client_id', clientId)
+
+    const response = await api.post<BatchJobCreated>('/batch/validate', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return response.data
+  },
+
+  list: async (page = 1, pageSize = 20): Promise<BatchJobList> => {
+    const response = await api.get<BatchJobList>(`/batch/jobs?page=${page}&page_size=${pageSize}`)
+    return response.data
+  },
+
+  get: async (jobId: string): Promise<BatchJobWithFiles> => {
+    const response = await api.get<BatchJobWithFiles>(`/batch/jobs/${jobId}`)
+    return response.data
+  },
+
+  getResults: async (jobId: string): Promise<BatchResultsSummary> => {
+    const response = await api.get<BatchResultsSummary>(`/batch/jobs/${jobId}/results`)
+    return response.data
+  },
+
+  cancel: async (jobId: string): Promise<void> => {
+    await api.post(`/batch/jobs/${jobId}/cancel`)
+  },
+
+  delete: async (jobId: string): Promise<void> => {
+    await api.delete(`/batch/jobs/${jobId}`)
   },
 }
 

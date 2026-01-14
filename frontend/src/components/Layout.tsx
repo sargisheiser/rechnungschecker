@@ -1,5 +1,5 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom'
-import { FileCheck, Menu, X, User, LogOut, Settings } from 'lucide-react'
+import { FileCheck, Menu, X, User, LogOut, Settings, BarChart3, FolderUp } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore, useLogout } from '@/hooks/useAuth'
@@ -59,6 +59,20 @@ export function Layout() {
                     className="text-gray-600 hover:text-gray-900 font-medium"
                   >
                     {t('nav.conversion')}
+                  </Link>
+                  <Link
+                    to="/analytik"
+                    className="text-gray-600 hover:text-gray-900 font-medium flex items-center gap-1"
+                  >
+                    <BarChart3 className="h-4 w-4" />
+                    {t('nav.analytics')}
+                  </Link>
+                  <Link
+                    to="/batch"
+                    className="text-gray-600 hover:text-gray-900 font-medium flex items-center gap-1"
+                  >
+                    <FolderUp className="h-4 w-4" />
+                    {t('nav.batch')}
                   </Link>
                   <div className="relative group">
                     <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
@@ -148,6 +162,20 @@ export function Layout() {
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {t('nav.conversion')}
+                  </Link>
+                  <Link
+                    to="/analytik"
+                    className="block px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {t('nav.analytics')}
+                  </Link>
+                  <Link
+                    to="/batch"
+                    className="block px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {t('nav.batch')}
                   </Link>
                   <Link
                     to="/einstellungen"

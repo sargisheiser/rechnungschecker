@@ -66,6 +66,7 @@ class Client(Base):
     # Relationships
     user = relationship("User", back_populates="clients")
     validations = relationship("ValidationLog", back_populates="client", cascade="all, delete-orphan")
+    batch_jobs = relationship("BatchJob", back_populates="client")
 
     def increment_validation_count(self) -> None:
         """Increment validation count and update last validation time."""
