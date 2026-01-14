@@ -5,6 +5,7 @@ from fastapi import APIRouter
 from app.api.v1 import (
     analytics,
     api_keys,
+    audit,
     auth,
     batch,
     billing,
@@ -32,3 +33,4 @@ api_router.include_router(export.router, prefix="/export", tags=["Export"])
 api_router.include_router(integrations.router, prefix="/integrations", tags=["Integrations"])
 api_router.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])
 api_router.include_router(batch.router, prefix="/batch", tags=["Batch"])
+api_router.include_router(audit.router, prefix="/audit", tags=["Audit"])

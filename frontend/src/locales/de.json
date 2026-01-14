@@ -666,6 +666,54 @@
     "noData": "Keine Daten verfuegbar",
     "noErrors": "Keine Fehler im ausgewaehlten Zeitraum"
   },
+  "audit": {
+    "title": "Aktivitaetsprotokoll",
+    "subtitle": "Uebersicht ueber alle Aktionen in Ihrem Konto",
+    "noLogs": "Keine Aktivitaeten vorhanden",
+    "export": "Exportieren",
+    "exportJson": "Als JSON exportieren",
+    "exportCsv": "Als CSV exportieren",
+    "filters": {
+      "all": "Alle Aktionen",
+      "dateFrom": "Von",
+      "dateTo": "Bis"
+    },
+    "columns": {
+      "action": "Aktion",
+      "resource": "Ressource",
+      "ipAddress": "IP-Adresse",
+      "timestamp": "Zeitpunkt"
+    },
+    "actions": {
+      "login": "Anmeldung",
+      "logout": "Abmeldung",
+      "login_failed": "Fehlgeschlagene Anmeldung",
+      "password_reset_request": "Passwort-Zuruecksetzung angefordert",
+      "password_reset_complete": "Passwort zurueckgesetzt",
+      "password_change": "Passwort geaendert",
+      "validate": "Validierung",
+      "validate_batch": "Stapelvalidierung",
+      "convert": "Konvertierung",
+      "api_key_create": "API-Schluessel erstellt",
+      "api_key_revoke": "API-Schluessel widerrufen",
+      "client_create": "Mandant erstellt",
+      "client_update": "Mandant aktualisiert",
+      "client_delete": "Mandant geloescht",
+      "webhook_create": "Webhook erstellt",
+      "webhook_update": "Webhook aktualisiert",
+      "webhook_delete": "Webhook geloescht",
+      "integration_create": "Integration erstellt",
+      "integration_update": "Integration aktualisiert",
+      "integration_delete": "Integration geloescht",
+      "export_data": "Daten exportiert",
+      "settings_update": "Einstellungen aktualisiert"
+    },
+    "summary": {
+      "title": "Aktivitaetszusammenfassung",
+      "totalActions": "Aktionen gesamt",
+      "period": "Zeitraum: {{days}} Tage"
+    }
+  },
   "errors": {
     "notFound": "Seite nicht gefunden",
     "serverError": "Ein Serverfehler ist aufgetreten",

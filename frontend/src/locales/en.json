@@ -666,6 +666,54 @@
     "noData": "No data available",
     "noErrors": "No errors in selected period"
   },
+  "audit": {
+    "title": "Activity Log",
+    "subtitle": "Overview of all actions in your account",
+    "noLogs": "No activities found",
+    "export": "Export",
+    "exportJson": "Export as JSON",
+    "exportCsv": "Export as CSV",
+    "filters": {
+      "all": "All actions",
+      "dateFrom": "From",
+      "dateTo": "To"
+    },
+    "columns": {
+      "action": "Action",
+      "resource": "Resource",
+      "ipAddress": "IP Address",
+      "timestamp": "Timestamp"
+    },
+    "actions": {
+      "login": "Login",
+      "logout": "Logout",
+      "login_failed": "Failed login",
+      "password_reset_request": "Password reset requested",
+      "password_reset_complete": "Password reset",
+      "password_change": "Password changed",
+      "validate": "Validation",
+      "validate_batch": "Batch validation",
+      "convert": "Conversion",
+      "api_key_create": "API key created",
+      "api_key_revoke": "API key revoked",
+      "client_create": "Client created",
+      "client_update": "Client updated",
+      "client_delete": "Client deleted",
+      "webhook_create": "Webhook created",
+      "webhook_update": "Webhook updated",
+      "webhook_delete": "Webhook deleted",
+      "integration_create": "Integration created",
+      "integration_update": "Integration updated",
+      "integration_delete": "Integration deleted",
+      "export_data": "Data exported",
+      "settings_update": "Settings updated"
+    },
+    "summary": {
+      "title": "Activity Summary",
+      "totalActions": "Total actions",
+      "period": "Period: {{days}} days"
+    }
+  },
   "errors": {
     "notFound": "Page not found",
     "serverError": "A server error occurred",

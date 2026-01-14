@@ -4,10 +4,11 @@ import logging
 from typing import Annotated, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, Request, UploadFile, status
 
 from app.api.deps import CurrentUser, DbSession
 from app.config import settings
+from app.models.audit import AuditAction
 from app.models.batch import BatchJobStatus, BatchFileStatus
 from app.schemas.batch import (
     BatchJobCreated,
@@ -15,6 +16,7 @@ from app.schemas.batch import (
     BatchJobWithFiles,
     BatchResultsSummary,
 )
+from app.services.audit import AuditService
 from app.services.batch import BatchService
 
 logger = logging.getLogger(__name__)
@@ -151,6 +153,7 @@ async def create_batch_validation(
     db: DbSession,
     current_user: CurrentUser,
     background_tasks: BackgroundTasks,
+    request: Request,
     files: Annotated[list[UploadFile], File(description="Invoice files to validate")],
     name: Annotated[str, Form()] = "Batch Validation",
     client_id: Annotated[Optional[UUID], Form()] = None,
@@ -159,6 +162,8 @@ async def create_batch_validation(
 
     Upload multiple files for validation. Files are processed in the background.
     """
+    audit_service = AuditService(db)
+
     if len(files) == 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -203,6 +208,16 @@ async def create_batch_validation(
     )
 
     await db.commit()
+
+    # Log audit event
+    await audit_service.log(
+        user_id=current_user.id,
+        action=AuditAction.VALIDATE_BATCH,
+        resource_type="batch_job",
+        resource_id=str(job.id),
+        request=request,
+        details={"name": job.name, "total_files": job.total_files},
+    )
 
     # Start background processing
     background_tasks.add_task(

@@ -3,10 +3,11 @@
 import logging
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 from sqlalchemy import func, select
 
 from app.api.deps import CurrentUser, DbSession
+from app.models.audit import AuditAction
 from app.models.client import Client
 from app.schemas.client import (
     ClientCreate,
@@ -16,6 +17,7 @@ from app.schemas.client import (
     ClientStats,
     ClientUpdate,
 )
+from app.services.audit import AuditService
 
 logger = logging.getLogger(__name__)
 
@@ -146,9 +148,11 @@ async def create_client(
     data: ClientCreate,
     current_user: CurrentUser,
     db: DbSession,
+    request: Request,
 ) -> ClientResponse:
     """Create a new client."""
     _check_client_access(current_user)
+    audit_service = AuditService(db)
 
     # Check if user has reached max clients
     count_result = await db.execute(
@@ -184,6 +188,16 @@ async def create_client(
     await db.commit()
     await db.refresh(client)
 
+    # Log audit event
+    await audit_service.log(
+        user_id=current_user.id,
+        action=AuditAction.CLIENT_CREATE,
+        resource_type="client",
+        resource_id=str(client.id),
+        request=request,
+        details={"name": client.name, "client_number": client.client_number},
+    )
+
     logger.info(f"Client created: user={current_user.email}, client={client.name}")
 
     return _client_to_response(client)
@@ -218,9 +232,11 @@ async def update_client(
     data: ClientUpdate,
     current_user: CurrentUser,
     db: DbSession,
+    request: Request,
 ) -> ClientResponse:
     """Update a client."""
     _check_client_access(current_user)
+    audit_service = AuditService(db)
 
     client = await _get_client_or_404(client_id, current_user.id, db)
 
@@ -231,6 +247,16 @@ async def update_client(
 
     await db.commit()
     await db.refresh(client)
+
+    # Log audit event
+    await audit_service.log(
+        user_id=current_user.id,
+        action=AuditAction.CLIENT_UPDATE,
+        resource_type="client",
+        resource_id=str(client.id),
+        request=request,
+        details={"name": client.name, "updated_fields": list(update_data.keys())},
+    )
 
     logger.info(f"Client updated: user={current_user.email}, client={client.name}")
 
@@ -247,14 +273,27 @@ async def delete_client(
     client_id: UUID,
     current_user: CurrentUser,
     db: DbSession,
+    request: Request,
 ) -> None:
     """Delete a client."""
     _check_client_access(current_user)
+    audit_service = AuditService(db)
 
     client = await _get_client_or_404(client_id, current_user.id, db)
+    client_name = client.name
 
     await db.delete(client)
     await db.commit()
+
+    # Log audit event
+    await audit_service.log(
+        user_id=current_user.id,
+        action=AuditAction.CLIENT_DELETE,
+        resource_type="client",
+        resource_id=str(client_id),
+        request=request,
+        details={"name": client_name},
+    )
 
     logger.info(f"Client deleted: user={current_user.email}, client_id={client_id}")
 

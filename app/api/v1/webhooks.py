@@ -3,10 +3,11 @@
 import logging
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 from sqlalchemy import select, func
 
 from app.api.deps import CurrentUser, DbSession
+from app.models.audit import AuditAction
 from app.models.webhook import WebhookSubscription, WebhookDelivery, DeliveryStatus, generate_webhook_secret
 from app.schemas.webhook import (
     WebhookCreate,
@@ -19,6 +20,7 @@ from app.schemas.webhook import (
     WebhookTestResponse,
     DeliveryStatus as DeliveryStatusSchema,
 )
+from app.services.audit import AuditService
 from app.services.webhook import WebhookService
 
 logger = logging.getLogger(__name__)
@@ -90,9 +92,11 @@ async def create_webhook(
     data: WebhookCreate,
     current_user: CurrentUser,
     db: DbSession,
+    request: Request,
 ) -> WebhookCreated:
     """Create a new webhook subscription."""
     _check_webhook_access(current_user)
+    audit_service = AuditService(db)
 
     # Check webhook limit
     result = await db.execute(
@@ -120,6 +124,16 @@ async def create_webhook(
     db.add(webhook)
     await db.commit()
     await db.refresh(webhook)
+
+    # Log audit event
+    await audit_service.log(
+        user_id=current_user.id,
+        action=AuditAction.WEBHOOK_CREATE,
+        resource_type="webhook",
+        resource_id=str(webhook.id),
+        request=request,
+        details={"url": webhook.url, "events": webhook.events},
+    )
 
     logger.info(f"Webhook created: user={current_user.email}, webhook_id={webhook.id}")
 
@@ -222,9 +236,11 @@ async def update_webhook(
     data: WebhookUpdate,
     current_user: CurrentUser,
     db: DbSession,
+    request: Request,
 ) -> WebhookResponse:
     """Update a webhook subscription."""
     _check_webhook_access(current_user)
+    audit_service = AuditService(db)
 
     # Get webhook
     result = await db.execute(
@@ -242,18 +258,35 @@ async def update_webhook(
             detail="Webhook nicht gefunden.",
         )
 
+    # Track updated fields
+    updated_fields = []
+
     # Update fields
     if data.url is not None:
         webhook.url = str(data.url)
+        updated_fields.append("url")
     if data.events is not None:
         webhook.events = [e.value for e in data.events]
+        updated_fields.append("events")
     if data.description is not None:
         webhook.description = data.description
+        updated_fields.append("description")
     if data.is_active is not None:
         webhook.is_active = data.is_active
+        updated_fields.append("is_active")
 
     await db.commit()
     await db.refresh(webhook)
+
+    # Log audit event
+    await audit_service.log(
+        user_id=current_user.id,
+        action=AuditAction.WEBHOOK_UPDATE,
+        resource_type="webhook",
+        resource_id=str(webhook.id),
+        request=request,
+        details={"url": webhook.url, "updated_fields": updated_fields},
+    )
 
     logger.info(f"Webhook updated: user={current_user.email}, webhook_id={webhook.id}")
 
@@ -283,9 +316,11 @@ async def delete_webhook(
     webhook_id: UUID,
     current_user: CurrentUser,
     db: DbSession,
+    request: Request,
 ) -> None:
     """Delete a webhook subscription."""
     _check_webhook_access(current_user)
+    audit_service = AuditService(db)
 
     # Get webhook
     result = await db.execute(
@@ -303,8 +338,20 @@ async def delete_webhook(
             detail="Webhook nicht gefunden.",
         )
 
+    webhook_url = webhook.url
+
     await db.delete(webhook)
     await db.commit()
+
+    # Log audit event
+    await audit_service.log(
+        user_id=current_user.id,
+        action=AuditAction.WEBHOOK_DELETE,
+        resource_type="webhook",
+        resource_id=str(webhook_id),
+        request=request,
+        details={"url": webhook_url},
+    )
 
     logger.info(f"Webhook deleted: user={current_user.email}, webhook_id={webhook_id}")
 

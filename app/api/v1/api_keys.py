@@ -4,11 +4,12 @@ import logging
 from datetime import datetime, timedelta
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 from sqlalchemy import func, select
 
 from app.api.deps import CurrentUser, DbSession
 from app.models.api_key import APIKey
+from app.models.audit import AuditAction
 from app.schemas.api_key import (
     APIKeyCreate,
     APIKeyCreated,
@@ -16,6 +17,7 @@ from app.schemas.api_key import (
     APIKeyResponse,
     APIKeyUpdate,
 )
+from app.services.audit import AuditService
 
 logger = logging.getLogger(__name__)
 
@@ -89,12 +91,15 @@ async def create_api_key(
     data: APIKeyCreate,
     current_user: CurrentUser,
     db: DbSession,
+    request: Request,
 ) -> APIKeyCreated:
     """Create a new API key.
 
     The actual key value is only returned once at creation time.
     Store it securely!
     """
+    audit_service = AuditService(db)
+
     # Check if user can use API
     if not current_user.can_use_api():
         raise HTTPException(
@@ -132,6 +137,16 @@ async def create_api_key(
     db.add(api_key)
     await db.commit()
     await db.refresh(api_key)
+
+    # Log audit event
+    await audit_service.log(
+        user_id=current_user.id,
+        action=AuditAction.API_KEY_CREATE,
+        resource_type="api_key",
+        resource_id=str(api_key.id),
+        request=request,
+        details={"name": api_key.name},
+    )
 
     logger.info(f"API key created: user={current_user.email}, key_id={api_key.id}")
 
@@ -250,8 +265,11 @@ async def delete_api_key(
     key_id: UUID,
     current_user: CurrentUser,
     db: DbSession,
+    request: Request,
 ) -> None:
     """Delete an API key."""
+    audit_service = AuditService(db)
+
     result = await db.execute(
         select(APIKey)
         .where(APIKey.id == key_id, APIKey.user_id == current_user.id)
@@ -264,7 +282,19 @@ async def delete_api_key(
             detail="API-Schluessel nicht gefunden.",
         )
 
+    key_name = api_key.name
+
     await db.delete(api_key)
     await db.commit()
+
+    # Log audit event
+    await audit_service.log(
+        user_id=current_user.id,
+        action=AuditAction.API_KEY_REVOKE,
+        resource_type="api_key",
+        resource_id=str(key_id),
+        request=request,
+        details={"name": key_name},
+    )
 
     logger.info(f"API key deleted: user={current_user.email}, key_id={key_id}")

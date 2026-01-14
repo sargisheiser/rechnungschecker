@@ -3,7 +3,7 @@
 import logging
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 from sqlalchemy import select
 
 from app.api.deps import CurrentUser, DbSession
@@ -18,7 +18,9 @@ from app.core.security import (
     verify_password_reset_token,
     verify_refresh_token,
 )
+from app.models.audit import AuditAction
 from app.models.user import User
+from app.services.audit import AuditService
 from app.services.email import email_service
 from app.schemas.auth import (
     EmailVerification,
@@ -101,19 +103,40 @@ async def register(
 async def login(
     data: UserLogin,
     db: DbSession,
+    request: Request,
 ) -> TokenResponse:
     """Authenticate user and return access/refresh tokens."""
+    audit_service = AuditService(db)
+
     # Find user by email
     result = await db.execute(select(User).where(User.email == data.email))
     user = result.scalar_one_or_none()
 
     if user is None or not verify_password(data.password, user.password_hash):
+        # Log failed login attempt if user exists
+        if user:
+            await audit_service.log(
+                user_id=user.id,
+                action=AuditAction.LOGIN_FAILED,
+                resource_type="user",
+                resource_id=str(user.id),
+                request=request,
+                details={"reason": "invalid_password"},
+            )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Ungültige E-Mail-Adresse oder Passwort",
         )
 
     if not user.is_active:
+        await audit_service.log(
+            user_id=user.id,
+            action=AuditAction.LOGIN_FAILED,
+            resource_type="user",
+            resource_id=str(user.id),
+            request=request,
+            details={"reason": "account_inactive"},
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Benutzerkonto deaktiviert",
@@ -122,6 +145,15 @@ async def login(
     # Update last login
     user.last_login_at = datetime.utcnow()
     await db.flush()
+
+    # Log successful login
+    await audit_service.log(
+        user_id=user.id,
+        action=AuditAction.LOGIN,
+        resource_type="user",
+        resource_id=str(user.id),
+        request=request,
+    )
 
     # Create tokens
     access_token = create_access_token(user.id)
@@ -268,16 +300,28 @@ async def resend_verification(
 async def forgot_password(
     data: PasswordReset,
     db: DbSession,
+    request: Request,
 ) -> dict[str, str]:
     """Request password reset email.
 
     Always returns success to prevent email enumeration.
     """
+    audit_service = AuditService(db)
+
     # Find user (but don't reveal if they exist)
     result = await db.execute(select(User).where(User.email == data.email))
     user = result.scalar_one_or_none()
 
     if user and user.is_active:
+        # Log password reset request
+        await audit_service.log(
+            user_id=user.id,
+            action=AuditAction.PASSWORD_RESET_REQUEST,
+            resource_type="user",
+            resource_id=str(user.id),
+            request=request,
+        )
+
         # Create reset token and send email
         reset_token = create_password_reset_token(data.email)
         await email_service.send_password_reset_email(data.email, reset_token)
@@ -298,8 +342,11 @@ async def forgot_password(
 async def reset_password(
     data: PasswordResetConfirm,
     db: DbSession,
+    request: Request,
 ) -> dict[str, str]:
     """Reset password using reset token."""
+    audit_service = AuditService(db)
+
     email = verify_password_reset_token(data.token)
 
     if email is None:
@@ -320,6 +367,15 @@ async def reset_password(
 
     user.password_hash = get_password_hash(data.new_password)
     await db.flush()
+
+    # Log password reset completion
+    await audit_service.log(
+        user_id=user.id,
+        action=AuditAction.PASSWORD_RESET_COMPLETE,
+        resource_type="user",
+        resource_id=str(user.id),
+        request=request,
+    )
 
     logger.info(f"Password reset completed for: {email}")
 
@@ -372,8 +428,11 @@ async def change_password(
     data: PasswordChange,
     current_user: CurrentUser,
     db: DbSession,
+    request: Request,
 ) -> dict[str, str]:
     """Change current user's password."""
+    audit_service = AuditService(db)
+
     # Verify current password
     if not verify_password(data.current_password, current_user.password_hash):
         raise HTTPException(
@@ -384,6 +443,15 @@ async def change_password(
     # Update password
     current_user.password_hash = get_password_hash(data.new_password)
     await db.flush()
+
+    # Log password change
+    await audit_service.log(
+        user_id=current_user.id,
+        action=AuditAction.PASSWORD_CHANGE,
+        resource_type="user",
+        resource_id=str(current_user.id),
+        request=request,
+    )
 
     logger.info(f"Password changed for: {current_user.email}")
 
