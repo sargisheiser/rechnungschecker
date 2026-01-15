@@ -407,20 +407,12 @@ class ZUGFeRDGenerator:
         Returns:
             XML content as bytes
         """
-        # Register namespaces
+        # Register namespaces (do NOT also add as attributes - causes duplicates)
         for prefix, uri in self.NS.items():
             ET.register_namespace(prefix, uri)
 
-        # Create root element
-        root = ET.Element(
-            f"{{{self.NS['rsm']}}}CrossIndustryInvoice",
-            {
-                "xmlns:rsm": self.NS["rsm"],
-                "xmlns:ram": self.NS["ram"],
-                "xmlns:udt": self.NS["udt"],
-                "xmlns:qdt": self.NS["qdt"],
-            },
-        )
+        # Create root element - namespaces are added automatically by register_namespace
+        root = ET.Element(f"{{{self.NS['rsm']}}}CrossIndustryInvoice")
 
         # Document context
         context = ET.SubElement(
@@ -610,10 +602,10 @@ class ZUGFeRDGenerator:
         # Open PDF
         doc = fitz.open(stream=pdf_content, filetype="pdf")
 
-        # Add XML as embedded file
+        # Add XML as embedded file (PyMuPDF uses buffer_ parameter)
         doc.embfile_add(
             name=original_filename,
-            buffer=xml_content,
+            buffer_=xml_content,
             filename=original_filename,
             ufilename=original_filename,
             desc="ZUGFeRD Invoice Data",

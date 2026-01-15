@@ -7,7 +7,7 @@ from uuid import UUID
 from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, Request, UploadFile, status
 
 from app.api.deps import CurrentUser, DbSession
-from app.config import settings
+from app.config import get_settings
 from app.models.audit import AuditAction
 from app.models.batch import BatchJobStatus, BatchFileStatus
 from app.schemas.batch import (
@@ -182,10 +182,10 @@ async def create_batch_validation(
         content = await file.read()
         size = len(content)
 
-        if size > settings.max_upload_size_bytes:
+        if size > get_settings().max_upload_size_bytes:
             raise HTTPException(
                 status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                detail=f"File {file.filename} exceeds maximum size of {settings.max_upload_size_mb}MB",
+                detail=f"File {file.filename} exceeds maximum size of {get_settings().max_upload_size_mb}MB",
             )
 
         # Check file extension

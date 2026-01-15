@@ -121,3 +121,6 @@ dmypy.json
 # ruff
 .ruff_cache/
 rechnungschecker_commercial_docs.docx
+
+# KoSIT validator (download separately)
+kosit/

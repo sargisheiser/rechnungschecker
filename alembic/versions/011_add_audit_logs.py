@@ -17,33 +17,31 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Create audit action enum
+    # Create audit action enum using raw SQL
+    op.execute("""
+        CREATE TYPE auditaction AS ENUM (
+            'login', 'logout', 'login_failed', 'password_reset_request',
+            'password_reset_complete', 'password_change', 'validate',
+            'validate_batch', 'convert', 'api_key_create', 'api_key_revoke',
+            'client_create', 'client_update', 'client_delete',
+            'webhook_create', 'webhook_update', 'webhook_delete',
+            'integration_create', 'integration_update', 'integration_delete',
+            'export_data', 'settings_update'
+        )
+    """)
+
+    # Reference existing enum (don't create)
     auditaction = postgresql.ENUM(
-        "login",
-        "logout",
-        "login_failed",
-        "password_reset_request",
-        "password_reset_complete",
-        "password_change",
-        "validate",
-        "validate_batch",
-        "convert",
-        "api_key_create",
-        "api_key_revoke",
-        "client_create",
-        "client_update",
-        "client_delete",
-        "webhook_create",
-        "webhook_update",
-        "webhook_delete",
-        "integration_create",
-        "integration_update",
-        "integration_delete",
-        "export_data",
-        "settings_update",
+        "login", "logout", "login_failed", "password_reset_request",
+        "password_reset_complete", "password_change", "validate",
+        "validate_batch", "convert", "api_key_create", "api_key_revoke",
+        "client_create", "client_update", "client_delete",
+        "webhook_create", "webhook_update", "webhook_delete",
+        "integration_create", "integration_update", "integration_delete",
+        "export_data", "settings_update",
         name="auditaction",
+        create_type=False,
     )
-    auditaction.create(op.get_bind())
 
     # Create audit_logs table
     op.create_table(

@@ -72,7 +72,7 @@ class AuditLog(Base):
         index=True
     )
     action: Mapped[AuditAction] = mapped_column(
-        Enum(AuditAction, values_callable=lambda x: [e.value for e in x])
+        Enum(AuditAction, name="auditaction", values_callable=lambda x: [e.value for e in x], create_type=False)
     )
     resource_type: Mapped[str] = mapped_column(String(50))
     resource_id: Mapped[str | None] = mapped_column(String(100), nullable=True)

@@ -21,6 +21,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 }))
 
+export function useAuth() {
+  const { user, isAuthenticated } = useAuthStore()
+  return { user, isAuthenticated }
+}
+
 export function useUser() {
   const { setUser } = useAuthStore()
   const hasToken = !!getAccessToken()

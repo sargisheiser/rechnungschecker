@@ -65,11 +65,42 @@ class KoSITValidator:
         self.scenarios_path = scenarios_path or settings.kosit_scenarios_path
         self.timeout = timeout or settings.kosit_timeout_seconds
 
+    def _get_java_executable(self) -> str | None:
+        """Get path to Java executable."""
+        import shutil
+        import subprocess
+
+        # Check Homebrew locations first (macOS) - these are more reliable
+        homebrew_java_paths = [
+            "/opt/homebrew/opt/openjdk/bin/java",  # Apple Silicon
+            "/usr/local/opt/openjdk/bin/java",  # Intel Mac
+            "/opt/homebrew/bin/java",
+            "/usr/local/bin/java",
+        ]
+        for path in homebrew_java_paths:
+            if Path(path).exists():
+                return path
+
+        # Fall back to system java in PATH, but verify it works
+        # (macOS has a /usr/bin/java stub that doesn't actually work)
+        java_path = shutil.which("java")
+        if java_path:
+            try:
+                result = subprocess.run(
+                    [java_path, "-version"],
+                    capture_output=True,
+                    timeout=5
+                )
+                if result.returncode == 0:
+                    return java_path
+            except (subprocess.TimeoutExpired, OSError):
+                pass
+
+        return None
+
     def _check_java_available(self) -> bool:
         """Check if Java runtime is available."""
-        import shutil
-
-        return shutil.which("java") is not None
+        return self._get_java_executable() is not None
 
     async def validate_file(self, file_path: Path) -> KoSITResult:
         """Validate an XML file using KoSIT validator.
@@ -107,10 +138,15 @@ class KoSITValidator:
 
     async def _run_kosit(self, file_path: Path) -> KoSITResult:
         """Run KoSIT validator subprocess."""
+        # Get Java executable
+        java_exe = self._get_java_executable()
+        if not java_exe:
+            raise KoSITError("Java runtime not found")
+
         # Build command - use absolute path for repository
         kosit_dir = self.jar_path.parent.resolve()
         cmd = [
-            "java",
+            java_exe,
             "-jar",
             str(self.jar_path.resolve()),
             "-s",
@@ -183,7 +219,30 @@ class KoSITValidator:
             if rec_elem is not None:
                 recommendation = "reject"
 
-        # Extract SVRL messages
+        # Extract messages from rep:message elements (KoSIT report format)
+        for msg_elem in root.findall(".//rep:message", NAMESPACES):
+            level = msg_elem.get("level", "error")
+            code = msg_elem.get("code", "UNKNOWN")
+            location = msg_elem.get("xpathLocation", "")
+            text = msg_elem.text or ""
+
+            # Map level to severity
+            severity_map = {
+                "error": "error",
+                "warning": "warning",
+                "info": "info",
+                "information": "info",
+            }
+            severity = severity_map.get(level.lower(), "error")
+
+            messages.append(KoSITMessage(
+                severity=severity,
+                code=code,
+                text=text.strip(),
+                location=location if location else None,
+            ))
+
+        # Also check for SVRL messages (fallback for different report formats)
         for failed in root.findall(".//s:failed-assert", NAMESPACES):
             messages.append(self._parse_svrl_message(failed, "error"))
 

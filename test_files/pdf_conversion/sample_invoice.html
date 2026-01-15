@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Musterrechnung - TEST-PDF-001</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            font-size: 12pt;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+        }
+        .seller {
+            text-align: left;
+        }
+        .invoice-info {
+            text-align: right;
+        }
+        .buyer {
+            margin: 30px 0;
+            padding: 15px;
+            background: #f5f5f5;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background: #333;
+            color: white;
+        }
+        .total-row {
+            font-weight: bold;
+            background: #f0f0f0;
+        }
+        .bank-info {
+            margin-top: 30px;
+            padding: 15px;
+            background: #e8f4e8;
+            border-left: 4px solid #4CAF50;
+        }
+        .footer {
+            margin-top: 40px;
+            font-size: 10pt;
+            color: #666;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="seller">
+            <h2>Muster GmbH</h2>
+            <p>
+                Musterstrasse 1<br>
+                10115 Berlin<br>
+                Deutschland
+            </p>
+            <p>
+                Tel: +49 30 12345678<br>
+                E-Mail: kontakt@muster-gmbh.de
+            </p>
+        </div>
+        <div class="invoice-info">
+            <h1>RECHNUNG</h1>
+            <p>
+                <strong>Rechnungsnummer:</strong> TEST-PDF-001<br>
+                <strong>Rechnungsdatum:</strong> 15.01.2024<br>
+                <strong>Faelligkeitsdatum:</strong> 15.02.2024<br>
+                <strong>Lieferdatum:</strong> 10.01.2024
+            </p>
+        </div>
+    </div>
+
+    <div class="buyer">
+        <strong>Rechnungsempfaenger:</strong><br>
+        Bundesamt fuer Muster<br>
+        Amtsstrasse 10<br>
+        53113 Bonn<br>
+        Deutschland<br><br>
+        <strong>Leitweg-ID:</strong> 991-12345-67
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Pos.</th>
+                <th>Beschreibung</th>
+                <th>Menge</th>
+                <th>Einzelpreis</th>
+                <th>MwSt.</th>
+                <th>Gesamt</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1</td>
+                <td>IT-Beratung Januar 2024</td>
+                <td>8 Std.</td>
+                <td>125,00 EUR</td>
+                <td>19%</td>
+                <td>1.000,00 EUR</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>Software-Lizenz (jaehrlich)</td>
+                <td>1 Stueck</td>
+                <td>500,00 EUR</td>
+                <td>19%</td>
+                <td>500,00 EUR</td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td>Support-Pauschale Q1/2024</td>
+                <td>1 Stueck</td>
+                <td>300,00 EUR</td>
+                <td>19%</td>
+                <td>300,00 EUR</td>
+            </tr>
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="5" style="text-align: right;"><strong>Nettobetrag:</strong></td>
+                <td>1.800,00 EUR</td>
+            </tr>
+            <tr>
+                <td colspan="5" style="text-align: right;"><strong>MwSt. (19%):</strong></td>
+                <td>342,00 EUR</td>
+            </tr>
+            <tr class="total-row">
+                <td colspan="5" style="text-align: right;"><strong>Gesamtbetrag:</strong></td>
+                <td><strong>2.142,00 EUR</strong></td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <div class="bank-info">
+        <strong>Bankverbindung:</strong><br>
+        Muster GmbH<br>
+        IBAN: DE89 3704 0044 0532 0130 00<br>
+        BIC: COBADEFFXXX<br>
+        Bank: Commerzbank<br><br>
+        <strong>Verwendungszweck:</strong> TEST-PDF-001
+    </div>
+
+    <div class="footer">
+        <p>
+            <strong>Muster GmbH</strong> | Geschaeftsfuehrer: Max Mustermann |
+            HRB 12345 Amtsgericht Berlin | USt-IdNr.: DE123456789
+        </p>
+        <p>
+            Zahlbar innerhalb von 30 Tagen ohne Abzug. Bei Zahlung nach Faelligkeit
+            werden Verzugszinsen in Hoehe von 9 Prozentpunkten ueber dem Basiszinssatz berechnet.
+        </p>
+    </div>
+</body>
+</html>

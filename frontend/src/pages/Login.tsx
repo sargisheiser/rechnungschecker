@@ -85,7 +85,7 @@ export function Login() {
                   to="/passwort-vergessen"
                   className="text-sm text-primary-600 hover:text-primary-700"
                 >
-                  {t('auth.forgotPassword')}
+                  {t('auth.login.forgotPassword')}
                 </Link>
               </div>
               <input

@@ -17,19 +17,23 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Create batch job status enum
+    # Create batch job status enum using raw SQL
+    op.execute("CREATE TYPE batchjobstatus AS ENUM ('pending', 'processing', 'completed', 'failed', 'cancelled')")
+
+    # Create batch file status enum using raw SQL
+    op.execute("CREATE TYPE batchfilestatus AS ENUM ('pending', 'processing', 'completed', 'failed', 'skipped')")
+
+    # Reference existing enums (don't create)
     batchjobstatus = postgresql.ENUM(
         "pending", "processing", "completed", "failed", "cancelled",
         name="batchjobstatus",
+        create_type=False,
     )
-    batchjobstatus.create(op.get_bind())
-
-    # Create batch file status enum
     batchfilestatus = postgresql.ENUM(
         "pending", "processing", "completed", "failed", "skipped",
         name="batchfilestatus",
+        create_type=False,
     )
-    batchfilestatus.create(op.get_bind())
 
     # Create batch_jobs table
     op.create_table(

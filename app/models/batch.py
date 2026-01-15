@@ -55,7 +55,7 @@ class BatchJob(Base):
     # Job metadata
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     status: Mapped[BatchJobStatus] = mapped_column(
-        Enum(BatchJobStatus, name="batchjobstatus", values_callable=lambda x: [e.value for e in x]),
+        Enum(BatchJobStatus, name="batchjobstatus", values_callable=lambda x: [e.value for e in x], create_type=False),
         default=BatchJobStatus.PENDING,
     )
 
@@ -145,7 +145,7 @@ class BatchFile(Base):
 
     # Status
     status: Mapped[BatchFileStatus] = mapped_column(
-        Enum(BatchFileStatus, name="batchfilestatus", values_callable=lambda x: [e.value for e in x]),
+        Enum(BatchFileStatus, name="batchfilestatus", values_callable=lambda x: [e.value for e in x], create_type=False),
         default=BatchFileStatus.PENDING,
     )
 

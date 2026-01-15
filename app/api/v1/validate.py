@@ -605,6 +605,9 @@ async def validate_guest(
         # Set report URL
         validation_result.report_url = f"/api/v1/reports/{validation_result.id}/pdf"
 
+        # Cache result for PDF generation
+        cache_validation_result(validation_result)
+
         logger.info(
             f"Guest validation completed: id={validation_result.id}, "
             f"valid={validation_result.is_valid}, ip={client_ip}"
@@ -612,7 +615,7 @@ async def validate_guest(
 
         # Return response with guest tracking info
         return GuestValidationResponse(
-            **validation_result.model_dump(),
+            **validation_result.model_dump(exclude={"validations_used", "validations_limit"}),
             guest_id=new_guest_id,
             validations_used=guest_usage.validations_used,
             validations_limit=GUEST_VALIDATION_LIMIT,

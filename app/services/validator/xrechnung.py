@@ -50,10 +50,33 @@ class XRechnungValidator:
         file_hash = hashlib.sha256(content).hexdigest()
 
         # Validate it's actually XML
-        if not self._is_valid_xml(content):
-            raise FileProcessingError(
-                "Die Datei ist kein gültiges XML.",
-                details={"filename": filename},
+        is_valid_xml, xml_error = self._is_valid_xml(content)
+        if not is_valid_xml:
+            # Return validation result with XML parsing error
+            return ValidationResponse(
+                id=validation_id,
+                is_valid=False,
+                file_type="xrechnung",
+                file_hash=file_hash,
+                error_count=1,
+                warning_count=0,
+                info_count=0,
+                errors=[
+                    ValidationErrorSchema(
+                        severity=ValidationSeverity.ERROR,
+                        code="XML-PARSE-ERROR",
+                        message_de=f"Die Datei ist kein gültiges XML: {xml_error}",
+                        message_en=f"The file is not valid XML: {xml_error}",
+                        location=None,
+                        suggestion="Überprüfen Sie die XML-Struktur auf fehlende oder falsch geschlossene Tags.",
+                    )
+                ],
+                warnings=[],
+                infos=[],
+                xrechnung_version=None,
+                validator_version=KoSITValidator.VALIDATOR_VERSION,
+                processing_time_ms=0,
+                validated_at=datetime.utcnow(),
             )
 
         # Write to temp file for KoSIT
@@ -85,15 +108,19 @@ class XRechnungValidator:
             except OSError as e:
                 logger.warning(f"Failed to clean up temp files: {e}")
 
-    def _is_valid_xml(self, content: bytes) -> bool:
-        """Check if content is valid XML."""
+    def _is_valid_xml(self, content: bytes) -> tuple[bool, str | None]:
+        """Check if content is valid XML.
+
+        Returns:
+            Tuple of (is_valid, error_message)
+        """
         import xml.etree.ElementTree as ET
 
         try:
             ET.fromstring(content)
-            return True
-        except ET.ParseError:
-            return False
+            return True, None
+        except ET.ParseError as e:
+            return False, str(e)
 
     def _build_response(
         self,

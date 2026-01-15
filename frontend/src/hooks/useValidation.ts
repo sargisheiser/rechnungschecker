@@ -27,12 +27,13 @@ export const useValidationStore = create<ValidationState>((set) => ({
 
 export function useValidate() {
   const { setResult, setValidating, setGuestLimitReached } = useValidationStore()
-  const { isAuthenticated } = useAuthStore()
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: async (file: File) => {
       setValidating(true)
+      // Get current auth state at mutation time
+      const { isAuthenticated } = useAuthStore.getState()
       if (isAuthenticated) {
         return validationApi.validate(file)
       } else {
@@ -47,7 +48,8 @@ export function useValidate() {
     },
     onSuccess: (result) => {
       setResult(result)
-      // Invalidate history if authenticated
+      // Invalidate history if authenticated (get fresh state)
+      const { isAuthenticated } = useAuthStore.getState()
       if (isAuthenticated) {
         queryClient.invalidateQueries({ queryKey: ['validation-history'] })
       }
