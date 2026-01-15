@@ -111,6 +111,9 @@ class XRechnungGenerator:
         # Invoice lines
         self._add_invoice_lines(root, data)
 
+        # Pretty-print XML
+        ET.indent(root, space="    ")
+
         # Generate XML string
         tree = ET.ElementTree(root)
         buffer = io.BytesIO()
@@ -582,6 +585,9 @@ class ZUGFeRDGenerator:
             summation, f"{{{self.NS['ram']}}}DuePayableAmount"
         )
         due_amount.text = f"{data.gross_amount or Decimal('0'):.2f}"
+
+        # Pretty-print XML
+        ET.indent(root, space="    ")
 
         # Generate XML string
         tree = ET.ElementTree(root)
