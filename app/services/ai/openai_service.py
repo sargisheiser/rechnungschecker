@@ -8,12 +8,47 @@ from datetime import date
 from decimal import Decimal
 from typing import Any, Optional
 
-import httpx
+from openai import AsyncOpenAI
 
 from app.config import get_settings
 from app.services.converter.extractor import Address, InvoiceData, LineItem
 
 logger = logging.getLogger(__name__)
+
+# Initialize Langfuse if configured
+_langfuse_client = None
+
+
+def _get_openai_client() -> AsyncOpenAI:
+    """Get OpenAI client with Langfuse tracing if configured."""
+    global _langfuse_client
+
+    settings = get_settings()
+
+    # If Langfuse is configured, use it for tracing
+    if settings.langfuse_secret_key and settings.langfuse_public_key:
+        try:
+            from langfuse import Langfuse
+            from langfuse.openai import AsyncOpenAI as LangfuseAsyncOpenAI
+
+            # Initialize Langfuse client once
+            if _langfuse_client is None:
+                _langfuse_client = Langfuse(
+                    secret_key=settings.langfuse_secret_key,
+                    public_key=settings.langfuse_public_key,
+                    host=settings.langfuse_host,
+                )
+                logger.info("Langfuse tracing enabled")
+
+            # Return Langfuse-wrapped OpenAI client
+            return LangfuseAsyncOpenAI(api_key=settings.openai_api_key)
+        except ImportError:
+            logger.warning("Langfuse not installed, using standard OpenAI client")
+        except Exception as e:
+            logger.warning(f"Failed to initialize Langfuse: {e}")
+
+    # Fall back to standard OpenAI client
+    return AsyncOpenAI(api_key=settings.openai_api_key)
 
 
 @dataclass
@@ -95,7 +130,14 @@ Respond ONLY with the JSON object, no additional text."""
         settings = get_settings()
         self.api_key = settings.openai_api_key
         self.model = settings.openai_model
-        self.base_url = "https://api.openai.com/v1"
+        self._client = None  # Lazy initialization
+
+    @property
+    def client(self) -> AsyncOpenAI:
+        """Get or create OpenAI client with Langfuse tracing."""
+        if self._client is None:
+            self._client = _get_openai_client()
+        return self._client
 
     @property
     def is_available(self) -> bool:
@@ -195,27 +237,21 @@ Respond ONLY with the JSON object, no additional text."""
         return self._parse_response(response)
 
     async def _call_api(self, messages: list[dict]) -> dict[str, Any]:
-        """Make API call to OpenAI."""
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
+        """Make API call to OpenAI using SDK with Langfuse tracing."""
+        response = await self.client.chat.completions.create(
+            model=self.model,
+            messages=messages,
+            max_tokens=4096,
+            temperature=0.1,  # Low temperature for consistent extraction
+        )
 
-        payload = {
-            "model": self.model,
-            "messages": messages,
-            "max_tokens": 4096,
-            "temperature": 0.1  # Low temperature for consistent extraction
+        # Convert to dict format for compatibility
+        return {
+            "choices": [{"message": {"content": response.choices[0].message.content}}],
+            "usage": {
+                "total_tokens": response.usage.total_tokens if response.usage else 0
+            }
         }
-
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            response = await client.post(
-                f"{self.base_url}/chat/completions",
-                headers=headers,
-                json=payload
-            )
-            response.raise_for_status()
-            return response.json()
 
     def _parse_response(self, response: dict[str, Any]) -> ExtractionResult:
         """Parse OpenAI response into InvoiceData."""

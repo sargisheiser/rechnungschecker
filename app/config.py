@@ -77,6 +77,11 @@ class Settings(BaseSettings):
     openai_api_key: str = Field(default="")
     openai_model: str = Field(default="gpt-4o-mini")
 
+    # Langfuse (LLM observability)
+    langfuse_secret_key: str = Field(default="")
+    langfuse_public_key: str = Field(default="")
+    langfuse_host: str = Field(default="https://cloud.langfuse.com")
+
     @property
     def max_upload_size_bytes(self) -> int:
         """Return max upload size in bytes."""
