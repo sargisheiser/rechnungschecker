@@ -63,67 +63,81 @@ class ExtractionResult:
 class OpenAIExtractor:
     """Extract invoice data using OpenAI GPT models."""
 
-    EXTRACTION_PROMPT = """Analyze this invoice image/text and extract all relevant data in JSON format.
+    EXTRACTION_PROMPT = """Du bist ein Experte für deutsche Rechnungen (XRechnung/ZUGFeRD). Extrahiere alle Rechnungsdaten aus diesem Dokument.
 
-Extract the following fields (use null if not found):
+WICHTIG - Deutsche Formate:
+- Datum: "15.01.2024" → "2024-01-15"
+- Beträge: "1.234,56 €" → 1234.56
+- USt-IdNr: "DE 123 456 789" → "DE123456789"
+- IBAN: mit oder ohne Leerzeichen akzeptieren
+
+Extrahiere diese Felder (null wenn nicht gefunden):
+
+```json
 {
-  "invoice_number": "string - The invoice/receipt number",
-  "invoice_date": "YYYY-MM-DD - The invoice date",
-  "due_date": "YYYY-MM-DD - Payment due date",
-  "delivery_date": "YYYY-MM-DD - Delivery/service date",
+  "invoice_number": "Rechnungsnummer (z.B. RE-2024-001)",
+  "invoice_date": "YYYY-MM-DD",
+  "due_date": "YYYY-MM-DD (Zahlungsziel/Fälligkeitsdatum)",
+  "delivery_date": "YYYY-MM-DD (Liefer-/Leistungsdatum)",
 
   "seller": {
-    "name": "Company name of the seller",
-    "street": "Street address",
-    "postal_code": "Postal/ZIP code",
-    "city": "City name",
-    "country_code": "ISO country code (e.g., DE)"
+    "name": "Firmenname des Verkäufers/Lieferanten",
+    "street": "Straße und Hausnummer",
+    "postal_code": "PLZ (5 Ziffern)",
+    "city": "Stadt",
+    "country_code": "DE"
   },
+  "seller_vat_id": "USt-IdNr (DE + 9 Ziffern)",
+  "seller_tax_id": "Steuernummer (Format: XX/XXX/XXXXX)",
+  "seller_email": "E-Mail-Adresse des Verkäufers",
+  "seller_phone": "Telefonnummer des Verkäufers",
 
   "buyer": {
-    "name": "Company/person name of the buyer",
-    "street": "Street address",
-    "postal_code": "Postal/ZIP code",
-    "city": "City name",
-    "country_code": "ISO country code (e.g., DE)"
+    "name": "Firmenname/Name des Käufers/Rechnungsempfängers",
+    "street": "Straße und Hausnummer",
+    "postal_code": "PLZ",
+    "city": "Stadt",
+    "country_code": "DE"
   },
+  "buyer_reference": "Bestellnummer/Kundennummer des Käufers",
+  "leitweg_id": "Leitweg-ID (Format: XXXXX-XXXXX-XX, für Behörden)",
 
-  "net_amount": "number - Net amount without VAT",
-  "vat_amount": "number - VAT/tax amount",
-  "gross_amount": "number - Total amount including VAT",
-  "currency": "string - Currency code (e.g., EUR)",
+  "net_amount": 0.00,
+  "vat_amount": 0.00,
+  "gross_amount": 0.00,
+  "vat_rate": 19,
+  "currency": "EUR",
 
-  "seller_vat_id": "VAT ID (e.g., DE123456789)",
-  "seller_tax_id": "Tax number (Steuernummer)",
-  "iban": "Bank IBAN",
-  "bic": "Bank BIC/SWIFT",
-  "bank_name": "Name of the bank",
+  "iban": "IBAN ohne Leerzeichen",
+  "bic": "BIC/SWIFT-Code",
+  "bank_name": "Name der Bank",
+  "payment_reference": "Verwendungszweck",
 
-  "leitweg_id": "Leitweg-ID for public sector invoices",
-  "buyer_reference": "Buyer reference number",
-  "order_reference": "Purchase order reference",
-  "payment_reference": "Payment reference",
+  "order_reference": "Bestellnummer/Auftragsnummer",
 
   "line_items": [
     {
-      "description": "Item description",
-      "quantity": "number",
-      "unit_price": "number - Price per unit",
-      "vat_rate": "number - VAT percentage (e.g., 19)",
-      "total": "number - Line total"
+      "description": "Artikelbezeichnung/Leistungsbeschreibung",
+      "quantity": 1.0,
+      "unit": "Stück/Stunden/kg/etc.",
+      "unit_price": 0.00,
+      "vat_rate": 19,
+      "total": 0.00
     }
   ]
 }
+```
 
-Important:
-- All amounts should be numbers (not strings)
-- Dates should be in YYYY-MM-DD format
-- For German invoices, parse German date formats (DD.MM.YYYY)
-- Parse German number formats (1.234,56 = 1234.56)
-- Extract ALL line items if present
-- Be thorough and extract as much data as possible
+REGELN:
+1. Alle Beträge als Zahlen (nicht als Strings)
+2. Datumsformat immer YYYY-MM-DD
+3. IBAN ohne Leerzeichen (DE89370400440532013000)
+4. Bei mehreren MwSt-Sätzen: den Hauptsatz in vat_rate
+5. Leitweg-ID ist wichtig für Behördenrechnungen - suche nach "Leitweg"
+6. Extrahiere ALLE Positionen/Artikel in line_items
+7. Wenn seller_email nicht gefunden: null (nicht erfinden!)
 
-Respond ONLY with the JSON object, no additional text."""
+Antworte NUR mit dem JSON-Objekt, kein zusätzlicher Text."""
 
     def __init__(self):
         """Initialize OpenAI extractor."""
@@ -300,9 +314,11 @@ Respond ONLY with the JSON object, no additional text."""
         data.leitweg_id = raw.get("leitweg_id")
         data.order_reference = raw.get("order_reference")
 
-        # Tax IDs
+        # Tax IDs and contact
         data.seller_vat_id = raw.get("seller_vat_id")
         data.seller_tax_id = raw.get("seller_tax_id")
+        data.seller_email = raw.get("seller_email")
+        data.seller_phone = raw.get("seller_phone")
 
         # Bank details
         data.iban = raw.get("iban")
@@ -318,6 +334,7 @@ Respond ONLY with the JSON object, no additional text."""
         data.net_amount = self._parse_decimal(raw.get("net_amount"))
         data.vat_amount = self._parse_decimal(raw.get("vat_amount"))
         data.gross_amount = self._parse_decimal(raw.get("gross_amount"))
+        data.vat_rate = self._parse_decimal(raw.get("vat_rate")) or Decimal("19")
 
         # Addresses
         if raw.get("seller"):
@@ -331,6 +348,7 @@ Respond ONLY with the JSON object, no additional text."""
                 data.line_items.append(LineItem(
                     description=item.get("description", ""),
                     quantity=self._parse_decimal(item.get("quantity")) or Decimal("1"),
+                    unit=self._parse_unit(item.get("unit")),
                     unit_price=self._parse_decimal(item.get("unit_price")) or Decimal("0"),
                     vat_rate=self._parse_decimal(item.get("vat_rate")) or Decimal("19"),
                     total=self._parse_decimal(item.get("total")) or Decimal("0"),
@@ -391,6 +409,51 @@ Respond ONLY with the JSON object, no additional text."""
         except Exception:
             return None
         return None
+
+    def _parse_unit(self, value: Optional[str]) -> str:
+        """Parse unit string to UN/ECE unit code."""
+        if not value:
+            return "C62"  # Default: piece/unit
+
+        # Map common German units to UN/ECE codes
+        unit_map = {
+            "stück": "C62",
+            "stk": "C62",
+            "st": "C62",
+            "piece": "C62",
+            "pcs": "C62",
+            "stunde": "HUR",
+            "stunden": "HUR",
+            "std": "HUR",
+            "h": "HUR",
+            "hour": "HUR",
+            "hours": "HUR",
+            "tag": "DAY",
+            "tage": "DAY",
+            "day": "DAY",
+            "days": "DAY",
+            "monat": "MON",
+            "monate": "MON",
+            "month": "MON",
+            "kg": "KGM",
+            "kilogramm": "KGM",
+            "g": "GRM",
+            "gramm": "GRM",
+            "l": "LTR",
+            "liter": "LTR",
+            "m": "MTR",
+            "meter": "MTR",
+            "m²": "MTK",
+            "qm": "MTK",
+            "m³": "MTQ",
+            "km": "KMT",
+            "pauschal": "LS",
+            "pauschale": "LS",
+            "lump sum": "LS",
+        }
+
+        value_lower = value.lower().strip()
+        return unit_map.get(value_lower, "C62")
 
     def _parse_address(self, raw: dict[str, Any]) -> Address:
         """Parse address dictionary to Address object."""

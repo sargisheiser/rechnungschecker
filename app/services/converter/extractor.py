@@ -29,6 +29,7 @@ class LineItem:
 
     description: str
     quantity: Decimal = Decimal("1")
+    unit: str = "C62"  # Default unit code (piece)
     unit_price: Decimal = Decimal("0")
     vat_rate: Decimal = Decimal("19")  # Default German VAT
     total: Decimal = Decimal("0")
@@ -55,10 +56,13 @@ class InvoiceData:
     payment_reference: Optional[str] = None
     seller_tax_id: Optional[str] = None
     seller_vat_id: Optional[str] = None
+    seller_email: Optional[str] = None
+    seller_phone: Optional[str] = None
     buyer_reference: Optional[str] = None
     leitweg_id: Optional[str] = None
     order_reference: Optional[str] = None
     delivery_date: Optional[date] = None
+    vat_rate: Decimal = Decimal("19")  # Main VAT rate
 
     # Bank details
     iban: Optional[str] = None

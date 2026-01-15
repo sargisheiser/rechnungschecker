@@ -195,8 +195,11 @@ class XRechnungGenerator:
         # Contact (required for XRechnung BR-DE-2)
         contact = ET.SubElement(party, f"{{{self.NS['cac']}}}Contact")
         self._add_element(contact, "cbc:Name", name or "Kontakt")
-        self._add_element(contact, "cbc:Telephone", "+49 0 0000000")
-        self._add_element(contact, "cbc:ElectronicMail", f"{data.seller_vat_id or 'info'}@invoice.local")
+        self._add_element(contact, "cbc:Telephone", data.seller_phone or "+49 0 0000000")
+        self._add_element(
+            contact, "cbc:ElectronicMail",
+            data.seller_email or f"{data.seller_vat_id or 'info'}@invoice.local"
+        )
 
     def _add_customer_party(self, root: ET.Element, data: InvoiceData) -> None:
         """Add customer party information."""
@@ -355,7 +358,7 @@ class XRechnungGenerator:
         self._add_element(line, "cbc:ID", str(line_num))
 
         qty = ET.SubElement(line, f"{{{self.NS['cbc']}}}InvoicedQuantity")
-        qty.set("unitCode", "C62")  # Unit (one)
+        qty.set("unitCode", item.unit or "C62")
         qty.text = f"{item.quantity:.2f}"
 
         amount = ET.SubElement(
