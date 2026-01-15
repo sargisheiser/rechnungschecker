@@ -32,25 +32,18 @@ class XRechnungGenerator:
         Returns:
             XML content as bytes
         """
-        # Register namespaces
+        # Register namespaces (this handles xmlns declarations automatically)
         for prefix, uri in self.NS.items():
             ET.register_namespace(prefix, uri)
 
-        # Create root element
-        root = ET.Element(
-            f"{{{self.NS['ubl']}}}Invoice",
-            {
-                "xmlns": self.NS["ubl"],
-                "xmlns:cac": self.NS["cac"],
-                "xmlns:cbc": self.NS["cbc"],
-            },
-        )
+        # Create root element (don't add xmlns attributes manually - register_namespace handles it)
+        root = ET.Element(f"{{{self.NS['ubl']}}}Invoice")
 
-        # Customization ID for XRechnung
+        # Customization ID for XRechnung 3.0
         self._add_element(
             root,
             "cbc:CustomizationID",
-            "urn:cen.eu:en16931:2017#compliant#urn:xoev-de:kosit:standard:xrechnung_3.0",
+            "urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0",
         )
 
         # Profile ID
@@ -150,15 +143,15 @@ class XRechnungGenerator:
         )
         party = ET.SubElement(supplier, f"{{{self.NS['cac']}}}Party")
 
-        # Endpoint ID (VAT ID)
-        if data.seller_vat_id:
-            endpoint = ET.SubElement(party, f"{{{self.NS['cbc']}}}EndpointID")
-            endpoint.set("schemeID", "DE:VAT")
-            endpoint.text = data.seller_vat_id
+        # Endpoint ID - use email scheme with VAT ID as placeholder
+        # (PEPPOL requires valid schemeID from CEF code list)
+        endpoint = ET.SubElement(party, f"{{{self.NS['cbc']}}}EndpointID")
+        endpoint.set("schemeID", "EM")  # Email scheme
+        endpoint.text = f"{data.seller_vat_id or 'seller'}@invoice.local"
 
-        # Party name
+        # Party name (required by BR-06)
         party_name = ET.SubElement(party, f"{{{self.NS['cac']}}}PartyName")
-        name = data.seller.name if data.seller else "Lieferant"
+        name = (data.seller.name if data.seller and data.seller.name else None) or "Lieferant"
         self._add_element(party_name, "cbc:Name", name)
 
         # Postal address
@@ -196,6 +189,12 @@ class XRechnungGenerator:
         legal = ET.SubElement(party, f"{{{self.NS['cac']}}}PartyLegalEntity")
         self._add_element(legal, "cbc:RegistrationName", name)
 
+        # Contact (required for XRechnung BR-DE-2)
+        contact = ET.SubElement(party, f"{{{self.NS['cac']}}}Contact")
+        self._add_element(contact, "cbc:Name", name or "Kontakt")
+        self._add_element(contact, "cbc:Telephone", "+49 0 0000000")
+        self._add_element(contact, "cbc:ElectronicMail", f"{data.seller_vat_id or 'info'}@invoice.local")
+
     def _add_customer_party(self, root: ET.Element, data: InvoiceData) -> None:
         """Add customer party information."""
         customer = ET.SubElement(
@@ -203,9 +202,14 @@ class XRechnungGenerator:
         )
         party = ET.SubElement(customer, f"{{{self.NS['cac']}}}Party")
 
-        # Party name
+        # Endpoint ID - required for PEPPOL
+        endpoint = ET.SubElement(party, f"{{{self.NS['cbc']}}}EndpointID")
+        endpoint.set("schemeID", "EM")  # Email scheme
+        endpoint.text = f"{data.buyer_reference or 'buyer'}@invoice.local"
+
+        # Party name (required by BR-07)
         party_name = ET.SubElement(party, f"{{{self.NS['cac']}}}PartyName")
-        name = data.buyer.name if data.buyer else "Kaeufer"
+        name = (data.buyer.name if data.buyer and data.buyer.name else None) or "Kaeufer"
         self._add_element(party_name, "cbc:Name", name)
 
         # Postal address
