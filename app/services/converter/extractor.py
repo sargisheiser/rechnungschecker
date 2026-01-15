@@ -1,5 +1,6 @@
-"""Invoice data extraction from text using pattern matching."""
+"""Invoice data extraction from text using pattern matching and AI."""
 
+import logging
 import re
 from dataclasses import dataclass, field
 from datetime import date, datetime
@@ -7,6 +8,8 @@ from decimal import Decimal
 from typing import Optional
 
 from app.services.converter.ocr import OCRService
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -71,11 +74,57 @@ class InvoiceData:
 
 
 class InvoiceExtractor:
-    """Extract invoice data from text using pattern matching."""
+    """Extract invoice data from text using pattern matching and AI."""
 
-    def __init__(self, ocr_service: Optional[OCRService] = None):
-        """Initialize extractor with optional OCR service."""
+    def __init__(self, ocr_service: Optional[OCRService] = None, use_ai: bool = True):
+        """Initialize extractor with optional OCR service and AI enhancement."""
         self.ocr_service = ocr_service or OCRService()
+        self.use_ai = use_ai
+        self._ai_extractor = None
+
+    @property
+    def ai_extractor(self):
+        """Lazy-load AI extractor."""
+        if self._ai_extractor is None:
+            try:
+                from app.services.ai.openai_service import OpenAIExtractor
+                self._ai_extractor = OpenAIExtractor()
+            except ImportError:
+                self._ai_extractor = None
+        return self._ai_extractor
+
+    @property
+    def ai_available(self) -> bool:
+        """Check if AI extraction is available."""
+        return self.use_ai and self.ai_extractor and self.ai_extractor.is_available
+
+    async def extract_from_pdf_async(self, pdf_content: bytes) -> InvoiceData:
+        """
+        Extract invoice data from a PDF file using AI if available.
+
+        Args:
+            pdf_content: PDF file content as bytes
+
+        Returns:
+            Extracted invoice data
+        """
+        # Try AI extraction first if available
+        if self.ai_available:
+            try:
+                # Convert PDF pages to images for vision model
+                page_images = self.ocr_service.convert_pdf_to_images(pdf_content)
+                if page_images:
+                    logger.info(f"Using AI extraction for {len(page_images)} page(s)")
+                    result = await self.ai_extractor.extract_from_pdf_pages(page_images)
+                    if result.data.confidence > 0.5:
+                        logger.info(f"AI extraction successful with confidence {result.data.confidence:.2f}")
+                        return result.data
+                    logger.info(f"AI extraction low confidence ({result.data.confidence:.2f}), falling back to pattern matching")
+            except Exception as e:
+                logger.warning(f"AI extraction failed, falling back to pattern matching: {e}")
+
+        # Fall back to pattern matching
+        return self.extract_from_pdf(pdf_content)
 
     def extract_from_pdf(self, pdf_content: bytes) -> InvoiceData:
         """

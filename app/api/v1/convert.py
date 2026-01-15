@@ -139,6 +139,7 @@ async def get_conversion_status() -> ConversionStatusResponse:
     """
     return ConversionStatusResponse(
         ocr_available=conversion_service.ocr_available,
+        ai_available=conversion_service.ai_available,
         supported_formats=list(OutputFormat),
         supported_profiles=list(ZUGFeRDProfile),
     )
@@ -172,9 +173,9 @@ async def preview_extraction(
     # Check if scanned
     is_scanned = conversion_service.ocr_service.is_scanned_pdf(content)
 
-    # Extract data
+    # Extract data (using AI if available)
     try:
-        data = conversion_service.preview_extraction(content)
+        data = await conversion_service.preview_extraction_async(content)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -185,6 +186,7 @@ async def preview_extraction(
         extracted_data=_invoice_data_to_schema(data),
         ocr_used=is_scanned,
         ocr_available=conversion_service.ocr_available,
+        ai_used=conversion_service.ai_available,
     )
 
 
@@ -241,8 +243,8 @@ async def convert_pdf(
         leitweg_id=leitweg_id,
     )
 
-    # Perform conversion
-    result = conversion_service.convert(
+    # Perform conversion (using AI-enhanced extraction if available)
+    result = await conversion_service.convert_async(
         pdf_content=content,
         output_format=ServiceOutputFormat(output_format.value),
         zugferd_profile=ServiceZUGFeRDProfile(zugferd_profile.value),

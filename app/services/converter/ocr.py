@@ -158,3 +158,37 @@ class OCRService:
 
         # If most checked pages have no text, it's likely scanned
         return pages_without_text > total_pages // 2
+
+    def convert_pdf_to_images(
+        self,
+        pdf_content: bytes,
+        dpi: int = 150,
+        max_pages: int = 5,
+    ) -> list[bytes]:
+        """
+        Convert PDF pages to PNG images.
+
+        Args:
+            pdf_content: PDF file content as bytes
+            dpi: Resolution for rendering (lower = smaller files, faster)
+            max_pages: Maximum number of pages to convert
+
+        Returns:
+            List of PNG image bytes for each page
+        """
+        doc = fitz.open(stream=pdf_content, filetype="pdf")
+        images = []
+
+        zoom = dpi / 72  # 72 is the default PDF DPI
+        mat = fitz.Matrix(zoom, zoom)
+
+        for page_num in range(min(len(doc), max_pages)):
+            page = doc[page_num]
+            pix = page.get_pixmap(matrix=mat)
+
+            # Convert to PNG bytes
+            png_bytes = pix.tobytes("png")
+            images.append(png_bytes)
+
+        doc.close()
+        return images

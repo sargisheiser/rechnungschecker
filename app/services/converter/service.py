@@ -160,7 +160,118 @@ class ConversionService:
         """
         return self.extractor.extract_from_pdf(pdf_content)
 
+    async def preview_extraction_async(self, pdf_content: bytes) -> InvoiceData:
+        """
+        Preview extracted data using AI-enhanced extraction if available.
+
+        Args:
+            pdf_content: PDF file content as bytes
+
+        Returns:
+            Extracted invoice data
+        """
+        return await self.extractor.extract_from_pdf_async(pdf_content)
+
+    async def convert_async(
+        self,
+        pdf_content: bytes,
+        output_format: OutputFormat = OutputFormat.XRECHNUNG,
+        zugferd_profile: ZUGFeRDProfile = ZUGFeRDProfile.EN16931,
+        embed_in_pdf: bool = True,
+    ) -> ConversionResult:
+        """
+        Convert a PDF invoice to e-invoice format using AI-enhanced extraction.
+
+        Args:
+            pdf_content: PDF file content as bytes
+            output_format: Desired output format (XRechnung or ZUGFeRD)
+            zugferd_profile: ZUGFeRD profile level (if ZUGFeRD output)
+            embed_in_pdf: Whether to embed XML in PDF (ZUGFeRD only)
+
+        Returns:
+            ConversionResult with the converted invoice
+        """
+        warnings: list[str] = []
+
+        # Check if PDF is scanned
+        if self.ocr_service.is_scanned_pdf(pdf_content):
+            if not self.ocr_service.is_available and not self.extractor.ai_available:
+                return ConversionResult(
+                    success=False,
+                    output_format=output_format,
+                    content=b"",
+                    filename="",
+                    extracted_data=InvoiceData(),
+                    warnings=[],
+                    error="OCR ist nicht verfuegbar. Installieren Sie Tesseract fuer gescannte PDFs.",
+                )
+            if not self.extractor.ai_available:
+                warnings.append(
+                    "PDF scheint gescannt zu sein. OCR wird verwendet - "
+                    "bitte pruefen Sie die extrahierten Daten."
+                )
+
+        # Extract invoice data (using AI if available)
+        try:
+            data = await self.extractor.extract_from_pdf_async(pdf_content)
+            warnings.extend(data.warnings)
+        except Exception as e:
+            return ConversionResult(
+                success=False,
+                output_format=output_format,
+                content=b"",
+                filename="",
+                extracted_data=InvoiceData(),
+                warnings=warnings,
+                error=f"Fehler bei der Datenextraktion: {str(e)}",
+            )
+
+        # Check extraction quality
+        if data.confidence < 0.3:
+            warnings.append(
+                "Niedrige Extraktionsqualitaet. Bitte pruefen Sie alle Felder."
+            )
+
+        # Generate output
+        try:
+            if output_format == OutputFormat.XRECHNUNG:
+                content = self.xrechnung_generator.generate(data)
+                filename = f"xrechnung_{data.invoice_number or 'invoice'}.xml"
+            else:
+                generator = ZUGFeRDGenerator(profile=zugferd_profile.value)
+                if embed_in_pdf:
+                    content = generator.generate_pdf(data, source_pdf=pdf_content)
+                    filename = f"zugferd_{data.invoice_number or 'invoice'}.pdf"
+                else:
+                    content = generator.generate_xml(data)
+                    filename = f"factur-x_{data.invoice_number or 'invoice'}.xml"
+
+            return ConversionResult(
+                success=True,
+                output_format=output_format,
+                content=content,
+                filename=filename,
+                extracted_data=data,
+                warnings=warnings,
+            )
+
+        except Exception as e:
+            return ConversionResult(
+                success=False,
+                output_format=output_format,
+                content=b"",
+                filename="",
+                extracted_data=data,
+                warnings=warnings,
+                error=f"Fehler bei der Generierung: {str(e)}",
+            )
+
     @property
     def ocr_available(self) -> bool:
         """Check if OCR is available."""
         return self.ocr_service.is_available
+
+    @property
+    def ai_available(self) -> bool:
+        """Check if AI extraction is available."""
+        return self.extractor.ai_available

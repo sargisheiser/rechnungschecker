@@ -73,6 +73,10 @@ class Settings(BaseSettings):
     # Sentry
     sentry_dsn: str = Field(default="")
 
+    # OpenAI (for enhanced PDF extraction and error explanations)
+    openai_api_key: str = Field(default="")
+    openai_model: str = Field(default="gpt-4o-mini")
+
     @property
     def max_upload_size_bytes(self) -> int:
         """Return max upload size in bytes."""

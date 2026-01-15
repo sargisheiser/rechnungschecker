@@ -134,11 +134,13 @@ class PreviewResponse(BaseModel):
     extracted_data: ExtractedDataSchema
     ocr_used: bool
     ocr_available: bool
+    ai_used: bool = False
 
 
 class ConversionStatusResponse(BaseModel):
     """Conversion capabilities status."""
 
     ocr_available: bool
+    ai_available: bool = False
     supported_formats: list[OutputFormat]
     supported_profiles: list[ZUGFeRDProfile]
