@@ -2,7 +2,7 @@
 
 import io
 import uuid
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from typing import Optional
 from xml.etree import ElementTree as ET
@@ -460,6 +460,9 @@ class ZUGFeRDGenerator:
             root, f"{{{self.NS['rsm']}}}SupplyChainTradeTransaction"
         )
 
+        # Line items (required by BR-09 - must come first in CII)
+        self._add_line_items(transaction, data)
+
         # Trade agreement
         agreement = ET.SubElement(
             transaction, f"{{{self.NS['ram']}}}ApplicableHeaderTradeAgreement"
@@ -473,6 +476,22 @@ class ZUGFeRDGenerator:
             seller_party, f"{{{self.NS['ram']}}}Name"
         )
         seller_name.text = data.seller.name if data.seller else "Lieferant"
+
+        # Seller postal address (required for BR-07)
+        seller_addr = ET.SubElement(
+            seller_party, f"{{{self.NS['ram']}}}PostalTradeAddress"
+        )
+        if data.seller and data.seller.postal_code:
+            seller_pc = ET.SubElement(seller_addr, f"{{{self.NS['ram']}}}PostcodeCode")
+            seller_pc.text = data.seller.postal_code
+        if data.seller and data.seller.street:
+            seller_line = ET.SubElement(seller_addr, f"{{{self.NS['ram']}}}LineOne")
+            seller_line.text = data.seller.street
+        if data.seller and data.seller.city:
+            seller_city = ET.SubElement(seller_addr, f"{{{self.NS['ram']}}}CityName")
+            seller_city.text = data.seller.city
+        seller_country = ET.SubElement(seller_addr, f"{{{self.NS['ram']}}}CountryID")
+        seller_country.text = data.seller.country_code if data.seller else "DE"
 
         if data.seller_vat_id:
             tax_reg = ET.SubElement(
@@ -488,6 +507,22 @@ class ZUGFeRDGenerator:
         )
         buyer_name = ET.SubElement(buyer_party, f"{{{self.NS['ram']}}}Name")
         buyer_name.text = data.buyer.name if data.buyer else "Kaeufer"
+
+        # Buyer postal address (required for BR-08)
+        buyer_addr = ET.SubElement(
+            buyer_party, f"{{{self.NS['ram']}}}PostalTradeAddress"
+        )
+        if data.buyer and data.buyer.postal_code:
+            buyer_pc = ET.SubElement(buyer_addr, f"{{{self.NS['ram']}}}PostcodeCode")
+            buyer_pc.text = data.buyer.postal_code
+        if data.buyer and data.buyer.street:
+            buyer_line = ET.SubElement(buyer_addr, f"{{{self.NS['ram']}}}LineOne")
+            buyer_line.text = data.buyer.street
+        if data.buyer and data.buyer.city:
+            buyer_city = ET.SubElement(buyer_addr, f"{{{self.NS['ram']}}}CityName")
+            buyer_city.text = data.buyer.city
+        buyer_country = ET.SubElement(buyer_addr, f"{{{self.NS['ram']}}}CountryID")
+        buyer_country.text = data.buyer.country_code if data.buyer else "DE"
 
         # Trade delivery
         delivery = ET.SubElement(
@@ -556,6 +591,27 @@ class ZUGFeRDGenerator:
             tax, f"{{{self.NS['ram']}}}RateApplicablePercent"
         )
         rate.text = "19"
+
+        # Payment terms (required by BR-CO-25)
+        payment_terms = ET.SubElement(
+            settlement, f"{{{self.NS['ram']}}}SpecifiedTradePaymentTerms"
+        )
+        if data.due_date:
+            due_dt = ET.SubElement(
+                payment_terms, f"{{{self.NS['ram']}}}DueDateDateTime"
+            )
+            due_date_str = ET.SubElement(due_dt, f"{{{self.NS['udt']}}}DateTimeString")
+            due_date_str.set("format", "102")
+            due_date_str.text = data.due_date.strftime("%Y%m%d")
+        else:
+            # If no due date, use invoice date + 30 days as default
+            default_due = (data.invoice_date or date.today()) + timedelta(days=30)
+            due_dt = ET.SubElement(
+                payment_terms, f"{{{self.NS['ram']}}}DueDateDateTime"
+            )
+            due_date_str = ET.SubElement(due_dt, f"{{{self.NS['udt']}}}DateTimeString")
+            due_date_str.set("format", "102")
+            due_date_str.text = default_due.strftime("%Y%m%d")
 
         # Monetary summation
         summation = ET.SubElement(
@@ -777,3 +833,98 @@ class ZUGFeRDGenerator:
         doc.close()
 
         return buffer.getvalue()
+
+    def _add_line_items(
+        self, transaction: ET.Element, data: InvoiceData
+    ) -> None:
+        """Add line items to CII transaction (required by BR-09)."""
+        if data.line_items:
+            for idx, item in enumerate(data.line_items, 1):
+                self._add_line_item(transaction, item, idx, data.currency)
+        else:
+            # Add a single default line item if no items were extracted
+            default_item = type(
+                "Item",
+                (),
+                {
+                    "description": "Leistung/Lieferung",
+                    "quantity": Decimal("1"),
+                    "unit": "C62",
+                    "unit_price": data.net_amount or Decimal("0"),
+                    "vat_rate": Decimal("19"),
+                    "total": data.net_amount or Decimal("0"),
+                },
+            )()
+            self._add_line_item(transaction, default_item, 1, data.currency)
+
+    def _add_line_item(
+        self, transaction: ET.Element, item, line_num: int, currency: str
+    ) -> None:
+        """Add a single line item to CII transaction."""
+        line = ET.SubElement(
+            transaction, f"{{{self.NS['ram']}}}IncludedSupplyChainTradeLineItem"
+        )
+
+        # Line document
+        line_doc = ET.SubElement(
+            line, f"{{{self.NS['ram']}}}AssociatedDocumentLineDocument"
+        )
+        line_id = ET.SubElement(line_doc, f"{{{self.NS['ram']}}}LineID")
+        line_id.text = str(line_num)
+
+        # Product (required by BR-25)
+        product = ET.SubElement(
+            line, f"{{{self.NS['ram']}}}SpecifiedTradeProduct"
+        )
+        product_name = ET.SubElement(product, f"{{{self.NS['ram']}}}Name")
+        product_name.text = item.description
+
+        # Line trade agreement (price)
+        line_agreement = ET.SubElement(
+            line, f"{{{self.NS['ram']}}}SpecifiedLineTradeAgreement"
+        )
+        net_price = ET.SubElement(
+            line_agreement, f"{{{self.NS['ram']}}}NetPriceProductTradePrice"
+        )
+        charge_amount = ET.SubElement(
+            net_price, f"{{{self.NS['ram']}}}ChargeAmount"
+        )
+        charge_amount.text = f"{item.unit_price:.2f}"
+
+        # Line trade delivery (quantity)
+        line_delivery = ET.SubElement(
+            line, f"{{{self.NS['ram']}}}SpecifiedLineTradeDelivery"
+        )
+        billed_qty = ET.SubElement(
+            line_delivery, f"{{{self.NS['ram']}}}BilledQuantity"
+        )
+        billed_qty.set("unitCode", getattr(item, 'unit', None) or "C62")
+        billed_qty.text = f"{item.quantity:.2f}"
+
+        # Line trade settlement (tax and totals)
+        line_settlement = ET.SubElement(
+            line, f"{{{self.NS['ram']}}}SpecifiedLineTradeSettlement"
+        )
+
+        # Line item tax (required by BR-S-08)
+        line_tax = ET.SubElement(
+            line_settlement, f"{{{self.NS['ram']}}}ApplicableTradeTax"
+        )
+        line_tax_type = ET.SubElement(line_tax, f"{{{self.NS['ram']}}}TypeCode")
+        line_tax_type.text = "VAT"
+        line_tax_cat = ET.SubElement(line_tax, f"{{{self.NS['ram']}}}CategoryCode")
+        line_tax_cat.text = "S"
+        line_tax_rate = ET.SubElement(
+            line_tax, f"{{{self.NS['ram']}}}RateApplicablePercent"
+        )
+        line_tax_rate.text = f"{item.vat_rate:.0f}"
+
+        # Line total (required by BR-DEC-23)
+        line_summation = ET.SubElement(
+            line_settlement,
+            f"{{{self.NS['ram']}}}SpecifiedTradeSettlementLineMonetarySummation",
+        )
+        line_total_amount = ET.SubElement(
+            line_summation, f"{{{self.NS['ram']}}}LineTotalAmount"
+        )
+        line_total_amount.text = f"{item.total:.2f}"
