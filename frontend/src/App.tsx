@@ -24,6 +24,7 @@ import { ExportPage } from '@/pages/Export'
 import { SettingsPage } from '@/pages/Settings'
 import AnalyticsPage from '@/pages/Analytics'
 import BatchUploadPage from '@/pages/BatchUpload'
+import BatchConversionPage from '@/pages/BatchConversion'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 
 function App() {
@@ -95,6 +96,14 @@ function App() {
           element={
             <ProtectedRoute>
               <ConversionPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="batch-konvertierung"
+          element={
+            <ProtectedRoute>
+              <BatchConversionPage />
             </ProtectedRoute>
           }
         />

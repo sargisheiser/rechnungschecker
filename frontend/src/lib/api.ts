@@ -443,6 +443,22 @@ export const conversionApi = {
     })
     return response.data
   },
+
+  convertBatch: async (
+    files: File[],
+    outputFormat: OutputFormat = 'xrechnung',
+    zugferdProfile: ZUGFeRDProfileType = 'EN16931'
+  ): Promise<ConversionResponse[]> => {
+    const formData = new FormData()
+    files.forEach((file) => formData.append('files', file))
+    formData.append('output_format', outputFormat)
+    formData.append('zugferd_profile', zugferdProfile)
+
+    const response = await api.post<ConversionResponse[]>('/convert/batch', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return response.data
+  },
 }
 
 // Integrations API

@@ -61,3 +61,17 @@ export function usePreviewXml() {
     mutationFn: (conversionId: string) => conversionApi.previewXml(conversionId),
   })
 }
+
+export function useBatchConvert() {
+  return useMutation({
+    mutationFn: ({
+      files,
+      outputFormat,
+      zugferdProfile,
+    }: {
+      files: File[]
+      outputFormat?: OutputFormat
+      zugferdProfile?: ZUGFeRDProfileType
+    }) => conversionApi.convertBatch(files, outputFormat, zugferdProfile),
+  })
+}
