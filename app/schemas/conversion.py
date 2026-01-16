@@ -39,6 +39,7 @@ class LineItemSchema(BaseModel):
 
     description: str
     quantity: Decimal = Decimal("1")
+    unit: str = "C62"  # Default unit code (piece)
     unit_price: Decimal = Decimal("0")
     vat_rate: Decimal = Decimal("19")
     total: Decimal = Decimal("0")

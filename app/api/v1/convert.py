@@ -464,6 +464,7 @@ async def convert_batch(
                     result.content,
                     result.filename,
                     content_type,
+                    result.xml_content,
                 )
 
                 results.append(
