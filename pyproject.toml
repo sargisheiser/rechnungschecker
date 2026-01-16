@@ -23,6 +23,7 @@ dependencies = [
     "stripe>=7.0.0",
     "sentry-sdk[fastapi]>=1.39.0",
     "email-validator>=2.1.0",
+    "pdfplumber>=0.10.0",
 ]
 
 [project.optional-dependencies]
