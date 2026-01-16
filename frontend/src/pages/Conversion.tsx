@@ -21,6 +21,8 @@ import {
   Landmark,
   Package,
   Code,
+  ShieldCheck,
+  ShieldX,
 } from 'lucide-react'
 import { useDropzone } from 'react-dropzone'
 import { useUser } from '@/hooks/useAuth'
@@ -33,7 +35,7 @@ import {
   usePreviewXml,
 } from '@/hooks/useConversion'
 import { cn } from '@/lib/utils'
-import type { ExtractedData, OutputFormat, ZUGFeRDProfileType } from '@/types'
+import type { ExtractedData, OutputFormat, ZUGFeRDProfileType, ConversionValidationResult } from '@/types'
 
 type ConversionStep = 'upload' | 'preview' | 'result'
 
@@ -63,6 +65,7 @@ export function ConversionPage() {
     conversionId: string
     filename: string
     warnings: string[]
+    validationResult?: ConversionValidationResult
   } | null>(null)
 
   // Overrides
@@ -124,6 +127,7 @@ export function ConversionPage() {
           conversionId: result.conversion_id,
           filename: result.filename,
           warnings: result.warnings,
+          validationResult: result.validation_result,
         })
         setStep('result')
       }
@@ -286,7 +290,7 @@ export function ConversionPage() {
               </p>
               <p className="text-sm text-gray-500 mt-1">
                 {status?.ai_available
-                  ? 'GPT-4 Vision extrahiert alle Rechnungsdaten'
+                  ? 'KI extrahiert alle Rechnungsdaten...'
                   : 'Analysiere PDF mit Mustererkennung...'}
               </p>
             </div>
@@ -652,20 +656,97 @@ export function ConversionPage() {
       {/* Result Step */}
       {step === 'result' && conversionResult && (
         <div className="card p-8 text-center">
-          <div className="w-16 h-16 bg-success-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="h-8 w-8 text-success-600" />
+          <div className={cn(
+            "w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6",
+            conversionResult.validationResult?.is_valid !== false
+              ? "bg-success-100"
+              : "bg-warning-100"
+          )}>
+            {conversionResult.validationResult?.is_valid !== false ? (
+              <CheckCircle className="h-8 w-8 text-success-600" />
+            ) : (
+              <AlertTriangle className="h-8 w-8 text-warning-600" />
+            )}
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Konvertierung erfolgreich!</h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 mb-4">
             Ihre Rechnung wurde erfolgreich in das {outputFormat === 'xrechnung' ? 'XRechnung' : 'ZUGFeRD'} Format konvertiert.
           </p>
 
+          {/* Validation Status Badge */}
+          {conversionResult.validationResult && (
+            <div className="flex justify-center mb-6">
+              <div className={cn(
+                "inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium",
+                conversionResult.validationResult.is_valid
+                  ? "bg-success-100 text-success-700"
+                  : "bg-error-100 text-error-700"
+              )}>
+                {conversionResult.validationResult.is_valid ? (
+                  <>
+                    <ShieldCheck className="h-4 w-4" />
+                    Validierung bestanden
+                  </>
+                ) : (
+                  <>
+                    <ShieldX className="h-4 w-4" />
+                    Validierung fehlgeschlagen ({conversionResult.validationResult.error_count} Fehler)
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Validation Errors */}
+          {conversionResult.validationResult && conversionResult.validationResult.error_count > 0 && (
+            <div className="bg-error-50 border border-error-200 rounded-lg p-4 mb-6 text-left">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-error-500 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <h4 className="font-medium text-error-800">Validierungsfehler</h4>
+                  <ul className="mt-2 space-y-2">
+                    {conversionResult.validationResult.errors.map((e, i) => (
+                      <li key={i} className="text-sm text-error-700">
+                        <span className="font-mono bg-error-100 px-1 rounded text-xs">{e.code}</span>
+                        <span className="ml-2">{e.message_de}</span>
+                        {e.suggestion && (
+                          <p className="text-error-600 text-xs mt-1 ml-4">Tipp: {e.suggestion}</p>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Validation Warnings */}
+          {conversionResult.validationResult && conversionResult.validationResult.warning_count > 0 && (
+            <div className="bg-warning-50 border border-warning-200 rounded-lg p-4 mb-6 text-left">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-warning-500 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <h4 className="font-medium text-warning-800">Validierungswarnungen</h4>
+                  <ul className="mt-2 space-y-2">
+                    {conversionResult.validationResult.warnings.map((w, i) => (
+                      <li key={i} className="text-sm text-warning-700">
+                        <span className="font-mono bg-warning-100 px-1 rounded text-xs">{w.code}</span>
+                        <span className="ml-2">{w.message_de}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Conversion Warnings */}
           {conversionResult.warnings.length > 0 && (
             <div className="bg-warning-50 border border-warning-200 rounded-lg p-4 mb-6 text-left">
               <div className="flex items-start gap-3">
                 <AlertTriangle className="h-5 w-5 text-warning-500 flex-shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-medium text-warning-800">Hinweise</h4>
+                  <h4 className="font-medium text-warning-800">Konvertierungshinweise</h4>
                   <ul className="mt-1 text-sm text-warning-700 list-disc list-inside">
                     {conversionResult.warnings.map((w, i) => (
                       <li key={i}>{w}</li>

@@ -334,6 +334,27 @@ export interface PreviewResponse {
   ai_used: boolean
 }
 
+export interface ConversionValidationError {
+  severity: string
+  code: string
+  message_de: string
+  message_en?: string
+  location?: string
+  suggestion?: string
+}
+
+export interface ConversionValidationResult {
+  is_valid: boolean
+  error_count: number
+  warning_count: number
+  info_count: number
+  errors: ConversionValidationError[]
+  warnings: ConversionValidationError[]
+  infos: ConversionValidationError[]
+  validator_version?: string
+  processing_time_ms?: number
+}
+
 export interface ConversionResponse {
   success: boolean
   conversion_id: string
@@ -342,6 +363,7 @@ export interface ConversionResponse {
   extracted_data: ExtractedData
   warnings: string[]
   error?: string
+  validation_result?: ConversionValidationResult
 }
 
 export interface ConversionStatusResponse {

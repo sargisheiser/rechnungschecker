@@ -116,6 +116,31 @@ class ConversionRequest(BaseModel):
     leitweg_id: Optional[str] = None
 
 
+class ValidationErrorSchema(BaseModel):
+    """Validation error/warning for conversion result."""
+
+    severity: str
+    code: str
+    message_de: str
+    message_en: Optional[str] = None
+    location: Optional[str] = None
+    suggestion: Optional[str] = None
+
+
+class ValidationResultSchema(BaseModel):
+    """Simplified validation result for conversion response."""
+
+    is_valid: bool
+    error_count: int = 0
+    warning_count: int = 0
+    info_count: int = 0
+    errors: list[ValidationErrorSchema] = Field(default_factory=list)
+    warnings: list[ValidationErrorSchema] = Field(default_factory=list)
+    infos: list[ValidationErrorSchema] = Field(default_factory=list)
+    validator_version: Optional[str] = None
+    processing_time_ms: Optional[int] = None
+
+
 class ConversionResponse(BaseModel):
     """Response from conversion endpoint."""
 
@@ -126,6 +151,7 @@ class ConversionResponse(BaseModel):
     extracted_data: ExtractedDataSchema
     warnings: list[str] = Field(default_factory=list)
     error: Optional[str] = None
+    validation_result: Optional[ValidationResultSchema] = None
 
 
 class PreviewResponse(BaseModel):

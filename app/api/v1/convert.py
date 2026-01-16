@@ -1,5 +1,6 @@
 """API endpoints for PDF to e-invoice conversion."""
 
+import logging
 import uuid
 from typing import Optional
 
@@ -17,8 +18,12 @@ from app.schemas.conversion import (
     ExtractedDataSchema,
     OutputFormat,
     PreviewResponse,
+    ValidationErrorSchema,
+    ValidationResultSchema,
     ZUGFeRDProfile,
 )
+
+logger = logging.getLogger(__name__)
 from app.services.converter.service import (
     ConversionService,
     OutputFormat as ServiceOutputFormat,
@@ -266,6 +271,65 @@ async def convert_pdf(
     )
     _conversion_cache[conversion_id] = (result.content, result.filename, content_type, result.xml_content)
 
+    # Auto-validate the generated XML
+    validation_result = None
+    if result.xml_content:
+        try:
+            from app.services.validator.xrechnung import XRechnungValidator
+
+            validator = XRechnungValidator()
+            val_response = await validator.validate(
+                content=result.xml_content,
+                filename=result.filename,
+                user_id=current_user.id if current_user else None,
+            )
+
+            # Convert ValidationResponse to ValidationResultSchema
+            validation_result = ValidationResultSchema(
+                is_valid=val_response.is_valid,
+                error_count=val_response.error_count,
+                warning_count=val_response.warning_count,
+                info_count=val_response.info_count,
+                errors=[
+                    ValidationErrorSchema(
+                        severity=e.severity.value,
+                        code=e.code,
+                        message_de=e.message_de,
+                        message_en=e.message_en,
+                        location=e.location,
+                        suggestion=e.suggestion,
+                    )
+                    for e in val_response.errors
+                ],
+                warnings=[
+                    ValidationErrorSchema(
+                        severity=w.severity.value,
+                        code=w.code,
+                        message_de=w.message_de,
+                        message_en=w.message_en,
+                        location=w.location,
+                        suggestion=w.suggestion,
+                    )
+                    for w in val_response.warnings
+                ],
+                infos=[
+                    ValidationErrorSchema(
+                        severity=i.severity.value,
+                        code=i.code,
+                        message_de=i.message_de,
+                        message_en=i.message_en,
+                        location=i.location,
+                        suggestion=i.suggestion,
+                    )
+                    for i in val_response.infos
+                ],
+                validator_version=val_response.validator_version,
+                processing_time_ms=val_response.processing_time_ms,
+            )
+        except Exception as e:
+            logger.warning(f"Auto-validation failed: {e}")
+            # Don't fail conversion if validation fails
+
     return ConversionResponse(
         success=True,
         conversion_id=conversion_id,
@@ -273,6 +337,7 @@ async def convert_pdf(
         output_format=output_format,
         extracted_data=_invoice_data_to_schema(result.extracted_data),
         warnings=result.warnings,
+        validation_result=validation_result,
     )
 
 
