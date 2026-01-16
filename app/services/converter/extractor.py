@@ -35,6 +35,36 @@ class LineItem:
     total: Decimal = Decimal("0")
 
 
+# German VAT rates and their EU tax category codes
+VAT_CATEGORY_MAP = {
+    Decimal("19"): "S",   # Standard rate
+    Decimal("7"): "AA",   # Reduced rate (food, books, etc.)
+    Decimal("0"): "Z",    # Zero rate
+}
+
+
+def get_vat_category(vat_rate: Decimal) -> str:
+    """Get EU tax category code for a VAT rate."""
+    # Normalize to integer for lookup
+    rate_int = Decimal(str(int(vat_rate)))
+    return VAT_CATEGORY_MAP.get(rate_int, "S")  # Default to Standard
+
+
+@dataclass
+class TaxBreakdown:
+    """Tax breakdown for a specific VAT rate."""
+
+    vat_rate: Decimal  # e.g., 19, 7, 0
+    category_code: str = "S"  # S=Standard, AA=Reduced, Z=Zero
+    taxable_amount: Decimal = Decimal("0")  # Net amount for this rate
+    tax_amount: Decimal = Decimal("0")  # VAT amount for this rate
+
+    def __post_init__(self):
+        """Set category code based on VAT rate if not provided."""
+        if self.category_code == "S" and self.vat_rate != Decimal("19"):
+            self.category_code = get_vat_category(self.vat_rate)
+
+
 @dataclass
 class InvoiceData:
     """Extracted invoice data."""
@@ -72,9 +102,48 @@ class InvoiceData:
     # Line items
     line_items: list[LineItem] = field(default_factory=list)
 
+    # Tax breakdowns (for multiple VAT rates)
+    tax_breakdowns: list[TaxBreakdown] = field(default_factory=list)
+
     # Extraction confidence
     confidence: float = 0.0
     warnings: list[str] = field(default_factory=list)
+
+    def get_tax_breakdowns(self) -> list[TaxBreakdown]:
+        """Get tax breakdowns, computing from line items if not set."""
+        if self.tax_breakdowns:
+            return self.tax_breakdowns
+
+        # Compute from line items if available
+        if self.line_items:
+            breakdowns_by_rate: dict[Decimal, TaxBreakdown] = {}
+            for item in self.line_items:
+                rate = item.vat_rate
+                if rate not in breakdowns_by_rate:
+                    breakdowns_by_rate[rate] = TaxBreakdown(
+                        vat_rate=rate,
+                        category_code=get_vat_category(rate),
+                        taxable_amount=Decimal("0"),
+                        tax_amount=Decimal("0"),
+                    )
+                breakdowns_by_rate[rate].taxable_amount += item.total
+                breakdowns_by_rate[rate].tax_amount += (
+                    item.total * rate / Decimal("100")
+                )
+            return list(breakdowns_by_rate.values())
+
+        # Fallback: single breakdown from totals
+        if self.net_amount or self.vat_amount:
+            return [
+                TaxBreakdown(
+                    vat_rate=self.vat_rate,
+                    category_code=get_vat_category(self.vat_rate),
+                    taxable_amount=self.net_amount or Decimal("0"),
+                    tax_amount=self.vat_amount or Decimal("0"),
+                )
+            ]
+
+        return []
 
 
 class InvoiceExtractor:

@@ -9,7 +9,7 @@ from xml.etree import ElementTree as ET
 
 import fitz  # PyMuPDF
 
-from app.services.converter.extractor import InvoiceData
+from app.services.converter.extractor import InvoiceData, TaxBreakdown, get_vat_category
 
 
 class XRechnungGenerator:
@@ -270,30 +270,52 @@ class XRechnungGenerator:
                 self._add_element(branch, "cbc:ID", data.bic)
 
     def _add_tax_total(self, root: ET.Element, data: InvoiceData) -> None:
-        """Add tax total information."""
+        """Add tax total information with support for multiple VAT rates."""
         tax_total = ET.SubElement(root, f"{{{self.NS['cac']}}}TaxTotal")
 
-        # Tax amount
-        vat = data.vat_amount or Decimal("0")
+        # Get tax breakdowns (computed from line items or totals)
+        breakdowns = data.get_tax_breakdowns()
+
+        # Calculate total VAT from breakdowns or use provided amount
+        total_vat = sum(b.tax_amount for b in breakdowns) if breakdowns else (data.vat_amount or Decimal("0"))
+
+        # Total tax amount
         tax_amount = ET.SubElement(tax_total, f"{{{self.NS['cbc']}}}TaxAmount")
         tax_amount.set("currencyID", data.currency)
-        tax_amount.text = f"{vat:.2f}"
+        tax_amount.text = f"{total_vat:.2f}"
 
-        # Tax subtotal
+        # Add subtotal for each VAT rate
+        if breakdowns:
+            for breakdown in breakdowns:
+                self._add_tax_subtotal(tax_total, breakdown, data.currency)
+        else:
+            # Fallback: single 19% rate
+            fallback = TaxBreakdown(
+                vat_rate=Decimal("19"),
+                category_code="S",
+                taxable_amount=data.net_amount or Decimal("0"),
+                tax_amount=data.vat_amount or Decimal("0"),
+            )
+            self._add_tax_subtotal(tax_total, fallback, data.currency)
+
+    def _add_tax_subtotal(
+        self, tax_total: ET.Element, breakdown: TaxBreakdown, currency: str
+    ) -> None:
+        """Add a single tax subtotal for a specific VAT rate."""
         subtotal = ET.SubElement(tax_total, f"{{{self.NS['cac']}}}TaxSubtotal")
 
         taxable = ET.SubElement(subtotal, f"{{{self.NS['cbc']}}}TaxableAmount")
-        taxable.set("currencyID", data.currency)
-        taxable.text = f"{data.net_amount or Decimal('0'):.2f}"
+        taxable.set("currencyID", currency)
+        taxable.text = f"{breakdown.taxable_amount:.2f}"
 
         sub_tax = ET.SubElement(subtotal, f"{{{self.NS['cbc']}}}TaxAmount")
-        sub_tax.set("currencyID", data.currency)
-        sub_tax.text = f"{vat:.2f}"
+        sub_tax.set("currencyID", currency)
+        sub_tax.text = f"{breakdown.tax_amount:.2f}"
 
-        # Tax category
+        # Tax category with correct code for the rate
         category = ET.SubElement(subtotal, f"{{{self.NS['cac']}}}TaxCategory")
-        self._add_element(category, "cbc:ID", "S")  # Standard rate
-        self._add_element(category, "cbc:Percent", "19")
+        self._add_element(category, "cbc:ID", breakdown.category_code)
+        self._add_element(category, "cbc:Percent", f"{breakdown.vat_rate:.0f}")
 
         scheme = ET.SubElement(category, f"{{{self.NS['cac']}}}TaxScheme")
         self._add_element(scheme, "cbc:ID", "VAT")
@@ -371,11 +393,12 @@ class XRechnungGenerator:
         inv_item = ET.SubElement(line, f"{{{self.NS['cac']}}}Item")
         self._add_element(inv_item, "cbc:Name", item.description)
 
-        # Tax category for line item
+        # Tax category for line item (use correct category for VAT rate)
         tax_cat = ET.SubElement(
             inv_item, f"{{{self.NS['cac']}}}ClassifiedTaxCategory"
         )
-        self._add_element(tax_cat, "cbc:ID", "S")
+        category_code = get_vat_category(item.vat_rate)
+        self._add_element(tax_cat, "cbc:ID", category_code)
         self._add_element(tax_cat, "cbc:Percent", f"{item.vat_rate:.0f}")
         scheme = ET.SubElement(tax_cat, f"{{{self.NS['cac']}}}TaxScheme")
         self._add_element(scheme, "cbc:ID", "VAT")
@@ -567,30 +590,20 @@ class ZUGFeRDGenerator:
             iban_elem = ET.SubElement(account, f"{{{self.NS['ram']}}}IBANID")
             iban_elem.text = data.iban
 
-        # Tax
-        tax = ET.SubElement(
-            settlement, f"{{{self.NS['ram']}}}ApplicableTradeTax"
-        )
-        calc_amt = ET.SubElement(
-            tax, f"{{{self.NS['ram']}}}CalculatedAmount"
-        )
-        calc_amt.text = f"{data.vat_amount or Decimal('0'):.2f}"
-
-        type_code_tax = ET.SubElement(tax, f"{{{self.NS['ram']}}}TypeCode")
-        type_code_tax.text = "VAT"
-
-        basis_amt = ET.SubElement(
-            tax, f"{{{self.NS['ram']}}}BasisAmount"
-        )
-        basis_amt.text = f"{data.net_amount or Decimal('0'):.2f}"
-
-        cat_code = ET.SubElement(tax, f"{{{self.NS['ram']}}}CategoryCode")
-        cat_code.text = "S"
-
-        rate = ET.SubElement(
-            tax, f"{{{self.NS['ram']}}}RateApplicablePercent"
-        )
-        rate.text = "19"
+        # Tax - add one ApplicableTradeTax per VAT rate
+        breakdowns = data.get_tax_breakdowns()
+        if breakdowns:
+            for breakdown in breakdowns:
+                self._add_trade_tax(settlement, breakdown)
+        else:
+            # Fallback: single 19% rate
+            fallback = TaxBreakdown(
+                vat_rate=Decimal("19"),
+                category_code="S",
+                taxable_amount=data.net_amount or Decimal("0"),
+                tax_amount=data.vat_amount or Decimal("0"),
+            )
+            self._add_trade_tax(settlement, fallback)
 
         # Payment terms (required by BR-CO-25)
         payment_terms = ET.SubElement(
@@ -906,14 +919,14 @@ class ZUGFeRDGenerator:
             line, f"{{{self.NS['ram']}}}SpecifiedLineTradeSettlement"
         )
 
-        # Line item tax (required by BR-S-08)
+        # Line item tax (required by BR-S-08) with correct category for VAT rate
         line_tax = ET.SubElement(
             line_settlement, f"{{{self.NS['ram']}}}ApplicableTradeTax"
         )
         line_tax_type = ET.SubElement(line_tax, f"{{{self.NS['ram']}}}TypeCode")
         line_tax_type.text = "VAT"
         line_tax_cat = ET.SubElement(line_tax, f"{{{self.NS['ram']}}}CategoryCode")
-        line_tax_cat.text = "S"
+        line_tax_cat.text = get_vat_category(item.vat_rate)
         line_tax_rate = ET.SubElement(
             line_tax, f"{{{self.NS['ram']}}}RateApplicablePercent"
         )
@@ -928,3 +941,26 @@ class ZUGFeRDGenerator:
             line_summation, f"{{{self.NS['ram']}}}LineTotalAmount"
         )
         line_total_amount.text = f"{item.total:.2f}"
+
+    def _add_trade_tax(
+        self, settlement: ET.Element, breakdown: TaxBreakdown
+    ) -> None:
+        """Add a single ApplicableTradeTax element for a specific VAT rate."""
+        tax = ET.SubElement(
+            settlement, f"{{{self.NS['ram']}}}ApplicableTradeTax"
+        )
+
+        calc_amt = ET.SubElement(tax, f"{{{self.NS['ram']}}}CalculatedAmount")
+        calc_amt.text = f"{breakdown.tax_amount:.2f}"
+
+        type_code = ET.SubElement(tax, f"{{{self.NS['ram']}}}TypeCode")
+        type_code.text = "VAT"
+
+        basis_amt = ET.SubElement(tax, f"{{{self.NS['ram']}}}BasisAmount")
+        basis_amt.text = f"{breakdown.taxable_amount:.2f}"
+
+        cat_code = ET.SubElement(tax, f"{{{self.NS['ram']}}}CategoryCode")
+        cat_code.text = breakdown.category_code
+
+        rate = ET.SubElement(tax, f"{{{self.NS['ram']}}}RateApplicablePercent")
+        rate.text = f"{breakdown.vat_rate:.0f}"
