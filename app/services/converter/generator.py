@@ -475,7 +475,7 @@ class ZUGFeRDGenerator:
         seller_name = ET.SubElement(
             seller_party, f"{{{self.NS['ram']}}}Name"
         )
-        seller_name.text = data.seller.name if data.seller else "Lieferant"
+        seller_name.text = (data.seller.name if data.seller and data.seller.name else "Lieferant")
 
         # Seller postal address (required for BR-07)
         seller_addr = ET.SubElement(
@@ -491,7 +491,7 @@ class ZUGFeRDGenerator:
             seller_city = ET.SubElement(seller_addr, f"{{{self.NS['ram']}}}CityName")
             seller_city.text = data.seller.city
         seller_country = ET.SubElement(seller_addr, f"{{{self.NS['ram']}}}CountryID")
-        seller_country.text = data.seller.country_code if data.seller else "DE"
+        seller_country.text = (data.seller.country_code if data.seller and data.seller.country_code else "DE")
 
         if data.seller_vat_id:
             tax_reg = ET.SubElement(
@@ -506,7 +506,7 @@ class ZUGFeRDGenerator:
             agreement, f"{{{self.NS['ram']}}}BuyerTradeParty"
         )
         buyer_name = ET.SubElement(buyer_party, f"{{{self.NS['ram']}}}Name")
-        buyer_name.text = data.buyer.name if data.buyer else "Kaeufer"
+        buyer_name.text = (data.buyer.name if data.buyer and data.buyer.name else "Kaeufer")
 
         # Buyer postal address (required for BR-08)
         buyer_addr = ET.SubElement(
@@ -522,7 +522,7 @@ class ZUGFeRDGenerator:
             buyer_city = ET.SubElement(buyer_addr, f"{{{self.NS['ram']}}}CityName")
             buyer_city.text = data.buyer.city
         buyer_country = ET.SubElement(buyer_addr, f"{{{self.NS['ram']}}}CountryID")
-        buyer_country.text = data.buyer.country_code if data.buyer else "DE"
+        buyer_country.text = (data.buyer.country_code if data.buyer and data.buyer.country_code else "DE")
 
         # Trade delivery
         delivery = ET.SubElement(
