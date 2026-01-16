@@ -36,6 +36,7 @@ class ConversionResult:
     extracted_data: InvoiceData
     warnings: list[str]
     error: Optional[str] = None
+    xml_content: Optional[bytes] = None  # Always contains the XML, even for ZUGFeRD PDFs
 
 
 class ConversionService:
@@ -116,16 +117,19 @@ class ConversionService:
 
         # Generate output
         try:
+            xml_content: bytes
             if output_format == OutputFormat.XRECHNUNG:
                 content = self.xrechnung_generator.generate(data)
+                xml_content = content
                 filename = f"xrechnung_{data.invoice_number or 'invoice'}.xml"
             else:
                 generator = ZUGFeRDGenerator(profile=zugferd_profile.value)
+                xml_content = generator.generate_xml(data)
                 if embed_in_pdf:
                     content = generator.generate_pdf(data, source_pdf=pdf_content)
                     filename = f"zugferd_{data.invoice_number or 'invoice'}.pdf"
                 else:
-                    content = generator.generate_xml(data)
+                    content = xml_content
                     filename = f"factur-x_{data.invoice_number or 'invoice'}.xml"
 
             return ConversionResult(
@@ -135,6 +139,7 @@ class ConversionService:
                 filename=filename,
                 extracted_data=data,
                 warnings=warnings,
+                xml_content=xml_content,
             )
 
         except Exception as e:
@@ -234,16 +239,19 @@ class ConversionService:
 
         # Generate output
         try:
+            xml_content: bytes
             if output_format == OutputFormat.XRECHNUNG:
                 content = self.xrechnung_generator.generate(data)
+                xml_content = content
                 filename = f"xrechnung_{data.invoice_number or 'invoice'}.xml"
             else:
                 generator = ZUGFeRDGenerator(profile=zugferd_profile.value)
+                xml_content = generator.generate_xml(data)
                 if embed_in_pdf:
                     content = generator.generate_pdf(data, source_pdf=pdf_content)
                     filename = f"zugferd_{data.invoice_number or 'invoice'}.pdf"
                 else:
-                    content = generator.generate_xml(data)
+                    content = xml_content
                     filename = f"factur-x_{data.invoice_number or 'invoice'}.xml"
 
             return ConversionResult(
@@ -253,6 +261,7 @@ class ConversionService:
                 filename=filename,
                 extracted_data=data,
                 warnings=warnings,
+                xml_content=xml_content,
             )
 
         except Exception as e:

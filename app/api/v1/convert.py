@@ -264,7 +264,7 @@ async def convert_pdf(
         if output_format == OutputFormat.ZUGFERD and embed_in_pdf
         else "application/xml"
     )
-    _conversion_cache[conversion_id] = (result.content, result.filename, content_type)
+    _conversion_cache[conversion_id] = (result.content, result.filename, content_type, result.xml_content)
 
     return ConversionResponse(
         success=True,
@@ -292,13 +292,46 @@ async def download_converted_file(
             detail="Konvertierung nicht gefunden oder abgelaufen",
         )
 
-    content, filename, content_type = _conversion_cache[conversion_id]
+    content, filename, content_type, _ = _conversion_cache[conversion_id]
 
     return Response(
         content=content,
         media_type=content_type,
         headers={
             "Content-Disposition": f'attachment; filename="{filename}"',
+        },
+    )
+
+
+@router.get("/{conversion_id}/preview-xml")
+async def preview_xml(
+    conversion_id: str,
+    current_user: User = Depends(get_current_user),
+) -> Response:
+    """
+    Preview the XML content of a conversion.
+
+    Returns the raw XML for XRechnung, or the XML that was embedded for ZUGFeRD.
+    """
+    if conversion_id not in _conversion_cache:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Konvertierung nicht gefunden oder abgelaufen",
+        )
+
+    _, _, _, xml_content = _conversion_cache[conversion_id]
+
+    if not xml_content:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Keine XML-Daten verfuegbar",
+        )
+
+    return Response(
+        content=xml_content,
+        media_type="application/xml",
+        headers={
+            "Content-Type": "application/xml; charset=utf-8",
         },
     )
 

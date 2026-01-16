@@ -287,6 +287,15 @@ export interface ClientUpdateRequest extends Partial<ClientCreateRequest> {
 export type OutputFormat = 'xrechnung' | 'zugferd'
 export type ZUGFeRDProfileType = 'MINIMUM' | 'BASIC' | 'EN16931' | 'EXTENDED'
 
+export interface LineItem {
+  description: string
+  quantity: number
+  unit: string
+  unit_price: number
+  vat_rate: number
+  total: number
+}
+
 export interface ExtractedData {
   invoice_number?: string
   invoice_date?: string
@@ -315,12 +324,14 @@ export interface ExtractedData {
   order_reference?: string
   confidence: number
   warnings: string[]
+  line_items?: LineItem[]
 }
 
 export interface PreviewResponse {
   extracted_data: ExtractedData
   ocr_used: boolean
   ocr_available: boolean
+  ai_used: boolean
 }
 
 export interface ConversionResponse {
@@ -335,6 +346,7 @@ export interface ConversionResponse {
 
 export interface ConversionStatusResponse {
   ocr_available: boolean
+  ai_available: boolean
   supported_formats: OutputFormat[]
   supported_profiles: ZUGFeRDProfileType[]
 }

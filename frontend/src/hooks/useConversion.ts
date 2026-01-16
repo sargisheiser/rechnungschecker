@@ -55,3 +55,9 @@ export function useDownloadConversion() {
     },
   })
 }
+
+export function usePreviewXml() {
+  return useMutation({
+    mutationFn: (conversionId: string) => conversionApi.previewXml(conversionId),
+  })
+}

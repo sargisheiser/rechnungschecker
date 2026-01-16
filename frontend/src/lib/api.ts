@@ -436,6 +436,13 @@ export const conversionApi = {
     })
     return response.data
   },
+
+  previewXml: async (conversionId: string): Promise<string> => {
+    const response = await api.get(`/convert/${conversionId}/preview-xml`, {
+      responseType: 'text',
+    })
+    return response.data
+  },
 }
 
 // Integrations API

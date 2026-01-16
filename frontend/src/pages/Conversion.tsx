@@ -17,6 +17,10 @@ import {
   X,
   Info,
   Eye,
+  Sparkles,
+  Landmark,
+  Package,
+  Code,
 } from 'lucide-react'
 import { useDropzone } from 'react-dropzone'
 import { useUser } from '@/hooks/useAuth'
@@ -26,6 +30,7 @@ import {
   usePreviewExtraction,
   useConvert,
   useDownloadConversion,
+  usePreviewXml,
 } from '@/hooks/useConversion'
 import { cn } from '@/lib/utils'
 import type { ExtractedData, OutputFormat, ZUGFeRDProfileType } from '@/types'
@@ -50,6 +55,7 @@ export function ConversionPage() {
   const [file, setFile] = useState<File | null>(null)
   const [extractedData, setExtractedData] = useState<ExtractedData | null>(null)
   const [ocrUsed, setOcrUsed] = useState(false)
+  const [aiUsed, setAiUsed] = useState(false)
   const [outputFormat, setOutputFormat] = useState<OutputFormat>('xrechnung')
   const [zugferdProfile, setZugferdProfile] = useState<ZUGFeRDProfileType>('EN16931')
   const [embedInPdf, setEmbedInPdf] = useState(true)
@@ -70,6 +76,9 @@ export function ConversionPage() {
   const preview = usePreviewExtraction()
   const convert = useConvert()
   const download = useDownloadConversion()
+  const previewXml = usePreviewXml()
+  const [showXmlPreview, setShowXmlPreview] = useState(false)
+  const [xmlContent, setXmlContent] = useState<string | null>(null)
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
@@ -83,6 +92,7 @@ export function ConversionPage() {
         const result = await preview.mutateAsync(pdfFile)
         setExtractedData(result.extracted_data)
         setOcrUsed(result.ocr_used)
+        setAiUsed(result.ai_used)
       } catch {
         // Error handled by mutation
       }
@@ -135,10 +145,25 @@ export function ConversionPage() {
     setFile(null)
     setExtractedData(null)
     setOcrUsed(false)
+    setAiUsed(false)
     setConversionResult(null)
     setOverrides({})
+    setShowXmlPreview(false)
+    setXmlContent(null)
     preview.reset()
     convert.reset()
+    previewXml.reset()
+  }
+
+  const handleXmlPreview = async () => {
+    if (!conversionResult) return
+    try {
+      const xml = await previewXml.mutateAsync(conversionResult.conversionId)
+      setXmlContent(xml)
+      setShowXmlPreview(true)
+    } catch {
+      // Error handled by mutation
+    }
   }
 
   // Check if user has reached conversion limit
@@ -175,16 +200,22 @@ export function ConversionPage() {
         </div>
       )}
 
-      {/* OCR Status */}
+      {/* AI & OCR Status */}
       {status && (
-        <div className={cn(
-          'mb-6 p-3 rounded-lg flex items-center gap-2 text-sm',
-          status.ocr_available ? 'bg-success-50 text-success-700' : 'bg-warning-50 text-warning-700'
-        )}>
-          <Info className="h-4 w-4" />
-          {status.ocr_available
-            ? 'OCR ist verfuegbar - auch gescannte PDFs koennen verarbeitet werden'
-            : 'OCR nicht verfuegbar - nur digitale PDFs werden unterstuetzt'}
+        <div className="mb-6 flex flex-wrap gap-3">
+          {status.ai_available && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary-50 text-primary-700 text-sm">
+              <Sparkles className="h-4 w-4" />
+              KI-Extraktion aktiv
+            </div>
+          )}
+          <div className={cn(
+            'flex items-center gap-2 px-3 py-2 rounded-lg text-sm',
+            status.ocr_available ? 'bg-success-50 text-success-700' : 'bg-gray-100 text-gray-600'
+          )}>
+            <Info className="h-4 w-4" />
+            {status.ocr_available ? 'OCR verfuegbar' : 'Nur digitale PDFs'}
+          </div>
         </div>
       )}
 
@@ -244,10 +275,19 @@ export function ConversionPage() {
         <div className="space-y-6">
           {preview.isPending ? (
             <div className="card p-12 text-center">
-              <Loader2 className="h-12 w-12 animate-spin text-primary-500 mx-auto mb-4" />
-              <p className="text-lg font-medium text-gray-900">Daten werden extrahiert...</p>
+              <div className="relative">
+                <Loader2 className="h-12 w-12 animate-spin text-primary-500 mx-auto mb-4" />
+                {status?.ai_available && (
+                  <Sparkles className="h-5 w-5 text-primary-400 absolute top-0 right-1/2 translate-x-8 animate-pulse" />
+                )}
+              </div>
+              <p className="text-lg font-medium text-gray-900">
+                {status?.ai_available ? 'KI analysiert Rechnung...' : 'Daten werden extrahiert...'}
+              </p>
               <p className="text-sm text-gray-500 mt-1">
-                {ocrUsed ? 'OCR wird verwendet (kann etwas laenger dauern)' : 'Analysiere PDF...'}
+                {status?.ai_available
+                  ? 'GPT-4 Vision extrahiert alle Rechnungsdaten'
+                  : 'Analysiere PDF mit Mustererkennung...'}
               </p>
             </div>
           ) : preview.isError ? (
@@ -272,7 +312,12 @@ export function ConversionPage() {
                     <p className="font-medium text-gray-900">{file?.name}</p>
                     <p className="text-sm text-gray-500">
                       {((file?.size || 0) / 1024).toFixed(1)} KB
-                      {ocrUsed && ' • OCR verwendet'}
+                      {aiUsed && (
+                        <span className="inline-flex items-center gap-1 ml-2 text-primary-600">
+                          <Sparkles className="h-3 w-3" /> KI
+                        </span>
+                      )}
+                      {ocrUsed && ' • OCR'}
                     </p>
                   </div>
                 </div>
@@ -432,6 +477,62 @@ export function ConversionPage() {
                 </div>
               </div>
 
+              {/* Bank Details */}
+              {(extractedData.iban || extractedData.bic || extractedData.bank_name) && (
+                <div className="card p-6">
+                  <h3 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
+                    <Landmark className="h-4 w-4 text-gray-400" />
+                    Bankverbindung
+                  </h3>
+                  <div className="grid sm:grid-cols-2 gap-x-8 gap-y-3">
+                    <DataField label="IBAN" value={extractedData.iban} />
+                    <DataField label="BIC" value={extractedData.bic} />
+                    <DataField label="Bank" value={extractedData.bank_name} />
+                    <DataField label="Verwendungszweck" value={extractedData.payment_reference} />
+                  </div>
+                </div>
+              )}
+
+              {/* Line Items */}
+              {extractedData.line_items && extractedData.line_items.length > 0 && (
+                <div className="card p-6">
+                  <h3 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
+                    <Package className="h-4 w-4 text-gray-400" />
+                    Positionen ({extractedData.line_items.length})
+                  </h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          <th className="text-left py-2 pr-4 font-medium text-gray-500">Beschreibung</th>
+                          <th className="text-right py-2 px-4 font-medium text-gray-500">Menge</th>
+                          <th className="text-right py-2 px-4 font-medium text-gray-500">Einzelpreis</th>
+                          <th className="text-right py-2 px-4 font-medium text-gray-500">MwSt.</th>
+                          <th className="text-right py-2 pl-4 font-medium text-gray-500">Gesamt</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {extractedData.line_items.map((item, idx) => (
+                          <tr key={idx} className="border-b border-gray-100 last:border-0">
+                            <td className="py-2 pr-4 text-gray-700">{item.description}</td>
+                            <td className="py-2 px-4 text-right text-gray-700">
+                              {item.quantity} {item.unit}
+                            </td>
+                            <td className="py-2 px-4 text-right text-gray-700">
+                              {item.unit_price.toFixed(2)} {extractedData.currency}
+                            </td>
+                            <td className="py-2 px-4 text-right text-gray-700">{item.vat_rate}%</td>
+                            <td className="py-2 pl-4 text-right font-medium text-gray-900">
+                              {item.total.toFixed(2)} {extractedData.currency}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
               {/* Output Options */}
               <div className="card p-6">
                 <h3 className="font-medium text-gray-900 mb-4">Ausgabeformat</h3>
@@ -587,10 +688,27 @@ export function ConversionPage() {
             </div>
           </div>
 
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex items-center justify-center gap-4 flex-wrap">
             <button onClick={handleReset} className="btn-secondary">
               <RefreshCw className="h-4 w-4 mr-2" />
               Weitere Konvertierung
+            </button>
+            <button
+              onClick={handleXmlPreview}
+              disabled={previewXml.isPending}
+              className="btn-secondary"
+            >
+              {previewXml.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Lade XML...
+                </>
+              ) : (
+                <>
+                  <Code className="h-4 w-4 mr-2" />
+                  XML ansehen
+                </>
+              )}
             </button>
             <button
               onClick={handleDownload}
@@ -609,6 +727,47 @@ export function ConversionPage() {
                 </>
               )}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* XML Preview Modal */}
+      {showXmlPreview && xmlContent && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <Code className="h-5 w-5 text-primary-500" />
+                XML Vorschau
+              </h3>
+              <button
+                onClick={() => setShowXmlPreview(false)}
+                className="text-gray-400 hover:text-gray-600 p-1"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto p-4">
+              <pre className="text-xs font-mono text-gray-700 bg-gray-50 rounded-lg p-4 overflow-x-auto whitespace-pre">
+                {xmlContent}
+              </pre>
+            </div>
+            <div className="flex items-center justify-end gap-3 p-4 border-t">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(xmlContent)
+                }}
+                className="btn-secondary text-sm"
+              >
+                In Zwischenablage kopieren
+              </button>
+              <button
+                onClick={() => setShowXmlPreview(false)}
+                className="btn-primary text-sm"
+              >
+                Schliessen
+              </button>
+            </div>
           </div>
         </div>
       )}
