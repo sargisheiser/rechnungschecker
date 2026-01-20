@@ -25,3 +25,12 @@ export {
   usePortalSession,
   useCancelSubscription,
 } from './useBilling'
+
+export {
+  useTemplates,
+  useTemplate,
+  useCreateTemplate,
+  useUpdateTemplate,
+  useDeleteTemplate,
+  useSetDefaultTemplate,
+} from './useTemplates'

@@ -27,6 +27,9 @@ import {
 import { useDropzone } from 'react-dropzone'
 import { useUser } from '@/hooks/useAuth'
 import { useUsage } from '@/hooks/useBilling'
+import { useTemplate } from '@/hooks/useTemplates'
+import { TemplateSelector } from '@/components/TemplateSelector'
+import { PdfPreview } from '@/components/PdfPreview'
 import {
   useConversionStatus,
   usePreviewExtraction,
@@ -68,12 +71,29 @@ export function ConversionPage() {
     validationResult?: ConversionValidationResult
   } | null>(null)
 
-  // Overrides
+  // Template selection
+  const [selectedSenderTemplateId, setSelectedSenderTemplateId] = useState<string | null>(null)
+  const [selectedReceiverTemplateId, setSelectedReceiverTemplateId] = useState<string | null>(null)
+  const { data: senderTemplate } = useTemplate(selectedSenderTemplateId)
+  const { data: receiverTemplate } = useTemplate(selectedReceiverTemplateId)
+
+  // Overrides (includes template data)
   const [overrides, setOverrides] = useState<{
     invoice_number?: string
+    seller_name?: string
+    seller_street?: string
+    seller_postal_code?: string
+    seller_city?: string
     seller_vat_id?: string
+    seller_tax_id?: string
+    buyer_name?: string
+    buyer_street?: string
+    buyer_postal_code?: string
+    buyer_city?: string
     buyer_reference?: string
     leitweg_id?: string
+    iban?: string
+    bic?: string
   }>({})
 
   const preview = usePreviewExtraction()
@@ -152,11 +172,81 @@ export function ConversionPage() {
     setAiUsed(false)
     setConversionResult(null)
     setOverrides({})
+    setSelectedSenderTemplateId(null)
+    setSelectedReceiverTemplateId(null)
     setShowXmlPreview(false)
     setXmlContent(null)
     preview.reset()
     convert.reset()
     previewXml.reset()
+  }
+
+  // Apply sender template when selected
+  const handleSenderTemplateSelect = (template: { id: string } | null) => {
+    if (!template) {
+      setSelectedSenderTemplateId(null)
+      setOverrides((prev) => ({
+        ...prev,
+        seller_name: undefined,
+        seller_street: undefined,
+        seller_postal_code: undefined,
+        seller_city: undefined,
+        seller_vat_id: undefined,
+        seller_tax_id: undefined,
+        iban: undefined,
+        bic: undefined,
+      }))
+      return
+    }
+    setSelectedSenderTemplateId(template.id)
+  }
+
+  // Apply receiver template when selected
+  const handleReceiverTemplateSelect = (template: { id: string } | null) => {
+    if (!template) {
+      setSelectedReceiverTemplateId(null)
+      setOverrides((prev) => ({
+        ...prev,
+        buyer_name: undefined,
+        buyer_street: undefined,
+        buyer_postal_code: undefined,
+        buyer_city: undefined,
+      }))
+      return
+    }
+    setSelectedReceiverTemplateId(template.id)
+  }
+
+  // Effect to apply sender template data
+  if (senderTemplate && selectedSenderTemplateId) {
+    const newOverrides = {
+      ...overrides,
+      seller_name: senderTemplate.company_name,
+      seller_street: senderTemplate.street || undefined,
+      seller_postal_code: senderTemplate.postal_code || undefined,
+      seller_city: senderTemplate.city || undefined,
+      seller_vat_id: senderTemplate.vat_id || undefined,
+      seller_tax_id: senderTemplate.tax_id || undefined,
+      iban: senderTemplate.iban || undefined,
+      bic: senderTemplate.bic || undefined,
+    }
+    if (JSON.stringify(newOverrides) !== JSON.stringify(overrides)) {
+      setOverrides(newOverrides)
+    }
+  }
+
+  // Effect to apply receiver template data
+  if (receiverTemplate && selectedReceiverTemplateId) {
+    const newOverrides = {
+      ...overrides,
+      buyer_name: receiverTemplate.company_name,
+      buyer_street: receiverTemplate.street || undefined,
+      buyer_postal_code: receiverTemplate.postal_code || undefined,
+      buyer_city: receiverTemplate.city || undefined,
+    }
+    if (JSON.stringify(newOverrides) !== JSON.stringify(overrides)) {
+      setOverrides(newOverrides)
+    }
   }
 
   const handleXmlPreview = async () => {
@@ -174,7 +264,7 @@ export function ConversionPage() {
   const isLimitReached = usage && usage.conversions_limit !== null && usage.conversions_used >= usage.conversions_limit
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">PDF Konvertierung</h1>
@@ -307,30 +397,37 @@ export function ConversionPage() {
               </button>
             </div>
           ) : extractedData ? (
-            <>
-              {/* File info */}
-              <div className="card p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <FileText className="h-8 w-8 text-primary-500" />
-                  <div>
-                    <p className="font-medium text-gray-900">{file?.name}</p>
-                    <p className="text-sm text-gray-500">
-                      {((file?.size || 0) / 1024).toFixed(1)} KB
-                      {aiUsed && (
-                        <span className="inline-flex items-center gap-1 ml-2 text-primary-600">
-                          <Sparkles className="h-3 w-3" /> KI
-                        </span>
-                      )}
-                      {ocrUsed && ' • OCR'}
-                    </p>
-                  </div>
-                </div>
-                <button onClick={handleReset} className="text-gray-400 hover:text-gray-600">
-                  <X className="h-5 w-5" />
-                </button>
+            <div className="grid lg:grid-cols-[400px_1fr] gap-6">
+              {/* PDF Preview - Left Column */}
+              <div className="lg:sticky lg:top-24 lg:self-start">
+                {file && <PdfPreview file={file} />}
               </div>
 
-              {/* Warnings */}
+              {/* Extracted Data - Right Column */}
+              <div className="space-y-6">
+                {/* File info */}
+                <div className="card p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <FileText className="h-8 w-8 text-primary-500" />
+                    <div>
+                      <p className="font-medium text-gray-900">{file?.name}</p>
+                      <p className="text-sm text-gray-500">
+                        {((file?.size || 0) / 1024).toFixed(1)} KB
+                        {aiUsed && (
+                          <span className="inline-flex items-center gap-1 ml-2 text-primary-600">
+                            <Sparkles className="h-3 w-3" /> KI
+                          </span>
+                        )}
+                        {ocrUsed && ' • OCR'}
+                      </p>
+                    </div>
+                  </div>
+                  <button onClick={handleReset} className="text-gray-400 hover:text-gray-600">
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+
+                {/* Warnings */}
               {extractedData.warnings.length > 0 && (
                 <div className="bg-warning-50 border border-warning-200 rounded-lg p-4">
                   <div className="flex items-start gap-3">
@@ -421,18 +518,40 @@ export function ConversionPage() {
 
                 {/* Seller */}
                 <div className="card p-6">
-                  <h3 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-gray-400" />
-                    Verkaeufer
-                  </h3>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-medium text-gray-900 flex items-center gap-2">
+                      <Building2 className="h-4 w-4 text-gray-400" />
+                      Verkaeufer
+                    </h3>
+                    <div className="w-48">
+                      <TemplateSelector
+                        type="sender"
+                        selectedId={selectedSenderTemplateId}
+                        onSelect={handleSenderTemplateSelect}
+                      />
+                    </div>
+                  </div>
                   <div className="space-y-3">
-                    <DataField label="Name" value={extractedData.seller_name} />
-                    <DataField label="Strasse" value={extractedData.seller_street} />
+                    <DataField
+                      label="Name"
+                      value={extractedData.seller_name}
+                      override={overrides.seller_name}
+                    />
+                    <DataField
+                      label="Strasse"
+                      value={extractedData.seller_street}
+                      override={overrides.seller_street}
+                    />
                     <DataField
                       label="PLZ / Ort"
                       value={
                         extractedData.seller_postal_code || extractedData.seller_city
                           ? `${extractedData.seller_postal_code || ''} ${extractedData.seller_city || ''}`.trim()
+                          : undefined
+                      }
+                      override={
+                        overrides.seller_postal_code || overrides.seller_city
+                          ? `${overrides.seller_postal_code || ''} ${overrides.seller_city || ''}`.trim()
                           : undefined
                       }
                     />
@@ -448,18 +567,40 @@ export function ConversionPage() {
 
                 {/* Buyer */}
                 <div className="card p-6">
-                  <h3 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
-                    <User className="h-4 w-4 text-gray-400" />
-                    Kaeufer
-                  </h3>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-medium text-gray-900 flex items-center gap-2">
+                      <User className="h-4 w-4 text-gray-400" />
+                      Kaeufer
+                    </h3>
+                    <div className="w-48">
+                      <TemplateSelector
+                        type="receiver"
+                        selectedId={selectedReceiverTemplateId}
+                        onSelect={handleReceiverTemplateSelect}
+                      />
+                    </div>
+                  </div>
                   <div className="space-y-3">
-                    <DataField label="Name" value={extractedData.buyer_name} />
-                    <DataField label="Strasse" value={extractedData.buyer_street} />
+                    <DataField
+                      label="Name"
+                      value={extractedData.buyer_name}
+                      override={overrides.buyer_name}
+                    />
+                    <DataField
+                      label="Strasse"
+                      value={extractedData.buyer_street}
+                      override={overrides.buyer_street}
+                    />
                     <DataField
                       label="PLZ / Ort"
                       value={
                         extractedData.buyer_postal_code || extractedData.buyer_city
                           ? `${extractedData.buyer_postal_code || ''} ${extractedData.buyer_city || ''}`.trim()
+                          : undefined
+                      }
+                      override={
+                        overrides.buyer_postal_code || overrides.buyer_city
+                          ? `${overrides.buyer_postal_code || ''} ${overrides.buyer_city || ''}`.trim()
                           : undefined
                       }
                     />
@@ -642,13 +783,14 @@ export function ConversionPage() {
                 </button>
               </div>
 
-              {convert.isError && (
-                <div className="flex items-center gap-2 p-4 bg-error-50 rounded-lg text-error-600">
-                  <AlertCircle className="h-5 w-5 flex-shrink-0" />
-                  <span>Konvertierung fehlgeschlagen. Bitte versuchen Sie es erneut.</span>
-                </div>
-              )}
-            </>
+                {convert.isError && (
+                  <div className="flex items-center gap-2 p-4 bg-error-50 rounded-lg text-error-600">
+                    <AlertCircle className="h-5 w-5 flex-shrink-0" />
+                    <span>Konvertierung fehlgeschlagen. Bitte versuchen Sie es erneut.</span>
+                  </div>
+                )}
+              </div>
+            </div>
           ) : null}
         </div>
       )}

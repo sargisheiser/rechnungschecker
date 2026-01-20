@@ -123,6 +123,7 @@ class User(Base):
     webhooks = relationship("WebhookSubscription", back_populates="user", cascade="all, delete-orphan")
     integrations = relationship("IntegrationSettings", back_populates="user", cascade="all, delete-orphan")
     batch_jobs = relationship("BatchJob", back_populates="user", cascade="all, delete-orphan")
+    templates = relationship("Template", back_populates="user", cascade="all, delete-orphan")
 
     def can_manage_clients(self) -> bool:
         """Check if user's plan allows client management."""

@@ -1,5 +1,5 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom'
-import { FileCheck, Menu, X, User, LogOut, Settings, BarChart3, FolderUp, Files } from 'lucide-react'
+import { FileCheck, Menu, X, User, LogOut, Settings, BarChart3, FolderUp, Files, BookTemplate } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore, useLogout } from '@/hooks/useAuth'
@@ -87,6 +87,13 @@ export function Layout() {
                       <span className="text-sm">{user?.email}</span>
                     </button>
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                      <Link
+                        to="/vorlagen"
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        <BookTemplate className="h-4 w-4" />
+                        Vorlagen
+                      </Link>
                       <Link
                         to="/einstellungen"
                         className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
@@ -190,6 +197,13 @@ export function Layout() {
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {t('nav.batch')}
+                  </Link>
+                  <Link
+                    to="/vorlagen"
+                    className="block px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Vorlagen
                   </Link>
                   <Link
                     to="/einstellungen"

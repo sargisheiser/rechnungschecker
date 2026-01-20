@@ -14,6 +14,7 @@ from app.api.v1 import (
     export,
     integrations,
     reports,
+    templates,
     validate,
     webhooks,
 )
@@ -34,3 +35,4 @@ api_router.include_router(integrations.router, prefix="/integrations", tags=["In
 api_router.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])
 api_router.include_router(batch.router, prefix="/batch", tags=["Batch"])
 api_router.include_router(audit.router, prefix="/audit", tags=["Audit"])
+api_router.include_router(templates.router, prefix="/templates", tags=["Templates"])

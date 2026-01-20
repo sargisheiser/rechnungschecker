@@ -124,3 +124,12 @@ rechnungschecker_commercial_docs.docx
 
 # KoSIT validator (download separately)
 kosit/
+
+# Test files
+test_files/
+test-rechnung.xml
+test_xrechnung-report.xml
+*-report.xml
+
+# Claude Code
+.claude/

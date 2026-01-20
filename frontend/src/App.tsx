@@ -25,6 +25,7 @@ import { SettingsPage } from '@/pages/Settings'
 import AnalyticsPage from '@/pages/Analytics'
 import BatchUploadPage from '@/pages/BatchUpload'
 import BatchConversionPage from '@/pages/BatchConversion'
+import { TemplatesPage } from '@/pages/Templates'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 
 function App() {
@@ -152,6 +153,14 @@ function App() {
           element={
             <ProtectedRoute>
               <BatchUploadPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="vorlagen"
+          element={
+            <ProtectedRoute>
+              <TemplatesPage />
             </ProtectedRoute>
           }
         />

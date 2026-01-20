@@ -8,6 +8,7 @@ from app.models.webhook import WebhookSubscription, WebhookDelivery, WebhookEven
 from app.models.integration import IntegrationSettings, IntegrationType
 from app.models.batch import BatchJob, BatchFile, BatchJobStatus, BatchFileStatus
 from app.models.audit import AuditLog, AuditAction
+from app.models.template import Template, TemplateType
 
 __all__ = [
     "User",
@@ -27,4 +28,6 @@ __all__ = [
     "BatchFileStatus",
     "AuditLog",
     "AuditAction",
+    "Template",
+    "TemplateType",
 ]

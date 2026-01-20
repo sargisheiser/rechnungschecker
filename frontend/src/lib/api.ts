@@ -41,6 +41,11 @@ import type {
   WebhookUpdateRequest,
   WebhookTestResponse,
   ExportParams,
+  Template,
+  TemplateList,
+  TemplateCreateRequest,
+  TemplateUpdateRequest,
+  TemplateType,
 } from '@/types'
 
 const api = axios.create({
@@ -193,12 +198,14 @@ function transformValidationResponse(
       message: e.message_de,
       location: e.location,
       severity: e.severity as 'error' | 'warning' | 'info',
+      suggestion: e.suggestion,
     })),
     warnings: data.warnings.map((w) => ({
       code: w.code,
       message: w.message_de,
       location: w.location,
       severity: w.severity as 'error' | 'warning' | 'info',
+      suggestion: w.suggestion,
     })),
     validated_at: data.validated_at,
     can_download_report: !!data.report_url,
@@ -727,6 +734,43 @@ export const batchApi = {
 
   delete: async (jobId: string): Promise<void> => {
     await api.delete(`/batch/jobs/${jobId}`)
+  },
+}
+
+// Templates API
+export const templatesApi = {
+  list: async (page = 1, pageSize = 50, templateType?: TemplateType): Promise<TemplateList> => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      page_size: pageSize.toString(),
+    })
+    if (templateType) params.set('template_type', templateType)
+    const response = await api.get<TemplateList>(`/templates/?${params}`)
+    return response.data
+  },
+
+  get: async (id: string): Promise<Template> => {
+    const response = await api.get<Template>(`/templates/${id}`)
+    return response.data
+  },
+
+  create: async (data: TemplateCreateRequest): Promise<Template> => {
+    const response = await api.post<Template>('/templates/', data)
+    return response.data
+  },
+
+  update: async (id: string, data: TemplateUpdateRequest): Promise<Template> => {
+    const response = await api.patch<Template>(`/templates/${id}`, data)
+    return response.data
+  },
+
+  delete: async (id: string): Promise<void> => {
+    await api.delete(`/templates/${id}`)
+  },
+
+  setDefault: async (id: string): Promise<Template> => {
+    const response = await api.post<Template>(`/templates/${id}/set-default`)
+    return response.data
   },
 }
 

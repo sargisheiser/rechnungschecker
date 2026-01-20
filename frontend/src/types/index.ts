@@ -39,6 +39,7 @@ export interface ValidationError {
   message: string
   location?: string
   severity: 'error' | 'warning' | 'info'
+  suggestion?: string
 }
 
 // Backend response format
@@ -493,3 +494,62 @@ export interface ExportParams {
   status?: ExportValidationStatus
   format?: ExportFormat
 }
+
+// Template types
+export type TemplateType = 'sender' | 'receiver'
+
+export interface Template {
+  id: string
+  name: string
+  template_type: TemplateType
+  company_name: string
+  street?: string
+  postal_code?: string
+  city?: string
+  country_code: string
+  vat_id?: string
+  tax_id?: string
+  email?: string
+  phone?: string
+  iban?: string
+  bic?: string
+  is_default: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface TemplateListItem {
+  id: string
+  name: string
+  template_type: TemplateType
+  company_name: string
+  city?: string
+  is_default: boolean
+  created_at: string
+}
+
+export interface TemplateList {
+  items: TemplateListItem[]
+  total: number
+  page: number
+  page_size: number
+}
+
+export interface TemplateCreateRequest {
+  name: string
+  template_type: TemplateType
+  company_name: string
+  street?: string
+  postal_code?: string
+  city?: string
+  country_code?: string
+  vat_id?: string
+  tax_id?: string
+  email?: string
+  phone?: string
+  iban?: string
+  bic?: string
+  is_default?: boolean
+}
+
+export interface TemplateUpdateRequest extends Partial<TemplateCreateRequest> {}

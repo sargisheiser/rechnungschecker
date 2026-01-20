@@ -413,14 +413,77 @@ class ZUGFeRDValidator:
 
     def _get_suggestion(self, code: str) -> str | None:
         """Get fix suggestion for an error code."""
-        # Reuse XRechnung suggestions + add ZUGFeRD-specific ones
         suggestions = {
-            "BR-DE-01": "Fügen Sie eine Leitweg-ID hinzu.",
-            "BR-DE-02": "Geben Sie die Bankverbindung des Verkäufers an.",
-            "BR-DE-04": "Fügen Sie eine gültige Umsatzsteuer-ID hinzu.",
-            "BR-DE-08": "Geben Sie ein gültiges IBAN-Format an.",
-            "BR-DE-09": "Das Fälligkeitsdatum ist erforderlich.",
-            "CII-SR-001": "Überprüfen Sie das CII-XML-Format.",
-            "CII-SR-002": "Ein erforderliches CII-Element fehlt.",
+            # ZUGFeRD-specific rules
+            "ZF-001": "Das eingebettete XML ist kein gueltiges ZUGFeRD/Factur-X Format.",
+            "ZF-002": "Die PDF/A-3 Konformitaet ist fuer ZUGFeRD erforderlich.",
+            "ZF-003": "Das XML muss als 'Alternative' eingebettet sein (AF-Beziehung).",
+            "ZUGFERD-PROFILE-DEPRECATED": "Verwenden Sie mindestens das Profil BASIC oder EN16931.",
+            "ZUGFERD-PROFILE-UNKNOWN": "Stellen Sie sicher, dass das Profil korrekt angegeben ist.",
+            # CII specific rules
+            "CII-SR-001": "Pruefen Sie die CII-Namensraeume im XML.",
+            "CII-SR-002": "Das CrossIndustryInvoice-Element muss vorhanden sein.",
+            "CII-SR-003": "Entfernen Sie nicht erlaubte XML-Erweiterungen.",
+            "CII-SR-004": "Pruefen Sie die CII-Elementreihenfolge.",
+            "CII-SR-005": "Verwenden Sie nur erlaubte CII-Elemente.",
+            # BR-DE German-specific rules
+            "BR-DE-01": "Fuegen Sie eine Leitweg-ID im Format XX-XXXX-XXXX-XX hinzu.",
+            "BR-DE-02": "Geben Sie IBAN und optional BIC des Verkaeufers an.",
+            "BR-DE-03": "Ergaenzen Sie die Zahlungsbedingungen oder das Faelligkeitsdatum.",
+            "BR-DE-04": "Tragen Sie eine gueltige USt-IdNr. ein (DE + 9 Ziffern).",
+            "BR-DE-05": "Geben Sie einen Ansprechpartner beim Verkaeufer an.",
+            "BR-DE-06": "Ergaenzen Sie Telefon oder E-Mail des Verkaeufers.",
+            "BR-DE-07": "Fuegen Sie die Telefonnummer des Verkaeufers hinzu.",
+            "BR-DE-08": "Pruefen Sie das IBAN-Format (DE + 20 Zeichen).",
+            "BR-DE-09": "Geben Sie ein Faelligkeitsdatum oder Zahlungsziel an.",
+            "BR-DE-10": "Fuegen Sie den BIC der Bank hinzu (8 oder 11 Zeichen).",
+            "BR-DE-13": "Pruefen Sie die Berechnung: MwSt-Betrag = Netto x MwSt-Satz.",
+            "BR-DE-14": "Tragen Sie eine eindeutige Rechnungsnummer ein.",
+            "BR-DE-15": "Fuegen Sie das Rechnungsdatum hinzu.",
+            "BR-DE-16": "Fuegen Sie mindestens eine Rechnungsposition hinzu.",
+            "BR-DE-17": "Geben Sie die Menge fuer jede Position an.",
+            "BR-DE-18": "Geben Sie den Einzelpreis fuer jede Position an.",
+            "BR-DE-19": "Fuegen Sie eine Beschreibung fuer jede Position hinzu.",
+            "BR-DE-21": "Pruefen Sie das Leitweg-ID Format: XX-XXXX-XXXX-XX.",
+            # BR Core rules
+            "BR-01": "Tragen Sie eine eindeutige Rechnungsnummer ein.",
+            "BR-02": "Fuegen Sie das Rechnungsdatum im Format JJJJ-MM-TT hinzu.",
+            "BR-03": "Waehlen Sie einen gueltigen Rechnungstyp (380, 381, 384).",
+            "BR-04": "Geben Sie die Rechnungswaehrung an (z.B. EUR).",
+            "BR-05": "Die Waehrung muss als ISO 4217 Code angegeben werden.",
+            "BR-06": "Tragen Sie den Namen des Verkaeufers ein.",
+            "BR-07": "Tragen Sie den Namen des Kaeufers ein.",
+            "BR-08": "Geben Sie die Postanschrift des Verkaeufers an.",
+            "BR-09": "Fuegen Sie das Land des Verkaeufers als ISO-Code hinzu.",
+            "BR-10": "Geben Sie die Postanschrift des Kaeufers an.",
+            "BR-11": "Fuegen Sie das Land des Kaeufers als ISO-Code hinzu.",
+            "BR-12": "Der Bruttobetrag muss angegeben werden.",
+            "BR-13": "Der zu zahlende Betrag muss angegeben werden.",
+            "BR-14": "Fuegen Sie mindestens eine Rechnungsposition hinzu.",
+            "BR-16": "Geben Sie die Menge fuer die Position an.",
+            "BR-17": "Der Nettopreis der Position muss angegeben werden.",
+            # BR-CO Calculation rules
+            "BR-CO-03": "Pruefen Sie: MwSt-Betrag pro Kategorie = Netto x MwSt-Satz.",
+            "BR-CO-10": "Pruefen Sie: Nettosumme + MwSt-Summe = Bruttosumme.",
+            "BR-CO-13": "Pruefen Sie: Positionsnetto = Menge x Einzelpreis.",
+            "BR-CO-15": "Die Nettosumme muss die Summe aller Positionen sein.",
+            "BR-CO-16": "Die MwSt-Summe muss die Summe aller MwSt-Betraege sein.",
+            "BR-CO-25": "Bei positivem Zahlbetrag muss entweder das Faelligkeitsdatum oder Zahlungsbedingungen angegeben werden.",
+            # PEPPOL rules
+            "PEPPOL-EN16931-R120": "Pruefen Sie: Positionsnetto = Menge × (Einzelpreis / Preisbasis) + Zuschlage - Abzuege.",
+            "PEPPOL-EN16931-R121": "Die Summe der Positionsnettobetraege muss dem Gesamtnetto entsprechen.",
+            # BR-S Standard rate VAT rules
+            "BR-S-01": "Steuerkategorie S erfordert MwSt-Satz > 0%.",
+            "BR-S-02": "Geben Sie den MwSt-Satz fuer Steuerkategorie S an.",
+            # BR-AE Reverse charge rules
+            "BR-AE-01": "Steuerkategorie AE (Reverse Charge) erfordert MwSt = 0%.",
+            "BR-AE-02": "Bei Reverse Charge muss der Grund angegeben werden.",
+            # BR-E Exempt VAT rules
+            "BR-E-01": "Steuerkategorie E (steuerbefreit) erfordert MwSt = 0%.",
+            "BR-E-02": "Geben Sie den Grund fuer die Steuerbefreiung an.",
+            # BR-Z Zero rate rules
+            "BR-Z-01": "Steuerkategorie Z (Nullsatz) erfordert MwSt = 0%.",
+            # BR-G Export rules
+            "BR-G-01": "Steuerkategorie G (Export) erfordert MwSt = 0%.",
         }
         return suggestions.get(code)

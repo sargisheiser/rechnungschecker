@@ -7,6 +7,7 @@ import {
   Download,
   RefreshCw,
   UserPlus,
+  Lightbulb,
 } from 'lucide-react'
 import { cn, formatDateTime } from '@/lib/utils'
 import { useValidationStore, useDownloadReport } from '@/hooks/useValidation'
@@ -259,6 +260,14 @@ function ErrorItem({ error }: { error: ValidationError }) {
           )}
           {error.code && (
             <p className="text-xs text-gray-400 mt-1">Code: {error.code}</p>
+          )}
+          {error.suggestion && (
+            <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-md">
+              <div className="flex items-start gap-2">
+                <Lightbulb className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-800">{error.suggestion}</p>
+              </div>
+            </div>
           )}
         </div>
       </div>
