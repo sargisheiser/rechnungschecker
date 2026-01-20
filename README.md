@@ -6,8 +6,9 @@ E-Invoice Validation & Conversion Platform for German SMEs and Steuerberater.
 
 - **XRechnung Validation**: Validate XRechnung XML files against official KoSIT rules
 - **ZUGFeRD Validation**: Validate ZUGFeRD PDF/XML files with embedded invoice data
-- **PDF to E-Invoice Conversion**: Convert PDF invoices to XRechnung or ZUGFeRD format
-- **German Error Messages**: All validation errors in clear German with fix suggestions
+- **PDF to E-Invoice Conversion**: Convert PDF invoices to XRechnung or ZUGFeRD format with live PDF preview
+- **German Error Messages**: All validation errors in clear German with 170+ actionable fix suggestions
+- **Templates**: Save sender/receiver company data for quick invoice creation
 - **PDF Reports**: Downloadable validation reports
 - **Multi-language Support**: German and English UI
 - **Batch Processing**: Validate multiple files at once (paid plans)
@@ -68,7 +69,7 @@ python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
-pip install -e ".[dev]"
+pip install -r requirements.txt
 
 # Copy environment file
 cp .env.example .env
@@ -126,6 +127,10 @@ The application is now available at:
 | POST | `/api/v1/convert/preview` | Preview PDF extraction |
 | POST | `/api/v1/convert/` | Convert PDF to e-invoice |
 | GET | `/api/v1/convert/status` | Get conversion service status |
+| GET | `/api/v1/templates/` | List saved templates |
+| POST | `/api/v1/templates/` | Create new template |
+| PUT | `/api/v1/templates/{id}` | Update template |
+| DELETE | `/api/v1/templates/{id}` | Delete template |
 
 ### Authentication
 
