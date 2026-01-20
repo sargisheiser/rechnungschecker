@@ -14,8 +14,9 @@ export function useBatchJob(jobId: string | undefined) {
     queryKey: ['batch', 'job', jobId],
     queryFn: () => batchApi.get(jobId!),
     enabled: !!jobId,
-    refetchInterval: (data) => {
+    refetchInterval: (query) => {
       // Stop polling when job is complete
+      const data = query.state.data
       if (data?.status === 'completed' || data?.status === 'failed' || data?.status === 'cancelled') {
         return false
       }
