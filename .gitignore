@@ -133,3 +133,6 @@ test_xrechnung-report.xml
 
 # Claude Code
 .claude/
+
+# Implementation docs (internal)
+IMPLEMENTATION_PLAN.md
