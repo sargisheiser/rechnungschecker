@@ -3,10 +3,17 @@ export interface User {
   id: string
   email: string
   company_name?: string
+  full_name?: string
   plan: PlanTier
   is_active: boolean
   is_verified: boolean
   created_at: string
+
+  // Notification preferences
+  email_notifications: boolean
+  notify_validation_results: boolean
+  notify_weekly_summary: boolean
+  notify_marketing: boolean
 }
 
 export type PlanTier = 'free' | 'starter' | 'pro' | 'steuerberater'

@@ -85,12 +85,19 @@ class UserResponse(BaseModel):
     id: UUID
     email: str
     company_name: str | None = None
+    full_name: str | None = None
     is_active: bool
     is_verified: bool
     plan: str
     validations_this_month: int
     conversions_this_month: int
     created_at: datetime
+
+    # Notification preferences
+    email_notifications: bool = True
+    notify_validation_results: bool = True
+    notify_weekly_summary: bool = False
+    notify_marketing: bool = False
 
     class Config:
         from_attributes = True
@@ -100,6 +107,13 @@ class UserUpdate(BaseModel):
     """Schema for user profile update."""
 
     company_name: str | None = Field(None, max_length=255)
+    full_name: str | None = Field(None, max_length=255)
+
+    # Notification preferences
+    email_notifications: bool | None = None
+    notify_validation_results: bool | None = None
+    notify_weekly_summary: bool | None = None
+    notify_marketing: bool | None = None
 
 
 class PasswordChange(BaseModel):

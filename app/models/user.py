@@ -31,6 +31,14 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(255))
     company_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    full_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    # Notification preferences
+    email_notifications: Mapped[bool] = mapped_column(Boolean, default=True)
+    notify_validation_results: Mapped[bool] = mapped_column(Boolean, default=True)
+    notify_weekly_summary: Mapped[bool] = mapped_column(Boolean, default=False)
+    notify_marketing: Mapped[bool] = mapped_column(Boolean, default=False)
+
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
 

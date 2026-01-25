@@ -410,6 +410,22 @@ async def update_profile(
     if data.company_name is not None:
         current_user.company_name = data.company_name
 
+    if data.full_name is not None:
+        current_user.full_name = data.full_name
+
+    # Update notification preferences
+    if data.email_notifications is not None:
+        current_user.email_notifications = data.email_notifications
+
+    if data.notify_validation_results is not None:
+        current_user.notify_validation_results = data.notify_validation_results
+
+    if data.notify_weekly_summary is not None:
+        current_user.notify_weekly_summary = data.notify_weekly_summary
+
+    if data.notify_marketing is not None:
+        current_user.notify_marketing = data.notify_marketing
+
     await db.flush()
     await db.refresh(current_user)
 

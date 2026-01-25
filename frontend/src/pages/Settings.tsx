@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   ArrowLeft,
   User,
@@ -11,6 +12,7 @@ import {
   Building,
   Mail,
   Shield,
+  Bell,
 } from 'lucide-react'
 import {
   useUser,
@@ -21,6 +23,7 @@ import {
 import { cn as _cn } from '@/lib/utils'
 
 export function SettingsPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { data: user } = useUser()
   const updateProfile = useUpdateProfile()
@@ -28,8 +31,28 @@ export function SettingsPage() {
   const deleteAccount = useDeleteAccount()
 
   // Profile form state
+  const [fullName, setFullName] = useState(user?.full_name || '')
   const [companyName, setCompanyName] = useState(user?.company_name || '')
   const [profileSaved, setProfileSaved] = useState(false)
+
+  // Notification preferences state
+  const [emailNotifications, setEmailNotifications] = useState(user?.email_notifications ?? true)
+  const [notifyValidationResults, setNotifyValidationResults] = useState(user?.notify_validation_results ?? true)
+  const [notifyWeeklySummary, setNotifyWeeklySummary] = useState(user?.notify_weekly_summary ?? false)
+  const [notifyMarketing, setNotifyMarketing] = useState(user?.notify_marketing ?? false)
+  const [notificationsSaved, setNotificationsSaved] = useState(false)
+
+  // Update state when user data loads
+  useEffect(() => {
+    if (user) {
+      setFullName(user.full_name || '')
+      setCompanyName(user.company_name || '')
+      setEmailNotifications(user.email_notifications)
+      setNotifyValidationResults(user.notify_validation_results)
+      setNotifyWeeklySummary(user.notify_weekly_summary)
+      setNotifyMarketing(user.notify_marketing)
+    }
+  }, [user])
 
   // Password form state
   const [currentPassword, setCurrentPassword] = useState('')
@@ -45,11 +68,30 @@ export function SettingsPage() {
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      await updateProfile.mutateAsync({ company_name: companyName || undefined })
+      await updateProfile.mutateAsync({
+        full_name: fullName || undefined,
+        company_name: companyName || undefined,
+      })
       setProfileSaved(true)
       setTimeout(() => setProfileSaved(false), 3000)
     } catch (error) {
       console.error('Failed to update profile:', error)
+    }
+  }
+
+  const handleUpdateNotifications = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      await updateProfile.mutateAsync({
+        email_notifications: emailNotifications,
+        notify_validation_results: notifyValidationResults,
+        notify_weekly_summary: notifyWeeklySummary,
+        notify_marketing: notifyMarketing,
+      })
+      setNotificationsSaved(true)
+      setTimeout(() => setNotificationsSaved(false), 3000)
+    } catch (error) {
+      console.error('Failed to update notifications:', error)
     }
   }
 
@@ -100,11 +142,11 @@ export function SettingsPage() {
           className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Zurueck zum Dashboard
+          {t('settings.backToDashboard')}
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">Einstellungen</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('settings.title')}</h1>
         <p className="text-gray-600 mt-1">
-          Verwalten Sie Ihr Profil und Ihre Sicherheitseinstellungen
+          {t('settings.subtitle')}
         </p>
       </div>
 
@@ -115,8 +157,8 @@ export function SettingsPage() {
             <User className="h-5 w-5 text-primary-600" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Profil</h2>
-            <p className="text-sm text-gray-600">Ihre persoenlichen Informationen</p>
+            <h2 className="text-lg font-semibold text-gray-900">{t('settings.profile')}</h2>
+            <p className="text-sm text-gray-600">{t('settings.profileDesc')}</p>
           </div>
         </div>
 
@@ -124,7 +166,7 @@ export function SettingsPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               <Mail className="h-4 w-4 inline mr-1" />
-              E-Mail-Adresse
+              {t('settings.email')}
             </label>
             <input
               type="email"
@@ -133,20 +175,35 @@ export function SettingsPage() {
               className="input bg-gray-50 text-gray-500 cursor-not-allowed"
             />
             <p className="text-xs text-gray-500 mt-1">
-              Die E-Mail-Adresse kann nicht geaendert werden
+              {t('settings.emailHint')}
             </p>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
+              <User className="h-4 w-4 inline mr-1" />
+              {t('settings.fullName')}
+            </label>
+            <input
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder={t('settings.fullNamePlaceholder')}
+              className="input"
+              maxLength={255}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               <Building className="h-4 w-4 inline mr-1" />
-              Firmenname
+              {t('settings.companyName')}
             </label>
             <input
               type="text"
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
-              placeholder="Ihr Firmenname (optional)"
+              placeholder={t('settings.companyNamePlaceholder')}
               className="input"
               maxLength={255}
             />
@@ -155,14 +212,14 @@ export function SettingsPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               <Shield className="h-4 w-4 inline mr-1" />
-              Plan
+              {t('settings.plan')}
             </label>
             <div className="flex items-center gap-2">
               <span className="px-3 py-1.5 bg-primary-100 text-primary-700 rounded-lg text-sm font-medium capitalize">
                 {user?.plan}
               </span>
               <Link to="/preise" className="text-sm text-primary-600 hover:underline">
-                Plan aendern
+                {t('settings.changePlan')}
               </Link>
             </div>
           </div>
@@ -176,13 +233,120 @@ export function SettingsPage() {
               {updateProfile.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                'Speichern'
+                t('settings.save')
               )}
             </button>
             {profileSaved && (
               <span className="text-sm text-success-600 flex items-center gap-1">
                 <Check className="h-4 w-4" />
-                Gespeichert
+                {t('settings.saved')}
+              </span>
+            )}
+          </div>
+        </form>
+      </div>
+
+      {/* Notifications Section */}
+      <div className="card p-6 mb-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 bg-blue-100 rounded-lg">
+            <Bell className="h-5 w-5 text-blue-600" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">{t('settings.notifications')}</h2>
+            <p className="text-sm text-gray-600">{t('settings.notificationsDesc')}</p>
+          </div>
+        </div>
+
+        <form onSubmit={handleUpdateNotifications} className="space-y-4">
+          <div className="space-y-3">
+            {/* Main toggle */}
+            <label className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
+              <div>
+                <span className="font-medium text-gray-900">{t('settings.emailNotifications')}</span>
+                <p className="text-sm text-gray-500">{t('settings.emailNotificationsDesc')}</p>
+              </div>
+              <div className="relative">
+                <input
+                  type="checkbox"
+                  checked={emailNotifications}
+                  onChange={(e) => setEmailNotifications(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+              </div>
+            </label>
+
+            {/* Sub-options - only show when email notifications are enabled */}
+            {emailNotifications && (
+              <div className="ml-4 pl-4 border-l-2 border-gray-200 space-y-3">
+                <label className="flex items-center justify-between p-3 bg-white rounded-lg cursor-pointer hover:bg-gray-50 transition-colors border border-gray-200">
+                  <div>
+                    <span className="font-medium text-gray-900">{t('settings.validationResults')}</span>
+                    <p className="text-sm text-gray-500">{t('settings.validationResultsDesc')}</p>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={notifyValidationResults}
+                      onChange={(e) => setNotifyValidationResults(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                  </div>
+                </label>
+
+                <label className="flex items-center justify-between p-3 bg-white rounded-lg cursor-pointer hover:bg-gray-50 transition-colors border border-gray-200">
+                  <div>
+                    <span className="font-medium text-gray-900">{t('settings.weeklySummary')}</span>
+                    <p className="text-sm text-gray-500">{t('settings.weeklySummaryDesc')}</p>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={notifyWeeklySummary}
+                      onChange={(e) => setNotifyWeeklySummary(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                  </div>
+                </label>
+
+                <label className="flex items-center justify-between p-3 bg-white rounded-lg cursor-pointer hover:bg-gray-50 transition-colors border border-gray-200">
+                  <div>
+                    <span className="font-medium text-gray-900">{t('settings.productUpdates')}</span>
+                    <p className="text-sm text-gray-500">{t('settings.productUpdatesDesc')}</p>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={notifyMarketing}
+                      onChange={(e) => setNotifyMarketing(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                  </div>
+                </label>
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3 pt-2">
+            <button
+              type="submit"
+              disabled={updateProfile.isPending}
+              className="btn-primary"
+            >
+              {updateProfile.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                t('settings.save')
+              )}
+            </button>
+            {notificationsSaved && (
+              <span className="text-sm text-success-600 flex items-center gap-1">
+                <Check className="h-4 w-4" />
+                {t('settings.saved')}
               </span>
             )}
           </div>
@@ -196,8 +360,8 @@ export function SettingsPage() {
             <Lock className="h-5 w-5 text-warning-600" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Passwort aendern</h2>
-            <p className="text-sm text-gray-600">Aktualisieren Sie Ihr Passwort</p>
+            <h2 className="text-lg font-semibold text-gray-900">{t('settings.changePassword')}</h2>
+            <p className="text-sm text-gray-600">{t('settings.changePasswordDesc')}</p>
           </div>
         </div>
 
