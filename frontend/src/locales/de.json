@@ -268,7 +268,12 @@
       "validate": "Datei validieren",
       "convert": "PDF konvertieren",
       "apiKeys": "API-Schluessel",
-      "clients": "Mandanten"
+      "clients": "Mandanten",
+      "batchValidation": "Stapelvalidierung",
+      "convertPdf": "PDF Konvertieren",
+      "batchConversion": "Stapelkonvertierung",
+      "templates": "Vorlagen",
+      "analytics": "Analytik"
     }
   },
   "pricing": {

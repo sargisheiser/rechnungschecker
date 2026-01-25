@@ -265,11 +265,16 @@
       "usage": "Usage"
     },
     "quickActions": {
-      "title": "Quick actions",
+      "title": "Quick Actions",
       "validate": "Validate file",
       "convert": "Convert PDF",
       "apiKeys": "API keys",
-      "clients": "Clients"
+      "clients": "Clients",
+      "batchValidation": "Batch Validation",
+      "convertPdf": "Convert PDF",
+      "batchConversion": "Batch Conversion",
+      "templates": "Templates",
+      "analytics": "Analytics"
     }
   },
   "pricing": {

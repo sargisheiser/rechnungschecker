@@ -12,6 +12,11 @@ import {
   Users,
   Building2,
   ChevronDown,
+  FolderUp,
+  FileOutput,
+  Layers,
+  ClipboardList,
+  BarChart3,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { FileUpload } from '@/components/FileUpload'
@@ -59,14 +64,33 @@ export function Dashboard() {
         </div>
       )}
 
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{t('nav.dashboard')}</h1>
-            <p className="text-gray-600 mt-1">
-              {t('dashboard.welcomeBack')}, {user?.company_name || user?.email}
-            </p>
+      {/* Header Card */}
+      <div className="card p-6 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 rounded-xl bg-primary-100 flex items-center justify-center">
+              <FileCheck className="h-6 w-6 text-primary-600" />
+            </div>
+            <div>
+              <h1 className="text-xl font-semibold text-gray-900">
+                {t('dashboard.welcomeBack')}, {user?.company_name || user?.email?.split('@')[0]}
+              </h1>
+              <div className="flex items-center gap-3 mt-1">
+                <span className={cn(
+                  'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+                  user?.plan === 'steuerberater' ? 'bg-purple-100 text-purple-700' :
+                  user?.plan === 'pro' ? 'bg-primary-100 text-primary-700' :
+                  'bg-gray-100 text-gray-700'
+                )}>
+                  {user?.plan === 'steuerberater' ? 'Steuerberater' : user?.plan === 'pro' ? 'Pro' : 'Free'}
+                </span>
+                {usage && !usageLoading && (
+                  <span className="text-sm text-gray-500">
+                    {usage.validations_used} {t('dashboard.validations').toLowerCase()} diesen Monat
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Client Selector (Steuerberater only) */}
@@ -74,13 +98,13 @@ export function Dashboard() {
             <div className="relative">
               <button
                 onClick={() => setShowClientDropdown(!showClientDropdown)}
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
               >
                 <Building2 className="h-4 w-4 text-gray-500" />
                 <span className="text-sm font-medium text-gray-700">
                   {selectedClient?.name || 'Alle Mandanten'}
                 </span>
-                <ChevronDown className="h-4 w-4 text-gray-400" />
+                <ChevronDown className={cn('h-4 w-4 text-gray-400 transition-transform', showClientDropdown && 'rotate-180')} />
               </button>
 
               {showClientDropdown && (
@@ -142,6 +166,9 @@ export function Dashboard() {
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Main content */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Quick Actions */}
+          <QuickActions plan={user?.plan || 'free'} />
+
           {/* Upload section */}
           <div className="card p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">
@@ -404,5 +431,40 @@ function ValidationHistoryItem({
         {statusLabel}
       </span>
     </Link>
+  )
+}
+
+function QuickActions({ plan }: { plan: string }) {
+  const { t } = useTranslation()
+  const isPro = plan === 'pro' || plan === 'steuerberater'
+
+  const actions = [
+    { label: t('dashboard.quickActions.batchValidation'), icon: FolderUp, to: '/batch', show: true },
+    { label: t('dashboard.quickActions.convertPdf'), icon: FileOutput, to: '/konvertierung', show: true },
+    { label: t('dashboard.quickActions.batchConversion'), icon: Layers, to: '/batch-konvertierung', show: isPro },
+    { label: t('dashboard.quickActions.templates'), icon: ClipboardList, to: '/vorlagen', show: isPro },
+    { label: t('dashboard.quickActions.analytics'), icon: BarChart3, to: '/analytik', show: isPro },
+  ].filter((action) => action.show)
+
+  return (
+    <div className="card p-4">
+      <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">
+        {t('dashboard.quickActions.title')}
+      </h3>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+        {actions.map((action) => (
+          <Link
+            key={action.to}
+            to={action.to}
+            className="flex flex-col items-center gap-2 p-3 rounded-lg border border-gray-200 bg-white hover:border-primary-300 hover:bg-primary-50 transition-all hover:shadow-sm group"
+          >
+            <action.icon className="h-6 w-6 text-gray-400 group-hover:text-primary-500 transition-colors" />
+            <span className="text-xs font-medium text-gray-600 group-hover:text-primary-700 text-center">
+              {action.label}
+            </span>
+          </Link>
+        ))}
+      </div>
+    </div>
   )
 }
