@@ -4,16 +4,45 @@ E-Invoice Validation & Conversion Platform for German SMEs and Steuerberater.
 
 ## Features
 
+### Validation
 - **XRechnung Validation**: Validate XRechnung XML files against official KoSIT rules
 - **ZUGFeRD Validation**: Validate ZUGFeRD PDF/XML files with embedded invoice data
-- **PDF to E-Invoice Conversion**: Convert PDF invoices to XRechnung or ZUGFeRD format with live PDF preview
 - **German Error Messages**: All validation errors in clear German with 170+ actionable fix suggestions
-- **Templates**: Save sender/receiver company data for quick invoice creation
+- **Batch Validation**: Validate multiple files at once (paid plans)
+- **Validation History**: Browse and search past validations with detailed results
 - **PDF Reports**: Downloadable validation reports
-- **Multi-language Support**: German and English UI
-- **Batch Processing**: Validate multiple files at once (paid plans)
+
+### PDF Conversion
+- **PDF to E-Invoice Conversion**: Convert PDF invoices to XRechnung or ZUGFeRD format
+- **Live PDF Preview**: See the original PDF while editing extracted data
+- **AI-Powered Extraction**: OpenAI GPT-4o extracts invoice data from PDFs
+- **Line Item Extraction**: Automatic extraction of invoice line items
+- **Multiple VAT Rates**: Support for 19%, 7%, and 0% VAT rates
+- **Auto-Validation**: Converted invoices are automatically validated with KoSIT
+- **XML Preview**: Preview generated XML before download
+- **Batch Conversion**: Convert multiple PDFs at once (Pro+)
+- **Email Delivery**: Send converted invoices directly via email
+
+### Templates & Workflow
+- **Templates**: Save sender/receiver company data for quick invoice creation
+- **Dashboard Quick Actions**: Quick access to common features
+- **Client Management**: Manage multiple clients (Steuerberater plan)
+
+### Integration & API
+- **REST API**: Full API access for integration
+- **API Keys**: Generate and manage API keys (Pro+)
 - **Webhook Notifications**: Get notified about validation results
-- **API Access**: Full REST API for integration
+- **Audit Logging**: Track all actions for compliance
+
+### Analytics & Monitoring
+- **Analytics Dashboard**: View validation statistics and trends (Pro+)
+- **Usage Tracking**: Monitor API usage and quotas
+- **Langfuse Integration**: LLM observability for AI-powered features
+
+### User Experience
+- **Multi-language Support**: German and English UI (i18n)
+- **Responsive Design**: Works on desktop and mobile
+- **Dark Mode Ready**: UI components support theming
 
 ## Quick Start
 
@@ -99,7 +128,7 @@ cd ..
 **Backend** (Terminal 1):
 ```bash
 source venv/bin/activate
-uvicorn app.main:app --reload --port 8001
+uvicorn app.main:app --reload --port 8000
 ```
 
 **Frontend** (Terminal 2):
@@ -110,8 +139,8 @@ npm run dev
 
 The application is now available at:
 - Frontend: http://localhost:3000
-- Backend API: http://localhost:8001
-- API Docs: http://localhost:8001/api/docs
+- Backend API: http://localhost:8000
+- API Docs: http://localhost:8000/api/docs
 
 ## API Documentation
 
@@ -119,29 +148,50 @@ The application is now available at:
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
+| **Validation** | | |
 | POST | `/api/v1/validate/` | Validate XRechnung/ZUGFeRD (authenticated) |
 | POST | `/api/v1/validate/guest` | Validate as guest (limited) |
 | POST | `/api/v1/validate/zugferd` | Validate ZUGFeRD PDF |
+| POST | `/api/v1/validate/batch` | Batch validate multiple files |
 | GET | `/api/v1/validate/history` | Get validation history |
-| GET | `/api/v1/reports/{id}/pdf` | Download validation report |
+| **Conversion** | | |
 | POST | `/api/v1/convert/preview` | Preview PDF extraction |
 | POST | `/api/v1/convert/` | Convert PDF to e-invoice |
+| POST | `/api/v1/convert/batch` | Batch convert multiple PDFs |
+| POST | `/api/v1/convert/{id}/send-email` | Send converted invoice via email |
 | GET | `/api/v1/convert/status` | Get conversion service status |
+| **Reports** | | |
+| GET | `/api/v1/reports/{id}/pdf` | Download validation report |
+| **Templates** | | |
 | GET | `/api/v1/templates/` | List saved templates |
 | POST | `/api/v1/templates/` | Create new template |
 | PUT | `/api/v1/templates/{id}` | Update template |
 | DELETE | `/api/v1/templates/{id}` | Delete template |
+| **Analytics** | | |
+| GET | `/api/v1/analytics/overview` | Get analytics overview |
+| GET | `/api/v1/analytics/validations` | Get validation statistics |
+| GET | `/api/v1/analytics/conversions` | Get conversion statistics |
+| **Webhooks** | | |
+| GET | `/api/v1/webhooks/` | List webhooks |
+| POST | `/api/v1/webhooks/` | Create webhook |
+| DELETE | `/api/v1/webhooks/{id}` | Delete webhook |
+| **API Keys** | | |
+| GET | `/api/v1/api-keys/` | List API keys |
+| POST | `/api/v1/api-keys/` | Create API key |
+| DELETE | `/api/v1/api-keys/{id}` | Revoke API key |
+| **Audit** | | |
+| GET | `/api/v1/audit/logs` | Get audit logs |
 
 ### Authentication
 
 ```bash
 # Register
-curl -X POST http://localhost:8001/api/v1/auth/register \
+curl -X POST http://localhost:8000/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{"email": "user@example.com", "password": "yourpassword"}'
 
 # Login
-curl -X POST http://localhost:8001/api/v1/auth/login \
+curl -X POST http://localhost:8000/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email": "user@example.com", "password": "yourpassword"}'
 ```
@@ -150,11 +200,11 @@ curl -X POST http://localhost:8001/api/v1/auth/login \
 
 ```bash
 # Guest validation (limited to 1 per day)
-curl -X POST http://localhost:8001/api/v1/validate/guest \
+curl -X POST http://localhost:8000/api/v1/validate/guest \
   -F "file=@invoice.xml"
 
 # Authenticated validation
-curl -X POST http://localhost:8001/api/v1/validate/ \
+curl -X POST http://localhost:8000/api/v1/validate/ \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -F "file=@invoice.xml"
 ```
@@ -171,7 +221,7 @@ pytest
 pytest --cov=app --cov-report=html
 
 # Manual testing with test files
-curl -X POST http://localhost:8001/api/v1/validate/guest \
+curl -X POST http://localhost:8000/api/v1/validate/guest \
   -F "file=@test_files/xrechnung/valid_xrechnung.xml" \
   -F "guest_id=test-123"
 ```
@@ -192,23 +242,35 @@ curl -X POST http://localhost:8001/api/v1/validate/guest \
 rechnungschecker/
 ├── app/
 │   ├── api/v1/           # API endpoints
+│   │   ├── auth.py       # Authentication
+│   │   ├── validate.py   # Validation endpoints
+│   │   ├── convert.py    # Conversion endpoints
+│   │   ├── templates.py  # Template management
+│   │   ├── analytics.py  # Analytics dashboard
+│   │   ├── webhooks.py   # Webhook management
+│   │   ├── api_keys.py   # API key management
+│   │   └── audit.py      # Audit logs
 │   ├── core/             # Database, security, cache
 │   ├── models/           # SQLAlchemy models
 │   ├── schemas/          # Pydantic schemas
 │   └── services/
 │       ├── validator/    # KoSIT validation
 │       ├── converter/    # PDF to e-invoice conversion
-│       └── reports/      # PDF report generation
+│       ├── reports/      # PDF report generation
+│       ├── email/        # Email delivery service
+│       ├── billing/      # Stripe billing integration
+│       └── audit/        # Audit logging service
 ├── alembic/              # Database migrations
-├── frontend/             # React frontend
+├── frontend/             # React frontend (Vite + React 18)
 │   ├── src/
 │   │   ├── components/   # React components
-│   │   ├── hooks/        # Custom hooks
+│   │   ├── hooks/        # Custom hooks (React Query)
 │   │   ├── pages/        # Page components
-│   │   └── locales/      # i18n translations
+│   │   ├── locales/      # i18n translations (de, en)
+│   │   └── lib/          # API client, utilities
 ├── kosit/                # KoSIT validator (download separately)
 ├── test_files/           # Test files for validation
-└── docker-compose.yml    # Docker services
+└── docker-compose.yml    # Docker services (PostgreSQL, Redis)
 ```
 
 ## Environment Variables
@@ -259,6 +321,31 @@ ls -la kosit/*.jar kosit/scenarios.xml
 /opt/homebrew/opt/openjdk/bin/java -jar kosit/validationtool-1.5.0-standalone.jar \
   -s kosit/scenarios.xml -r kosit test_files/xrechnung/valid_xrechnung.xml
 ```
+
+## Pricing Plans
+
+| Feature | Free | Pro | Steuerberater |
+|---------|------|-----|---------------|
+| Validations/month | 10 | 500 | Unlimited |
+| Conversions/month | 5 | 200 | Unlimited |
+| Batch Processing | - | ✓ | ✓ |
+| Templates | - | ✓ | ✓ |
+| Analytics | - | ✓ | ✓ |
+| API Access | - | ✓ | ✓ |
+| Webhooks | - | ✓ | ✓ |
+| Client Management | - | - | ✓ |
+| Priority Support | - | - | ✓ |
+
+## Tech Stack
+
+- **Backend**: Python 3.11+, FastAPI, SQLAlchemy (async), PostgreSQL
+- **Frontend**: React 18, TypeScript, Vite, Tailwind CSS, React Query
+- **Validation**: KoSIT Validator (Java)
+- **AI**: OpenAI GPT-4o for PDF extraction
+- **Email**: Mailgun
+- **Payments**: Stripe
+- **Caching**: Redis
+- **Monitoring**: Langfuse (LLM observability)
 
 ## License
 
