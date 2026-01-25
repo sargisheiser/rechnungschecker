@@ -26,6 +26,7 @@ import AnalyticsPage from '@/pages/Analytics'
 import BatchUploadPage from '@/pages/BatchUpload'
 import BatchConversionPage from '@/pages/BatchConversion'
 import { TemplatesPage } from '@/pages/Templates'
+import { ValidationHistory } from '@/pages/ValidationHistory'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 
 function App() {
@@ -65,6 +66,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="dashboard/verlauf"
+          element={
+            <ProtectedRoute>
+              <ValidationHistory />
             </ProtectedRoute>
           }
         />
