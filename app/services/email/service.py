@@ -804,5 +804,210 @@ RechnungsChecker - E-Rechnung Validierung & Konvertierung
         return await self.send_email(to, subject, html_content, text_content)
 
 
+    async def send_invoice_email(
+        self,
+        to: str,
+        sender_name: str,
+        invoice_number: str,
+        invoice_date: str,
+        gross_amount: str,
+        currency: str,
+        output_format: str,
+        file_content: bytes,
+        filename: str,
+    ) -> bool:
+        """
+        Send converted invoice via email with attachment.
+
+        Args:
+            to: Recipient email address
+            sender_name: Name of the sender/company
+            invoice_number: Invoice number
+            invoice_date: Invoice date
+            gross_amount: Total amount
+            currency: Currency code (e.g., EUR)
+            output_format: Format type (XRechnung or ZUGFeRD)
+            file_content: Binary content of the invoice file
+            filename: Name of the attachment file
+
+        Returns:
+            True if email was sent successfully
+        """
+        # In dev mode, print notification prominently
+        if not self.is_configured:
+            print("\n" + "*" * 60)
+            print("*  INVOICE EMAIL (DEV MODE)")
+            print("*" * 60)
+            print(f"*  To: {to}")
+            print(f"*  From: {sender_name}")
+            print(f"*  Invoice: {invoice_number}")
+            print(f"*  Amount: {gross_amount} {currency}")
+            print(f"*  Format: {output_format}")
+            print(f"*  Attachment: {filename} ({len(file_content)} bytes)")
+            print("*" * 60 + "\n")
+            return True
+
+        subject = f"Ihre E-Rechnung: {invoice_number}"
+
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body {{ font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ text-align: center; padding: 20px 0; border-bottom: 2px solid #2563eb; }}
+                .logo {{ font-size: 24px; font-weight: bold; color: #2563eb; }}
+                .content {{ padding: 30px 0; }}
+                .invoice-details {{
+                    background-color: #f9fafb;
+                    border-radius: 8px;
+                    padding: 20px;
+                    margin: 20px 0;
+                }}
+                .invoice-details table {{
+                    width: 100%;
+                    border-collapse: collapse;
+                }}
+                .invoice-details td {{
+                    padding: 8px 0;
+                    border-bottom: 1px solid #e5e7eb;
+                }}
+                .invoice-details td:first-child {{
+                    color: #6b7280;
+                    width: 40%;
+                }}
+                .invoice-details td:last-child {{
+                    font-weight: 500;
+                    text-align: right;
+                }}
+                .invoice-details tr:last-child td {{
+                    border-bottom: none;
+                }}
+                .format-badge {{
+                    display: inline-block;
+                    padding: 4px 12px;
+                    background-color: #dbeafe;
+                    color: #1d4ed8;
+                    border-radius: 9999px;
+                    font-size: 14px;
+                    font-weight: 500;
+                }}
+                .attachment-info {{
+                    background-color: #ecfdf5;
+                    border: 1px solid #a7f3d0;
+                    border-radius: 8px;
+                    padding: 16px;
+                    margin: 20px 0;
+                    text-align: center;
+                }}
+                .footer {{
+                    padding-top: 20px;
+                    border-top: 1px solid #eee;
+                    font-size: 12px;
+                    color: #666;
+                    text-align: center;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <div class="logo">RechnungsChecker</div>
+                </div>
+                <div class="content">
+                    <p>Guten Tag,</p>
+
+                    <p>anbei erhalten Sie die E-Rechnung <strong>{invoice_number}</strong> vom {invoice_date}.</p>
+
+                    <div class="invoice-details">
+                        <table>
+                            <tr>
+                                <td>Rechnungsnummer</td>
+                                <td>{invoice_number}</td>
+                            </tr>
+                            <tr>
+                                <td>Rechnungsdatum</td>
+                                <td>{invoice_date}</td>
+                            </tr>
+                            <tr>
+                                <td>Betrag</td>
+                                <td><strong>{gross_amount} {currency}</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Format</td>
+                                <td><span class="format-badge">{output_format}</span></td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="attachment-info">
+                        <p style="margin: 0;">📎 Die Rechnung ist als Anhang beigefuegt: <strong>{filename}</strong></p>
+                    </div>
+
+                    <p>Mit freundlichen Gruessen<br><strong>{sender_name}</strong></p>
+                </div>
+                <div class="footer">
+                    <p>Gesendet ueber RechnungsChecker - E-Rechnung Validierung & Konvertierung</p>
+                    <p><a href="https://rechnungschecker.de">rechnungschecker.de</a></p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        text_content = f"""
+Guten Tag,
+
+anbei erhalten Sie die E-Rechnung {invoice_number} vom {invoice_date}.
+
+Rechnungsdetails:
+- Rechnungsnummer: {invoice_number}
+- Rechnungsdatum: {invoice_date}
+- Betrag: {gross_amount} {currency}
+- Format: {output_format}
+
+Die Rechnung ist als Anhang beigefuegt: {filename}
+
+Mit freundlichen Gruessen
+{sender_name}
+
+---
+Gesendet ueber RechnungsChecker
+https://rechnungschecker.de
+        """
+
+        # Send email with attachment
+        try:
+            async with httpx.AsyncClient() as client:
+                # Determine content type based on filename
+                if filename.endswith('.pdf'):
+                    content_type = 'application/pdf'
+                else:
+                    content_type = 'application/xml'
+
+                response = await client.post(
+                    self.base_url,
+                    auth=("api", self.api_key),
+                    data={
+                        "from": f"RechnungsChecker <{self.from_email}>",
+                        "to": to,
+                        "subject": subject,
+                        "html": html_content,
+                        "text": text_content,
+                    },
+                    files={
+                        "attachment": (filename, file_content, content_type),
+                    },
+                )
+                response.raise_for_status()
+                logger.info(f"Invoice email sent to {to}: {invoice_number}")
+                return True
+        except Exception as e:
+            logger.error(f"Failed to send invoice email to {to}: {e}")
+            return False
+
+
 # Singleton instance
 email_service = EmailService()

@@ -171,3 +171,18 @@ class ConversionStatusResponse(BaseModel):
     ai_available: bool = False
     supported_formats: list[OutputFormat]
     supported_profiles: list[ZUGFeRDProfile]
+
+
+class SendInvoiceEmailRequest(BaseModel):
+    """Request to send converted invoice via email."""
+
+    recipient_email: Optional[str] = None
+    send_copy_to_self: bool = False
+
+
+class SendInvoiceEmailResponse(BaseModel):
+    """Response from sending invoice email."""
+
+    success: bool
+    message: str
+    emails_sent: int = 0

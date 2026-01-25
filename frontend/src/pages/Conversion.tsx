@@ -23,6 +23,8 @@ import {
   Code,
   ShieldCheck,
   ShieldX,
+  Mail,
+  Send,
 } from 'lucide-react'
 import { useDropzone } from 'react-dropzone'
 import { useUser } from '@/hooks/useAuth'
@@ -37,6 +39,7 @@ import {
   useDownloadConversion,
   usePreviewXml,
 } from '@/hooks/useConversion'
+import { conversionApi } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import type { ExtractedData, OutputFormat, ZUGFeRDProfileType, ConversionValidationResult } from '@/types'
 
@@ -102,6 +105,13 @@ export function ConversionPage() {
   const previewXml = usePreviewXml()
   const [showXmlPreview, setShowXmlPreview] = useState(false)
   const [xmlContent, setXmlContent] = useState<string | null>(null)
+
+  // Email sending state
+  const [recipientEmail, setRecipientEmail] = useState('')
+  const [sendCopyToSelf, setSendCopyToSelf] = useState(false)
+  const [isSendingEmail, setIsSendingEmail] = useState(false)
+  const [emailSent, setEmailSent] = useState(false)
+  const [emailError, setEmailError] = useState<string | null>(null)
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
@@ -176,9 +186,35 @@ export function ConversionPage() {
     setSelectedReceiverTemplateId(null)
     setShowXmlPreview(false)
     setXmlContent(null)
+    setRecipientEmail('')
+    setSendCopyToSelf(false)
+    setEmailSent(false)
+    setEmailError(null)
     preview.reset()
     convert.reset()
     previewXml.reset()
+  }
+
+  const handleSendEmail = async () => {
+    if (!conversionResult || (!recipientEmail && !sendCopyToSelf)) return
+
+    setIsSendingEmail(true)
+    setEmailError(null)
+
+    try {
+      await conversionApi.sendEmail(
+        conversionResult.conversionId,
+        recipientEmail || undefined,
+        sendCopyToSelf
+      )
+      setEmailSent(true)
+      setRecipientEmail('')
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { detail?: string } } }
+      setEmailError(error.response?.data?.detail || 'E-Mail konnte nicht gesendet werden')
+    } finally {
+      setIsSendingEmail(false)
+    }
   }
 
   // Apply sender template when selected
@@ -950,6 +986,75 @@ export function ConversionPage() {
                 </>
               )}
             </button>
+          </div>
+
+          {/* Email Sending Section */}
+          <div className="mt-8 pt-8 border-t border-gray-200">
+            <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center justify-center gap-2">
+              <Mail className="h-5 w-5 text-primary-500" />
+              Per E-Mail senden
+            </h3>
+
+            {emailSent ? (
+              <div className="flex items-center justify-center gap-2 p-4 bg-success-50 rounded-lg text-success-700">
+                <CheckCircle className="h-5 w-5" />
+                <span>E-Mail erfolgreich gesendet!</span>
+                <button
+                  onClick={() => setEmailSent(false)}
+                  className="ml-2 text-success-600 hover:text-success-800 underline text-sm"
+                >
+                  Weitere senden
+                </button>
+              </div>
+            ) : (
+              <div className="max-w-md mx-auto space-y-4">
+                <div>
+                  <label className="label">Empfaenger-E-Mail</label>
+                  <input
+                    type="email"
+                    value={recipientEmail}
+                    onChange={(e) => setRecipientEmail(e.target.value)}
+                    placeholder="empfaenger@beispiel.de"
+                    className="input"
+                  />
+                </div>
+
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={sendCopyToSelf}
+                    onChange={(e) => setSendCopyToSelf(e.target.checked)}
+                    className="rounded text-primary-600"
+                  />
+                  <span className="text-sm text-gray-700">Kopie an mich senden</span>
+                </label>
+
+                {emailError && (
+                  <div className="flex items-center gap-2 p-3 bg-error-50 rounded-lg text-error-600 text-sm">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                    <span>{emailError}</span>
+                  </div>
+                )}
+
+                <button
+                  onClick={handleSendEmail}
+                  disabled={isSendingEmail || (!recipientEmail && !sendCopyToSelf)}
+                  className="btn-secondary w-full"
+                >
+                  {isSendingEmail ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Wird gesendet...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4 mr-2" />
+                      Per E-Mail senden
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

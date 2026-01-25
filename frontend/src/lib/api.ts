@@ -466,6 +466,21 @@ export const conversionApi = {
     })
     return response.data
   },
+
+  sendEmail: async (
+    conversionId: string,
+    recipientEmail?: string,
+    sendCopyToSelf: boolean = false
+  ): Promise<{ success: boolean; message: string; emails_sent: number }> => {
+    const response = await api.post<{ success: boolean; message: string; emails_sent: number }>(
+      `/convert/${conversionId}/send-email`,
+      {
+        recipient_email: recipientEmail || null,
+        send_copy_to_self: sendCopyToSelf,
+      }
+    )
+    return response.data
+  },
 }
 
 // Integrations API

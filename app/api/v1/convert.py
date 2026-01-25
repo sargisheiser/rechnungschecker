@@ -18,6 +18,8 @@ from app.schemas.conversion import (
     ExtractedDataSchema,
     OutputFormat,
     PreviewResponse,
+    SendInvoiceEmailRequest,
+    SendInvoiceEmailResponse,
     ValidationErrorSchema,
     ValidationResultSchema,
     ZUGFeRDProfile,
@@ -504,3 +506,120 @@ async def convert_batch(
             break  # Stop processing if limit reached
 
     return results
+
+
+@router.post("/{conversion_id}/send-email", response_model=SendInvoiceEmailResponse)
+async def send_invoice_email(
+    conversion_id: str,
+    request: SendInvoiceEmailRequest,
+    current_user: User = Depends(get_current_user),
+) -> SendInvoiceEmailResponse:
+    """
+    Send converted invoice via email.
+
+    Sends the converted file to the specified recipient and/or user's own email.
+    """
+    from app.services.email.service import email_service
+
+    # Check if conversion exists
+    if conversion_id not in _conversion_cache:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Konvertierung nicht gefunden oder abgelaufen",
+        )
+
+    # Get cached conversion data
+    content, filename, content_type, xml_content = _conversion_cache[conversion_id]
+
+    # Need at least one recipient
+    if not request.recipient_email and not request.send_copy_to_self:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Bitte geben Sie eine Empfaenger-E-Mail an oder waehlen Sie 'Kopie an mich senden'",
+        )
+
+    # Extract invoice details from XML for email
+    invoice_number = "Unbekannt"
+    invoice_date = "Unbekannt"
+    gross_amount = "0.00"
+    currency = "EUR"
+    output_format = "XRechnung" if filename.endswith(".xml") else "ZUGFeRD"
+
+    # Try to parse invoice data from XML
+    if xml_content:
+        try:
+            import xml.etree.ElementTree as ET
+            root = ET.fromstring(xml_content)
+            ns = {
+                'cbc': 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2',
+                'ram': 'urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100',
+            }
+
+            # Try UBL (XRechnung)
+            inv_id = root.find('.//cbc:ID', ns)
+            if inv_id is not None and inv_id.text:
+                invoice_number = inv_id.text
+
+            issue_date = root.find('.//cbc:IssueDate', ns)
+            if issue_date is not None and issue_date.text:
+                invoice_date = issue_date.text
+
+            payable = root.find('.//cbc:PayableAmount', ns)
+            if payable is not None and payable.text:
+                gross_amount = payable.text
+                if payable.get('currencyID'):
+                    currency = payable.get('currencyID')
+
+            # Try CII (ZUGFeRD) if UBL didn't work
+            if invoice_number == "Unbekannt":
+                inv_id = root.find('.//ram:ID', ns)
+                if inv_id is not None and inv_id.text:
+                    invoice_number = inv_id.text
+
+        except Exception as e:
+            logger.warning(f"Could not parse invoice XML for email: {e}")
+
+    # Prepare recipients list
+    recipients = []
+    if request.recipient_email:
+        recipients.append(request.recipient_email)
+    if request.send_copy_to_self and current_user.email:
+        if current_user.email not in recipients:
+            recipients.append(current_user.email)
+
+    # Send emails
+    emails_sent = 0
+    sender_name = current_user.full_name or current_user.company_name or "RechnungsChecker Benutzer"
+
+    for recipient in recipients:
+        success = await email_service.send_invoice_email(
+            to=recipient,
+            sender_name=sender_name,
+            invoice_number=invoice_number,
+            invoice_date=invoice_date,
+            gross_amount=gross_amount,
+            currency=currency,
+            output_format=output_format,
+            file_content=content,
+            filename=filename,
+        )
+        if success:
+            emails_sent += 1
+
+    if emails_sent == 0:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="E-Mail konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
+        )
+
+    message = (
+        f"E-Mail erfolgreich an {emails_sent} Empfaenger gesendet"
+        if emails_sent > 1
+        else "E-Mail erfolgreich gesendet"
+    )
+
+    return SendInvoiceEmailResponse(
+        success=True,
+        message=message,
+        emails_sent=emails_sent,
+    )
