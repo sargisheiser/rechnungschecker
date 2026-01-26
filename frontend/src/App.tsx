@@ -27,6 +27,8 @@ import BatchUploadPage from '@/pages/BatchUpload'
 import BatchConversionPage from '@/pages/BatchConversion'
 import { TemplatesPage } from '@/pages/Templates'
 import { ValidationHistory } from '@/pages/ValidationHistory'
+import TeamPage from '@/pages/Team'
+import InvoiceCreatorPage from '@/pages/InvoiceCreator'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { AdminRoute } from '@/components/AdminRoute'
 import { AdminDashboard } from '@/pages/admin/AdminDashboard'
@@ -175,6 +177,30 @@ function App() {
           element={
             <ProtectedRoute>
               <TemplatesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="team"
+          element={
+            <ProtectedRoute>
+              <TeamPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="rechnung-erstellen"
+          element={
+            <ProtectedRoute>
+              <InvoiceCreatorPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="rechnung-erstellen/:draftId"
+          element={
+            <ProtectedRoute>
+              <InvoiceCreatorPage />
             </ProtectedRoute>
           }
         />

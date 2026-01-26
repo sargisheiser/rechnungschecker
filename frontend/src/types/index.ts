@@ -637,3 +637,179 @@ export interface TemplateCreateRequest {
 }
 
 export interface TemplateUpdateRequest extends Partial<TemplateCreateRequest> {}
+
+// Organization/Team types
+export type OrganizationRole = 'owner' | 'admin' | 'member'
+
+export interface Organization {
+  id: string
+  name: string
+  slug: string
+  description?: string
+  owner_id: string
+  plan: PlanTier
+  max_members: number
+  is_active: boolean
+  validations_this_month: number
+  conversions_this_month: number
+  member_count?: number
+  created_at: string
+}
+
+export interface OrganizationList {
+  organizations: Organization[]
+  total: number
+}
+
+export interface OrganizationCreateRequest {
+  name: string
+  description?: string
+}
+
+export interface OrganizationUpdateRequest {
+  name?: string
+  description?: string
+}
+
+export interface OrganizationMember {
+  id: string
+  user_id: string
+  email: string
+  full_name?: string
+  role: OrganizationRole
+  invited_at: string
+  joined_at?: string
+}
+
+export interface OrganizationMemberList {
+  members: OrganizationMember[]
+  total: number
+}
+
+export interface MemberInviteRequest {
+  email: string
+  role: 'admin' | 'member'
+}
+
+export interface MemberUpdateRequest {
+  role: 'admin' | 'member'
+}
+
+export interface OrganizationInvitation {
+  id: string
+  email: string
+  role: OrganizationRole
+  organization_name: string
+  expires_at: string
+  is_valid: boolean
+}
+
+// Invoice Creator types
+export interface PartyAddress {
+  street?: string
+  city?: string
+  postal_code?: string
+  country: string
+}
+
+export interface PartyInfo {
+  name: string
+  address?: PartyAddress
+  tax_id?: string
+  vat_id?: string
+  email?: string
+  phone?: string
+  iban?: string
+  bic?: string
+  bank_name?: string
+}
+
+export interface InvoiceLineItem {
+  id?: string
+  description: string
+  quantity: number
+  unit: string
+  unit_price: number
+  tax_rate: number
+  tax_category: string
+}
+
+export interface PaymentInfo {
+  payment_terms?: string
+  payment_means_code: string
+  due_date?: string
+  iban?: string
+  bic?: string
+  bank_name?: string
+}
+
+export interface InvoiceReferences {
+  order_reference?: string
+  buyer_reference?: string
+  contract_reference?: string
+  project_reference?: string
+}
+
+export interface InvoiceData {
+  invoice_number?: string
+  invoice_date?: string
+  due_date?: string
+  currency: string
+  seller?: PartyInfo
+  buyer?: PartyInfo
+  line_items: InvoiceLineItem[]
+  payment?: PaymentInfo
+  references?: InvoiceReferences
+  note?: string
+}
+
+export interface InvoiceDraft {
+  id: string
+  user_id: string
+  client_id?: string
+  name: string
+  output_format: 'xrechnung' | 'zugferd'
+  invoice_data: InvoiceData
+  current_step: number
+  is_complete: boolean
+  generated_xml?: string
+  validation_result_id?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface InvoiceDraftListItem {
+  id: string
+  name: string
+  output_format: string
+  current_step: number
+  is_complete: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface InvoiceDraftList {
+  drafts: InvoiceDraftListItem[]
+  total: number
+}
+
+export interface InvoiceDraftCreateRequest {
+  name?: string
+  output_format?: 'xrechnung' | 'zugferd'
+  client_id?: string
+}
+
+export interface InvoiceDraftUpdateRequest {
+  name?: string
+  output_format?: 'xrechnung' | 'zugferd'
+  current_step?: number
+  invoice_data?: InvoiceData
+}
+
+export interface GenerateInvoiceResponse {
+  id: string
+  xml: string
+  is_valid: boolean
+  validation_errors: string[]
+  validation_warnings: string[]
+}

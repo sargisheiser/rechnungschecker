@@ -145,3 +145,10 @@ class UsageResponse(BaseModel):
     conversions_used: int
     conversions_limit: int
     usage_reset_date: datetime
+
+
+class GoogleOAuthCallback(BaseModel):
+    """Schema for Google OAuth callback."""
+
+    code: str
+    redirect_uri: str

@@ -152,7 +152,11 @@ export const authApi = {
 
   // Exchange Google OAuth code for tokens
   googleCallback: async (code: string): Promise<AuthTokens> => {
-    const response = await api.post<AuthTokens>('/auth/google/callback', { code })
+    const redirectUri = `${window.location.origin}/auth/google/callback`
+    const response = await api.post<AuthTokens>('/auth/google/callback', {
+      code,
+      redirect_uri: redirectUri
+    })
     return response.data
   },
 
@@ -866,6 +870,123 @@ export const adminApi = {
     if (userId) params.set('user_id', userId)
     if (action) params.set('action', action)
     const response = await api.get<AdminAuditLogList>(`/admin/audit?${params}`)
+    return response.data
+  },
+}
+
+// Organization API
+import type {
+  Organization,
+  OrganizationList,
+  OrganizationCreateRequest,
+  OrganizationUpdateRequest,
+  OrganizationMember,
+  OrganizationMemberList,
+  MemberInviteRequest,
+  MemberUpdateRequest,
+  OrganizationInvitation,
+} from '@/types'
+
+export const organizationApi = {
+  list: async (): Promise<OrganizationList> => {
+    const response = await api.get<OrganizationList>('/organizations/')
+    return response.data
+  },
+
+  get: async (orgId: string): Promise<Organization> => {
+    const response = await api.get<Organization>(`/organizations/${orgId}`)
+    return response.data
+  },
+
+  create: async (data: OrganizationCreateRequest): Promise<Organization> => {
+    const response = await api.post<Organization>('/organizations/', data)
+    return response.data
+  },
+
+  update: async (orgId: string, data: OrganizationUpdateRequest): Promise<Organization> => {
+    const response = await api.patch<Organization>(`/organizations/${orgId}`, data)
+    return response.data
+  },
+
+  delete: async (orgId: string): Promise<void> => {
+    await api.delete(`/organizations/${orgId}`)
+  },
+
+  // Member management
+  listMembers: async (orgId: string): Promise<OrganizationMemberList> => {
+    const response = await api.get<OrganizationMemberList>(`/organizations/${orgId}/members`)
+    return response.data
+  },
+
+  inviteMember: async (orgId: string, data: MemberInviteRequest): Promise<OrganizationInvitation> => {
+    const response = await api.post<OrganizationInvitation>(`/organizations/${orgId}/members`, data)
+    return response.data
+  },
+
+  updateMember: async (orgId: string, userId: string, data: MemberUpdateRequest): Promise<OrganizationMember> => {
+    const response = await api.patch<OrganizationMember>(`/organizations/${orgId}/members/${userId}`, data)
+    return response.data
+  },
+
+  removeMember: async (orgId: string, userId: string): Promise<void> => {
+    await api.delete(`/organizations/${orgId}/members/${userId}`)
+  },
+
+  // Invitations
+  getInvitation: async (token: string): Promise<OrganizationInvitation> => {
+    const response = await api.get<OrganizationInvitation>(`/organizations/invitations/${token}`)
+    return response.data
+  },
+
+  acceptInvitation: async (token: string): Promise<{ message: string }> => {
+    const response = await api.post<{ message: string }>(`/organizations/invitations/${token}/accept`)
+    return response.data
+  },
+}
+
+// Invoice Creator API
+import type {
+  InvoiceDraft,
+  InvoiceDraftList,
+  InvoiceDraftCreateRequest,
+  InvoiceDraftUpdateRequest,
+  GenerateInvoiceResponse,
+} from '@/types'
+
+export const invoiceApi = {
+  listDrafts: async (): Promise<InvoiceDraftList> => {
+    const response = await api.get<InvoiceDraftList>('/invoices/drafts/')
+    return response.data
+  },
+
+  getDraft: async (draftId: string): Promise<InvoiceDraft> => {
+    const response = await api.get<InvoiceDraft>(`/invoices/drafts/${draftId}`)
+    return response.data
+  },
+
+  createDraft: async (data: InvoiceDraftCreateRequest = {}): Promise<InvoiceDraft> => {
+    const response = await api.post<InvoiceDraft>('/invoices/drafts/', data)
+    return response.data
+  },
+
+  updateDraft: async (draftId: string, data: InvoiceDraftUpdateRequest): Promise<InvoiceDraft> => {
+    const response = await api.patch<InvoiceDraft>(`/invoices/drafts/${draftId}`, data)
+    return response.data
+  },
+
+  deleteDraft: async (draftId: string): Promise<void> => {
+    await api.delete(`/invoices/drafts/${draftId}`)
+  },
+
+  generateInvoice: async (draftId: string): Promise<GenerateInvoiceResponse> => {
+    const response = await api.post<GenerateInvoiceResponse>(`/invoices/drafts/${draftId}/generate`)
+    return response.data
+  },
+
+  previewInvoice: async (draftId: string): Promise<string> => {
+    const response = await api.get(`/invoices/drafts/${draftId}/preview`, {
+      responseType: 'text',
+    })
     return response.data
   },
 }

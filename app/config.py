@@ -82,6 +82,10 @@ class Settings(BaseSettings):
     langfuse_public_key: str = Field(default="")
     langfuse_host: str = Field(default="https://cloud.langfuse.com")
 
+    # Google OAuth
+    google_oauth_client_id: str = Field(default="")
+    google_oauth_client_secret: str = Field(default="")
+
     @property
     def max_upload_size_bytes(self) -> int:
         """Return max upload size in bytes."""

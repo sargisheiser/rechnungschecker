@@ -2,8 +2,10 @@
 
 import logging
 from datetime import datetime, timedelta
+from urllib.parse import urlencode
 
 from fastapi import APIRouter, HTTPException, Request, status
+from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 
 from app.api.deps import CurrentUser, DbSession
@@ -22,8 +24,10 @@ from app.models.audit import AuditAction
 from app.models.user import User
 from app.services.audit import AuditService
 from app.services.email import email_service
+from app.services.oauth.google import google_oauth_service
 from app.schemas.auth import (
     EmailVerification,
+    GoogleOAuthCallback,
     PasswordChange,
     PasswordReset,
     PasswordResetConfirm,
@@ -494,6 +498,142 @@ async def get_usage(
             current_user.usage_reset_date,
             datetime.min.time(),
         ),
+    )
+
+
+@router.get(
+    "/google/login",
+    summary="Initiate Google OAuth login",
+    description="Redirect to Google OAuth consent screen.",
+)
+async def google_login(redirect_uri: str) -> RedirectResponse:
+    """Redirect to Google OAuth consent screen.
+
+    Args:
+        redirect_uri: The URI to redirect to after Google authorization.
+    """
+    if not google_oauth_service.is_configured():
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="Google OAuth ist nicht konfiguriert",
+        )
+
+    authorization_url = google_oauth_service.get_authorization_url(redirect_uri)
+    return RedirectResponse(url=authorization_url, status_code=status.HTTP_302_FOUND)
+
+
+@router.post(
+    "/google/callback",
+    response_model=TokenResponse,
+    summary="Google OAuth callback",
+    description="Exchange Google authorization code for access tokens.",
+)
+async def google_callback(
+    data: GoogleOAuthCallback,
+    db: DbSession,
+    request: Request,
+) -> TokenResponse:
+    """Handle Google OAuth callback.
+
+    - If user exists with same email, link Google account and log in
+    - If user doesn't exist, create new account with email verified
+    """
+    if not google_oauth_service.is_configured():
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="Google OAuth ist nicht konfiguriert",
+        )
+
+    audit_service = AuditService(db)
+
+    try:
+        # Get user info from Google
+        google_user = await google_oauth_service.authenticate(data.code, data.redirect_uri)
+    except Exception as e:
+        logger.error(f"Google OAuth failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Google-Authentifizierung fehlgeschlagen",
+        )
+
+    if not google_user.verified_email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Google-Konto hat keine verifizierte E-Mail-Adresse",
+        )
+
+    # Check if user exists by email or google_id
+    result = await db.execute(
+        select(User).where(
+            (User.email == google_user.email) | (User.google_id == google_user.id)
+        )
+    )
+    user = result.scalar_one_or_none()
+
+    if user:
+        # Existing user - link Google account if not already linked
+        if not user.google_id:
+            user.google_id = google_user.id
+            user.oauth_provider = "google"
+
+        # Ensure email is verified (Google already verified it)
+        if not user.is_verified:
+            user.is_verified = True
+            user.verification_code = None
+            user.verification_code_expires = None
+
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Benutzerkonto deaktiviert",
+            )
+
+        # Update last login
+        user.last_login_at = datetime.utcnow()
+
+        # Update name if not set
+        if not user.full_name and google_user.name:
+            user.full_name = google_user.name
+
+        await db.flush()
+
+        # Log OAuth login
+        await audit_service.log(
+            user_id=user.id,
+            action=AuditAction.LOGIN,
+            resource_type="user",
+            resource_id=str(user.id),
+            request=request,
+            details={"provider": "google", "google_id": google_user.id},
+        )
+
+        logger.info(f"User logged in via Google: {user.email}")
+    else:
+        # New user - create account
+        user = User(
+            email=google_user.email,
+            password_hash="",  # No password for OAuth users
+            google_id=google_user.id,
+            oauth_provider="google",
+            full_name=google_user.name,
+            is_active=True,
+            is_verified=True,  # Email already verified by Google
+        )
+
+        db.add(user)
+        await db.flush()
+        await db.refresh(user)
+
+        logger.info(f"New user created via Google OAuth: {user.email}")
+
+    # Create tokens
+    access_token = create_access_token(user.id)
+    refresh_token = create_refresh_token(user.id)
+
+    return TokenResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        expires_in=settings.access_token_expire_minutes * 60,
     )
 
 

@@ -9,6 +9,8 @@ from app.models.integration import IntegrationSettings, IntegrationType
 from app.models.batch import BatchJob, BatchFile, BatchJobStatus, BatchFileStatus
 from app.models.audit import AuditLog, AuditAction
 from app.models.template import Template, TemplateType
+from app.models.organization import Organization, OrganizationMember, OrganizationInvitation, OrganizationRole
+from app.models.invoice_draft import InvoiceDraft
 
 __all__ = [
     "User",
@@ -30,4 +32,9 @@ __all__ = [
     "AuditAction",
     "Template",
     "TemplateType",
+    "Organization",
+    "OrganizationMember",
+    "OrganizationInvitation",
+    "OrganizationRole",
+    "InvoiceDraft",
 ]

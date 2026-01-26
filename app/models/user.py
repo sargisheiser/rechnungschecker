@@ -43,6 +43,10 @@ class User(Base):
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
 
+    # OAuth
+    google_id: Mapped[str | None] = mapped_column(String(255), nullable=True, unique=True)
+    oauth_provider: Mapped[str | None] = mapped_column(String(50), nullable=True)
+
     # Email verification
     verification_code: Mapped[str | None] = mapped_column(String(6), nullable=True)
     verification_code_expires: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
@@ -60,6 +64,11 @@ class User(Base):
     validations_this_month: Mapped[int] = mapped_column(Integer, default=0)
     conversions_this_month: Mapped[int] = mapped_column(Integer, default=0)
     usage_reset_date: Mapped[date] = mapped_column(Date, default=date.today)
+
+    # Organization context
+    current_organization_id: Mapped[UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
 
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
@@ -133,6 +142,12 @@ class User(Base):
     integrations = relationship("IntegrationSettings", back_populates="user", cascade="all, delete-orphan")
     batch_jobs = relationship("BatchJob", back_populates="user", cascade="all, delete-orphan")
     templates = relationship("Template", back_populates="user", cascade="all, delete-orphan")
+    organization_memberships = relationship(
+        "OrganizationMember",
+        foreign_keys="OrganizationMember.user_id",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
 
     def can_manage_clients(self) -> bool:
         """Check if user's plan allows client management."""

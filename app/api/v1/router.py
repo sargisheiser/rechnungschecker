@@ -14,6 +14,8 @@ from app.api.v1 import (
     convert,
     export,
     integrations,
+    invoices,
+    organizations,
     reports,
     templates,
     validate,
@@ -37,4 +39,6 @@ api_router.include_router(analytics.router, prefix="/analytics", tags=["Analytic
 api_router.include_router(batch.router, prefix="/batch", tags=["Batch"])
 api_router.include_router(audit.router, prefix="/audit", tags=["Audit"])
 api_router.include_router(templates.router, prefix="/templates", tags=["Templates"])
+api_router.include_router(organizations.router, prefix="/organizations", tags=["Organizations"])
+api_router.include_router(invoices.router, prefix="/invoices", tags=["Invoices"])
 api_router.include_router(admin.router, prefix="/admin", tags=["Admin"])
