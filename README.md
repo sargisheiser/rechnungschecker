@@ -39,6 +39,29 @@ E-Invoice Validation & Conversion Platform for German SMEs and Steuerberater.
 - **Usage Tracking**: Monitor API usage and quotas
 - **Langfuse Integration**: LLM observability for AI-powered features
 
+### Authentication
+- **Google OAuth**: Sign in with Google for frictionless registration
+- **Email Verification**: 6-digit code verification
+- **Password Reset**: Secure password recovery flow
+
+### Team Features
+- **Organizations**: Create teams with multiple users (Pro+)
+- **Role-based Access**: Owner, Admin, Member roles
+- **Member Invitations**: Invite team members via email
+- **Shared Usage**: Team-wide validation quotas
+
+### Invoice Creation
+- **Invoice Wizard**: Create XRechnung invoices from scratch
+- **Step-by-step Builder**: Guided form for all invoice fields
+- **Auto-validation**: Generated invoices are validated with KoSIT
+- **Draft Support**: Save and continue editing later
+
+### Automation
+- **Scheduled Validations**: Auto-validate files from AWS S3 (Pro+)
+- **Cron Scheduling**: Daily, weekly, or custom schedules
+- **Post-validation Actions**: Move or delete files after validation
+- **Webhook Notifications**: Get notified when scheduled runs complete
+
 ### User Experience
 - **Multi-language Support**: German and English UI (i18n)
 - **Responsive Design**: Works on desktop and mobile
@@ -181,6 +204,27 @@ The application is now available at:
 | DELETE | `/api/v1/api-keys/{id}` | Revoke API key |
 | **Audit** | | |
 | GET | `/api/v1/audit/logs` | Get audit logs |
+| **Organizations** | | |
+| GET | `/api/v1/organizations/` | List user's organizations |
+| POST | `/api/v1/organizations/` | Create organization |
+| POST | `/api/v1/organizations/{id}/members` | Invite member |
+| DELETE | `/api/v1/organizations/{id}/members/{uid}` | Remove member |
+| **Invoice Creator** | | |
+| GET | `/api/v1/invoices/drafts/` | List invoice drafts |
+| POST | `/api/v1/invoices/drafts/` | Create new draft |
+| PATCH | `/api/v1/invoices/drafts/{id}` | Update draft |
+| POST | `/api/v1/invoices/drafts/{id}/generate` | Generate XRechnung |
+| GET | `/api/v1/invoices/drafts/{id}/preview` | Preview XML |
+| **Scheduled Validations** | | |
+| GET | `/api/v1/scheduled-validations/` | List scheduled jobs |
+| POST | `/api/v1/scheduled-validations/` | Create scheduled job |
+| PATCH | `/api/v1/scheduled-validations/{id}` | Update job |
+| DELETE | `/api/v1/scheduled-validations/{id}` | Delete job |
+| POST | `/api/v1/scheduled-validations/{id}/run` | Trigger manual run |
+| GET | `/api/v1/scheduled-validations/{id}/runs` | Get run history |
+| **OAuth** | | |
+| GET | `/api/v1/auth/google/login` | Initiate Google OAuth |
+| POST | `/api/v1/auth/google/callback` | Google OAuth callback |
 
 ### Authentication
 
@@ -207,6 +251,34 @@ curl -X POST http://localhost:8000/api/v1/validate/guest \
 curl -X POST http://localhost:8000/api/v1/validate/ \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -F "file=@invoice.xml"
+```
+
+### API Error Codes
+
+The API returns structured error responses for certain errors:
+
+| Code | Description |
+|------|-------------|
+| `VALIDATION_LIMIT_REACHED` | Monthly validation quota exceeded |
+| `CONVERSION_LIMIT_REACHED` | Monthly conversion quota exceeded |
+| `GUEST_LIMIT_REACHED` | Guest validation limit (1/day) exceeded |
+| `AUTH_INVALID_CREDENTIALS` | Invalid email or password |
+| `AUTH_EMAIL_NOT_VERIFIED` | Email address not verified |
+| `AUTH_TOKEN_EXPIRED` | Session token has expired |
+| `AUTHZ_PLAN_REQUIRED` | Feature requires plan upgrade |
+| `NOT_FOUND` | Resource not found |
+| `FILE_TOO_LARGE` | Uploaded file exceeds size limit |
+
+Error response format:
+```json
+{
+  "detail": {
+    "code": "VALIDATION_LIMIT_REACHED",
+    "message": "Sie haben Ihr monatliches Limit erreicht.",
+    "validations_used": 100,
+    "validations_limit": 100
+  }
+}
 ```
 
 ## Testing
@@ -241,36 +313,44 @@ curl -X POST http://localhost:8000/api/v1/validate/guest \
 ```
 rechnungschecker/
 ├── app/
-│   ├── api/v1/           # API endpoints
-│   │   ├── auth.py       # Authentication
-│   │   ├── validate.py   # Validation endpoints
-│   │   ├── convert.py    # Conversion endpoints
-│   │   ├── templates.py  # Template management
-│   │   ├── analytics.py  # Analytics dashboard
-│   │   ├── webhooks.py   # Webhook management
-│   │   ├── api_keys.py   # API key management
-│   │   └── audit.py      # Audit logs
-│   ├── core/             # Database, security, cache
-│   ├── models/           # SQLAlchemy models
-│   ├── schemas/          # Pydantic schemas
+│   ├── api/v1/                    # API endpoints
+│   │   ├── auth.py                # Authentication (incl. Google OAuth)
+│   │   ├── validate.py            # Validation endpoints
+│   │   ├── convert.py             # Conversion endpoints
+│   │   ├── templates.py           # Template management
+│   │   ├── invoices.py            # Invoice creator wizard
+│   │   ├── organizations.py       # Team/organization management
+│   │   ├── scheduled_validations.py  # Scheduled S3 validations
+│   │   ├── analytics.py           # Analytics dashboard
+│   │   ├── webhooks.py            # Webhook management
+│   │   ├── api_keys.py            # API key management
+│   │   └── audit.py               # Audit logs
+│   ├── core/                      # Database, security, cache, i18n
+│   ├── models/                    # SQLAlchemy models
+│   ├── schemas/                   # Pydantic schemas
 │   └── services/
-│       ├── validator/    # KoSIT validation
-│       ├── converter/    # PDF to e-invoice conversion
-│       ├── reports/      # PDF report generation
-│       ├── email/        # Email delivery service
-│       ├── billing/      # Stripe billing integration
-│       └── audit/        # Audit logging service
-├── alembic/              # Database migrations
-├── frontend/             # React frontend (Vite + React 18)
+│       ├── validator/             # KoSIT validation
+│       ├── converter/             # PDF to e-invoice conversion
+│       ├── invoice_creator/       # XRechnung XML generation
+│       ├── scheduler/             # APScheduler for cron jobs
+│       ├── storage/               # Cloud storage (S3) client
+│       ├── oauth/                 # Google OAuth service
+│       ├── reports/               # PDF report generation
+│       ├── email/                 # Email delivery service
+│       ├── billing/               # Stripe billing integration
+│       └── audit/                 # Audit logging service
+├── alembic/                       # Database migrations
+├── frontend/                      # React frontend (Vite + React 18)
 │   ├── src/
-│   │   ├── components/   # React components
-│   │   ├── hooks/        # Custom hooks (React Query)
-│   │   ├── pages/        # Page components
-│   │   ├── locales/      # i18n translations (de, en)
-│   │   └── lib/          # API client, utilities
-├── kosit/                # KoSIT validator (download separately)
-├── test_files/           # Test files for validation
-└── docker-compose.yml    # Docker services (PostgreSQL, Redis)
+│   │   ├── components/            # React components
+│   │   ├── hooks/                 # Custom hooks (React Query)
+│   │   ├── pages/                 # Page components
+│   │   ├── locales/               # i18n translations (de, en)
+│   │   └── lib/                   # API client, utilities
+├── kosit/                         # KoSIT validator (download separately)
+├── tests/                         # Pytest test files
+├── test_files/                    # Test files for validation
+└── docker-compose.yml             # Docker services (PostgreSQL, Redis)
 ```
 
 ## Environment Variables
@@ -292,7 +372,34 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 # KoSIT (paths relative to project root)
 KOSIT_JAR_PATH=kosit/validationtool-1.5.0-standalone.jar
 KOSIT_SCENARIOS_PATH=kosit/scenarios.xml
+
+# Google OAuth (optional)
+GOOGLE_OAUTH_CLIENT_ID=your-google-client-id
+GOOGLE_OAUTH_CLIENT_SECRET=your-google-client-secret
+
+# OpenAI (for PDF conversion)
+OPENAI_API_KEY=your-openai-api-key
+
+# Email (Mailgun)
+MAILGUN_API_KEY=your-mailgun-api-key
+MAILGUN_DOMAIN=your-mailgun-domain
+
+# Stripe (for billing)
+STRIPE_SECRET_KEY=your-stripe-secret-key
+STRIPE_WEBHOOK_SECRET=your-stripe-webhook-secret
 ```
+
+### Google OAuth Setup (Optional)
+
+To enable Google OAuth login:
+
+1. Create a Google Cloud project at https://console.cloud.google.com
+2. Navigate to APIs & Services > Credentials
+3. Create OAuth 2.0 credentials (Web application type)
+4. Add authorized redirect URIs:
+   - Development: `http://localhost:3000/auth/google/callback`
+   - Production: `https://your-domain.com/auth/google/callback`
+5. Add the client ID and secret to your `.env` file
 
 ## Troubleshooting
 
@@ -324,17 +431,20 @@ ls -la kosit/*.jar kosit/scenarios.xml
 
 ## Pricing Plans
 
-| Feature | Free | Pro | Steuerberater |
-|---------|------|-----|---------------|
-| Validations/month | 10 | 500 | Unlimited |
-| Conversions/month | 5 | 200 | Unlimited |
-| Batch Processing | - | ✓ | ✓ |
-| Templates | - | ✓ | ✓ |
-| Analytics | - | ✓ | ✓ |
-| API Access | - | ✓ | ✓ |
-| Webhooks | - | ✓ | ✓ |
-| Client Management | - | - | ✓ |
-| Priority Support | - | - | ✓ |
+| Feature | Free | Starter | Pro | Steuerberater |
+|---------|------|---------|-----|---------------|
+| Validations/month | 10 | 100 | 500 | Unlimited |
+| Conversions/month | 5 | 50 | 200 | Unlimited |
+| Invoice Creator | - | ✓ | ✓ | ✓ |
+| Templates | - | ✓ | ✓ | ✓ |
+| Batch Processing | - | - | ✓ | ✓ |
+| Scheduled Validations | - | - | ✓ | ✓ |
+| Teams/Organizations | - | - | ✓ | ✓ |
+| Analytics Dashboard | - | - | ✓ | ✓ |
+| API Access | - | - | ✓ | ✓ |
+| Webhooks | - | - | ✓ | ✓ |
+| Client Management | - | - | - | ✓ |
+| Priority Support | - | - | - | ✓ |
 
 ## Tech Stack
 
