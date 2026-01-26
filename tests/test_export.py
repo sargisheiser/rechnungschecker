@@ -5,12 +5,8 @@ from datetime import date
 import pytest
 from httpx import AsyncClient
 
-from app.core.security import create_access_token
-
+from app.models.user import User
 from app.schemas.export import ExportFormat, ValidationStatus
-
-# Use a valid UUID format for fake tokens
-FAKE_USER_ID = str(uuid.uuid4())
 
 
 class TestExportValidationsEndpoint:
@@ -37,110 +33,109 @@ class TestExportValidationsEndpoint:
 
     @pytest.mark.asyncio
     async def test_export_validations_datev_format(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_steuerberater_user: tuple[User, str]
     ) -> None:
         """Test exporting validations with DATEV format."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_steuerberater_user
         response = await async_client.get(
             "/api/v1/export/validations",
             params={"format": "datev"},
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
-        # 403 (wrong plan) or 500 (no DB) means params are valid
-        assert response.status_code in [403, 500, 200]
+        assert response.status_code == 200
 
     @pytest.mark.asyncio
     async def test_export_validations_excel_format(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_steuerberater_user: tuple[User, str]
     ) -> None:
         """Test exporting validations with Excel format."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_steuerberater_user
         response = await async_client.get(
             "/api/v1/export/validations",
             params={"format": "excel"},
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
-        assert response.status_code in [403, 500, 200]
+        assert response.status_code == 200
 
     @pytest.mark.asyncio
     async def test_export_validations_invalid_format(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_steuerberater_user: tuple[User, str]
     ) -> None:
         """Test exporting validations with invalid format fails."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_steuerberater_user
         response = await async_client.get(
             "/api/v1/export/validations",
             params={"format": "invalid-format"},
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 422
 
     @pytest.mark.asyncio
     async def test_export_validations_with_date_filters(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_steuerberater_user: tuple[User, str]
     ) -> None:
         """Test exporting validations with date filters."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_steuerberater_user
         response = await async_client.get(
             "/api/v1/export/validations",
             params={
                 "date_from": "2024-01-01",
                 "date_to": "2024-12-31",
             },
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
-        assert response.status_code in [403, 500, 200]
+        assert response.status_code == 200
 
     @pytest.mark.asyncio
     async def test_export_validations_with_client_filter(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_steuerberater_user: tuple[User, str]
     ) -> None:
         """Test exporting validations filtered by client."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_steuerberater_user
         client_id = uuid.uuid4()
         response = await async_client.get(
             "/api/v1/export/validations",
             params={"client_id": str(client_id)},
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
-        assert response.status_code in [403, 500, 200]
+        assert response.status_code == 200
 
     @pytest.mark.asyncio
     async def test_export_validations_status_filter_valid(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_steuerberater_user: tuple[User, str]
     ) -> None:
         """Test exporting only valid validations."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_steuerberater_user
         response = await async_client.get(
             "/api/v1/export/validations",
             params={"status": "valid"},
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
-        assert response.status_code in [403, 500, 200]
+        assert response.status_code == 200
 
     @pytest.mark.asyncio
     async def test_export_validations_status_filter_invalid(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_steuerberater_user: tuple[User, str]
     ) -> None:
         """Test exporting only invalid validations."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_steuerberater_user
         response = await async_client.get(
             "/api/v1/export/validations",
             params={"status": "invalid"},
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
-        assert response.status_code in [403, 500, 200]
+        assert response.status_code == 200
 
     @pytest.mark.asyncio
     async def test_export_validations_invalid_date_format(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_steuerberater_user: tuple[User, str]
     ) -> None:
         """Test exporting validations with invalid date format fails."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_steuerberater_user
         response = await async_client.get(
             "/api/v1/export/validations",
             params={"date_from": "not-a-date"},
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 422
 
@@ -158,58 +153,58 @@ class TestExportClientsEndpoint:
 
     @pytest.mark.asyncio
     async def test_export_clients_datev_format(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_steuerberater_user: tuple[User, str]
     ) -> None:
         """Test exporting clients with DATEV format."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_steuerberater_user
         response = await async_client.get(
             "/api/v1/export/clients",
             params={"format": "datev"},
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
-        assert response.status_code in [403, 500, 200]
+        assert response.status_code == 200
 
     @pytest.mark.asyncio
     async def test_export_clients_excel_format(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_steuerberater_user: tuple[User, str]
     ) -> None:
         """Test exporting clients with Excel format."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_steuerberater_user
         response = await async_client.get(
             "/api/v1/export/clients",
             params={"format": "excel"},
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
-        assert response.status_code in [403, 500, 200]
+        assert response.status_code == 200
 
     @pytest.mark.asyncio
     async def test_export_clients_include_inactive(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_steuerberater_user: tuple[User, str]
     ) -> None:
         """Test exporting clients including inactive ones."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_steuerberater_user
         response = await async_client.get(
             "/api/v1/export/clients",
             params={"include_inactive": "true"},
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
-        assert response.status_code in [403, 500, 200]
+        assert response.status_code == 200
 
     @pytest.mark.asyncio
     async def test_export_clients_with_date_filters(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_steuerberater_user: tuple[User, str]
     ) -> None:
         """Test exporting clients with validation date filters."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_steuerberater_user
         response = await async_client.get(
             "/api/v1/export/clients",
             params={
                 "date_from": "2024-01-01",
                 "date_to": "2024-12-31",
             },
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
-        assert response.status_code in [403, 500, 200]
+        assert response.status_code == 200
 
 
 class TestExportAccessControl:

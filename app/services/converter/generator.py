@@ -364,6 +364,7 @@ class XRechnungGenerator:
                 {
                     "description": "Leistung/Lieferung",
                     "quantity": Decimal("1"),
+                    "unit": "C62",
                     "unit_price": data.net_amount or Decimal("0"),
                     "vat_rate": Decimal("19"),
                     "total": data.net_amount or Decimal("0"),

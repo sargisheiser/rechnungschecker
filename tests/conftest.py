@@ -1,12 +1,138 @@
-"""Pytest configuration and fixtures."""
+"""Pytest configuration and fixtures for the test suite.
 
+Uses per-test database engines to ensure complete isolation and avoid
+async connection conflicts between tests.
+"""
+
+import uuid
+from datetime import date
 from pathlib import Path
 from typing import AsyncGenerator
 
 import pytest
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
+from app.config import get_settings
 from app.main import app
+from app.api.deps import get_db
+from app.models.user import User, PlanType
+from app.core.security import create_access_token, get_password_hash
+
+
+@pytest.fixture(scope="function")
+async def db_session() -> AsyncGenerator[AsyncSession, None]:
+    """Create a fresh database session with its own engine for each test.
+
+    This ensures complete isolation between tests and avoids async
+    connection pool conflicts.
+    """
+    settings = get_settings()
+
+    # Create a new engine for this test
+    engine = create_async_engine(
+        str(settings.database_url),
+        echo=False,
+        pool_pre_ping=True,
+        pool_size=2,
+        max_overflow=3,
+    )
+
+    # Create session maker for this engine
+    session_maker = async_sessionmaker(
+        engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+        autocommit=False,
+        autoflush=False,
+    )
+
+    async with session_maker() as session:
+        yield session
+
+    # Dispose the engine after the test to clean up all connections
+    await engine.dispose()
+
+
+@pytest.fixture
+async def async_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
+    """Create async HTTP client with overridden database dependency."""
+    async def override_get_db():
+        yield db_session
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        yield client
+
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+async def test_user(db_session: AsyncSession) -> tuple[User, str]:
+    """Create a real free-tier user in the test database."""
+    unique_id = uuid.uuid4().hex[:8]
+    user = User(
+        email=f"test-free-{unique_id}@example.com",
+        password_hash=get_password_hash("testpassword"),
+        is_active=True,
+        is_verified=True,
+        plan=PlanType.FREE,
+        usage_reset_date=date.today(),
+    )
+    db_session.add(user)
+    await db_session.commit()
+    await db_session.refresh(user)
+
+    token = create_access_token(str(user.id))
+    return user, token
+
+
+@pytest.fixture
+async def test_pro_user(db_session: AsyncSession) -> tuple[User, str]:
+    """Create a real pro-tier user in the test database."""
+    unique_id = uuid.uuid4().hex[:8]
+    user = User(
+        email=f"test-pro-{unique_id}@example.com",
+        password_hash=get_password_hash("testpassword"),
+        is_active=True,
+        is_verified=True,
+        plan=PlanType.PRO,
+        usage_reset_date=date.today(),
+    )
+    db_session.add(user)
+    await db_session.commit()
+    await db_session.refresh(user)
+
+    token = create_access_token(str(user.id))
+    return user, token
+
+
+@pytest.fixture
+async def test_steuerberater_user(db_session: AsyncSession) -> tuple[User, str]:
+    """Create a real steuerberater-tier user in the test database."""
+    unique_id = uuid.uuid4().hex[:8]
+    user = User(
+        email=f"test-steuerberater-{unique_id}@example.com",
+        password_hash=get_password_hash("testpassword"),
+        is_active=True,
+        is_verified=True,
+        plan=PlanType.STEUERBERATER,
+        usage_reset_date=date.today(),
+    )
+    db_session.add(user)
+    await db_session.commit()
+    await db_session.refresh(user)
+
+    token = create_access_token(str(user.id))
+    return user, token
+
+
+@pytest.fixture
+def fixtures_path() -> Path:
+    """Return path to test fixtures directory."""
+    return Path(__file__).parent / "fixtures"
 
 
 @pytest.fixture
@@ -131,17 +257,3 @@ def sample_invalid_xml() -> bytes:
 def sample_non_xml() -> bytes:
     """Return non-XML content."""
     return b"Just plain text, not XML at all."
-
-
-@pytest.fixture
-async def async_client() -> AsyncGenerator[AsyncClient, None]:
-    """Create async HTTP client for testing."""
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
-        yield client
-
-
-@pytest.fixture
-def fixtures_path() -> Path:
-    """Return path to test fixtures directory."""
-    return Path(__file__).parent / "fixtures"

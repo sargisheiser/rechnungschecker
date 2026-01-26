@@ -1,13 +1,9 @@
 """Tests for third-party integration endpoints."""
 
-import uuid
 import pytest
 from httpx import AsyncClient
 
-from app.core.security import create_access_token
-
-# Use a valid UUID format for fake tokens
-FAKE_USER_ID = str(uuid.uuid4())
+from app.models.user import User
 
 
 class TestIntegrationListEndpoint:
@@ -34,16 +30,15 @@ class TestIntegrationListEndpoint:
 
     @pytest.mark.asyncio
     async def test_list_integrations_with_auth(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_pro_user: tuple[User, str]
     ) -> None:
         """Test listing integrations with valid auth."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_pro_user
         response = await async_client.get(
             "/api/v1/integrations/",
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
-        # 403 (wrong plan) or 500 (no DB) means auth passed
-        assert response.status_code in [403, 500, 200]
+        assert response.status_code == 200
 
 
 class TestIntegrationCreateEndpoint:
@@ -62,17 +57,16 @@ class TestIntegrationCreateEndpoint:
 
     @pytest.mark.asyncio
     async def test_create_lexoffice_missing_api_key(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_pro_user: tuple[User, str]
     ) -> None:
         """Test creating Lexoffice integration without api_key fails."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_pro_user
         response = await async_client.post(
             "/api/v1/integrations/lexoffice",
             json={"config": {}},
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
-        # 400 (validation) or 403 (plan) or 500 (no DB)
-        assert response.status_code in [400, 403, 500]
+        assert response.status_code == 400
 
     @pytest.mark.asyncio
     async def test_create_slack_integration_unauthorized(
@@ -87,16 +81,16 @@ class TestIntegrationCreateEndpoint:
 
     @pytest.mark.asyncio
     async def test_create_slack_missing_webhook_url(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_pro_user: tuple[User, str]
     ) -> None:
         """Test creating Slack integration without webhook_url fails."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_pro_user
         response = await async_client.post(
             "/api/v1/integrations/slack",
             json={"config": {}},
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
-        assert response.status_code in [400, 403, 500]
+        assert response.status_code == 400
 
     @pytest.mark.asyncio
     async def test_create_teams_integration_unauthorized(
@@ -111,23 +105,23 @@ class TestIntegrationCreateEndpoint:
 
     @pytest.mark.asyncio
     async def test_create_integration_invalid_type(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_pro_user: tuple[User, str]
     ) -> None:
         """Test creating integration with invalid type fails."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_pro_user
         response = await async_client.post(
             "/api/v1/integrations/invalid-type",
             json={"config": {"key": "value"}},
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 422
 
     @pytest.mark.asyncio
     async def test_create_integration_with_notification_settings(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_pro_user: tuple[User, str]
     ) -> None:
         """Test creating integration with notification settings."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_pro_user
         response = await async_client.post(
             "/api/v1/integrations/slack",
             json={
@@ -136,10 +130,10 @@ class TestIntegrationCreateEndpoint:
                 "notify_on_invalid": True,
                 "notify_on_warning": False,
             },
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
-        # 400 (webhook test failed) or 403 (plan) or 500 (no DB)
-        assert response.status_code in [400, 403, 500, 201]
+        # 400 (webhook test failed) is expected since we don't have a real webhook
+        assert response.status_code in [400, 201]
 
 
 class TestIntegrationUpdateEndpoint:
@@ -158,24 +152,24 @@ class TestIntegrationUpdateEndpoint:
 
     @pytest.mark.asyncio
     async def test_update_integration_enable_disable(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_pro_user: tuple[User, str]
     ) -> None:
         """Test updating integration enabled status."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_pro_user
         response = await async_client.patch(
             "/api/v1/integrations/lexoffice",
             json={"is_enabled": False},
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
-        # 403 (plan) or 404 (not found) or 500 (no DB)
-        assert response.status_code in [403, 404, 500, 200]
+        # 404 (not found) since integration doesn't exist yet
+        assert response.status_code == 404
 
     @pytest.mark.asyncio
     async def test_update_notification_settings(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_pro_user: tuple[User, str]
     ) -> None:
         """Test updating notification settings."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_pro_user
         response = await async_client.patch(
             "/api/v1/integrations/slack",
             json={
@@ -183,9 +177,10 @@ class TestIntegrationUpdateEndpoint:
                 "notify_on_invalid": True,
                 "notify_on_warning": False,
             },
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
-        assert response.status_code in [403, 404, 500, 200]
+        # 404 (not found) since integration doesn't exist yet
+        assert response.status_code == 404
 
 
 class TestIntegrationDeleteEndpoint:
@@ -201,16 +196,16 @@ class TestIntegrationDeleteEndpoint:
 
     @pytest.mark.asyncio
     async def test_delete_integration_with_auth(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_pro_user: tuple[User, str]
     ) -> None:
         """Test deleting integration with auth."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_pro_user
         response = await async_client.delete(
             "/api/v1/integrations/lexoffice",
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
-        # 403 (plan) or 404 (not found) or 500 (no DB)
-        assert response.status_code in [403, 404, 500, 204]
+        # 404 (not found) since integration doesn't exist
+        assert response.status_code == 404
 
 
 class TestIntegrationTestEndpoint:
@@ -226,16 +221,16 @@ class TestIntegrationTestEndpoint:
 
     @pytest.mark.asyncio
     async def test_test_integration_with_auth(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_pro_user: tuple[User, str]
     ) -> None:
         """Test testing integration with auth."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_pro_user
         response = await async_client.post(
             "/api/v1/integrations/lexoffice/test",
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
-        # 403 (plan) or 404 (not found) or 500 (no DB)
-        assert response.status_code in [403, 404, 500, 200]
+        # 404 (not found) since integration doesn't exist
+        assert response.status_code == 404
 
 
 class TestLexofficeEndpoints:
@@ -251,17 +246,17 @@ class TestLexofficeEndpoints:
 
     @pytest.mark.asyncio
     async def test_list_lexoffice_invoices_pagination(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_pro_user: tuple[User, str]
     ) -> None:
         """Test listing Lexoffice invoices with pagination."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_pro_user
         response = await async_client.get(
             "/api/v1/integrations/lexoffice/invoices",
             params={"page": 0, "size": 10},
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
-        # 400 (no integration) or 403 (plan) or 500 (no DB)
-        assert response.status_code in [400, 403, 500, 502, 200]
+        # 400 (no integration) since lexoffice integration doesn't exist
+        assert response.status_code == 400
 
     @pytest.mark.asyncio
     async def test_validate_lexoffice_invoices_unauthorized(
@@ -276,27 +271,27 @@ class TestLexofficeEndpoints:
 
     @pytest.mark.asyncio
     async def test_validate_lexoffice_invoices_empty_list(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_pro_user: tuple[User, str]
     ) -> None:
         """Test validating Lexoffice invoices with empty list fails."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_pro_user
         response = await async_client.post(
             "/api/v1/integrations/lexoffice/validate",
             json={"invoice_ids": []},
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 422
 
     @pytest.mark.asyncio
     async def test_validate_lexoffice_invoices_too_many(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_pro_user: tuple[User, str]
     ) -> None:
         """Test validating too many Lexoffice invoices fails."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_pro_user
         response = await async_client.post(
             "/api/v1/integrations/lexoffice/validate",
             json={"invoice_ids": [f"inv-{i}" for i in range(20)]},  # >10 limit
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 422
 

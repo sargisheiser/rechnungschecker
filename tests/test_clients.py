@@ -4,10 +4,7 @@ import uuid
 import pytest
 from httpx import AsyncClient
 
-from app.core.security import create_access_token
-
-# Use a valid UUID format for fake tokens
-FAKE_USER_ID = str(uuid.uuid4())
+from app.models.user import User
 
 
 class TestClientEndpoints:
@@ -30,28 +27,29 @@ class TestClientEndpoints:
 
     @pytest.mark.asyncio
     async def test_list_clients_pagination_params(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_steuerberater_user: tuple[User, str]
     ) -> None:
         """Test listing clients with pagination parameters."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_steuerberater_user
         response = await async_client.get(
             "/api/v1/clients/",
             params={"page": 1, "page_size": 10, "active_only": True},
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
-        # 403 (wrong plan) or 500 (no DB) means params are valid
-        assert response.status_code in [403, 500, 200]
+        assert response.status_code == 200
 
     @pytest.mark.asyncio
-    async def test_list_clients_search_param(self, async_client: AsyncClient) -> None:
+    async def test_list_clients_search_param(
+        self, async_client: AsyncClient, test_steuerberater_user: tuple[User, str]
+    ) -> None:
         """Test listing clients with search parameter."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_steuerberater_user
         response = await async_client.get(
             "/api/v1/clients/",
             params={"search": "Test GmbH"},
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
-        assert response.status_code in [403, 500, 200]
+        assert response.status_code == 200
 
     @pytest.mark.asyncio
     async def test_create_client_unauthorized(self, async_client: AsyncClient) -> None:
@@ -64,23 +62,23 @@ class TestClientEndpoints:
 
     @pytest.mark.asyncio
     async def test_create_client_validation_name_required(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_steuerberater_user: tuple[User, str]
     ) -> None:
         """Test creating client without name fails validation."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_steuerberater_user
         response = await async_client.post(
             "/api/v1/clients/",
             json={},
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
-        assert response.status_code in [422, 401, 403, 500]
+        assert response.status_code == 422
 
     @pytest.mark.asyncio
     async def test_create_client_with_full_data(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_steuerberater_user: tuple[User, str]
     ) -> None:
-        """Test creating client with all fields reaches auth layer."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        """Test creating client with all fields."""
+        user, token = test_steuerberater_user
         response = await async_client.post(
             "/api/v1/clients/",
             json={
@@ -97,10 +95,9 @@ class TestClientEndpoints:
                 "country": "DE",
                 "notes": "Test notes",
             },
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
-        # 403 (wrong plan) or 500 (no DB) means validation passed
-        assert response.status_code in [403, 500, 201]
+        assert response.status_code == 201
 
     @pytest.mark.asyncio
     async def test_get_client_unauthorized(self, async_client: AsyncClient) -> None:
@@ -110,12 +107,14 @@ class TestClientEndpoints:
         assert response.status_code == 401
 
     @pytest.mark.asyncio
-    async def test_get_client_invalid_uuid(self, async_client: AsyncClient) -> None:
+    async def test_get_client_invalid_uuid(
+        self, async_client: AsyncClient, test_steuerberater_user: tuple[User, str]
+    ) -> None:
         """Test getting client with invalid UUID fails."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_steuerberater_user
         response = await async_client.get(
             "/api/v1/clients/not-a-uuid",
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 422
 
@@ -147,15 +146,16 @@ class TestClientStats:
         assert response.status_code == 401
 
     @pytest.mark.asyncio
-    async def test_get_stats_with_auth(self, async_client: AsyncClient) -> None:
+    async def test_get_stats_with_auth(
+        self, async_client: AsyncClient, test_steuerberater_user: tuple[User, str]
+    ) -> None:
         """Test getting client stats with authentication."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_steuerberater_user
         response = await async_client.get(
             "/api/v1/clients/stats",
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
-        # 403 (wrong plan) or 500 (no DB) means auth passed
-        assert response.status_code in [403, 500, 200]
+        assert response.status_code == 200
 
 
 class TestClientAccessControl:
@@ -230,31 +230,31 @@ class TestClientValidation:
 
     @pytest.mark.asyncio
     async def test_create_client_invalid_email(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_steuerberater_user: tuple[User, str]
     ) -> None:
         """Test creating client with invalid email fails."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_steuerberater_user
         response = await async_client.post(
             "/api/v1/clients/",
             json={
                 "name": "Test Client",
                 "contact_email": "not-an-email",
             },
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
-        assert response.status_code in [422, 403, 500]
+        assert response.status_code == 422
 
     @pytest.mark.asyncio
     async def test_create_client_valid_german_data(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_steuerberater_user: tuple[User, str]
     ) -> None:
         """Test creating client with German-format data."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_steuerberater_user
         response = await async_client.post(
             "/api/v1/clients/",
             json={
                 "name": "Müller & Söhne GmbH",
-                "client_number": "M-2024-001",
+                "client_number": "M-2024-002",
                 "tax_number": "12/345/67890",
                 "vat_id": "DE123456789",
                 "street": "Königstraße 42",
@@ -262,7 +262,6 @@ class TestClientValidation:
                 "city": "Stuttgart",
                 "country": "DE",
             },
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
-        # 403 (wrong plan) or 500 (no DB) means validation passed
-        assert response.status_code in [403, 500, 201]
+        assert response.status_code == 201

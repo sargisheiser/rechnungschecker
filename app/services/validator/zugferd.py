@@ -220,13 +220,14 @@ class ZUGFeRDExtractor:
         version = None
 
         # Extract version
-        if "2.1" in guideline_id:
+        # Handle both formats: "2.1" and "2p1" (used in URNs like urn:zugferd.de:2p1:basic)
+        if "2.1" in guideline_id or ":2p1:" in guideline_id:
             version = "2.1"
-        elif "2.2" in guideline_id:
+        elif "2.2" in guideline_id or ":2p2:" in guideline_id:
             version = "2.2"
-        elif "2.0" in guideline_id:
+        elif "2.0" in guideline_id or ":2p0:" in guideline_id:
             version = "2.0"
-        elif "1.0" in guideline_id:
+        elif "1.0" in guideline_id or ":1p0:" in guideline_id:
             version = "1.0"
 
         # Detect profile

@@ -3,6 +3,8 @@
 import pytest
 from httpx import AsyncClient
 
+from app.models.user import User
+
 
 class TestXRechnungValidationEndpoint:
     """Tests for /api/v1/validate/xrechnung endpoint."""
@@ -51,29 +53,33 @@ class TestXRechnungValidationEndpoint:
     async def test_validate_malformed_xml(
         self, async_client: AsyncClient, sample_invalid_xml: bytes
     ) -> None:
-        """Test validation of malformed XML."""
+        """Test validation of malformed XML returns 200 with is_valid=False."""
         response = await async_client.post(
             "/api/v1/validate/xrechnung",
             files={"file": ("invoice.xml", sample_invalid_xml, "application/xml")},
         )
 
-        assert response.status_code == 400
+        # API returns 200 with validation result showing errors
+        assert response.status_code == 200
         data = response.json()
-        assert "detail" in data
+        assert data["is_valid"] is False
+        assert data["error_count"] > 0
 
     @pytest.mark.asyncio
     async def test_validate_non_xml_content(
         self, async_client: AsyncClient, sample_non_xml: bytes
     ) -> None:
-        """Test validation of non-XML content."""
+        """Test validation of non-XML content returns 200 with is_valid=False."""
         response = await async_client.post(
             "/api/v1/validate/xrechnung",
             files={"file": ("invoice.xml", sample_non_xml, "application/xml")},
         )
 
-        assert response.status_code == 400
+        # API returns 200 with validation result showing errors
+        assert response.status_code == 200
         data = response.json()
-        assert "detail" in data
+        assert data["is_valid"] is False
+        assert data["error_count"] > 0
 
     @pytest.mark.asyncio
     async def test_validate_wrong_file_extension(
@@ -92,13 +98,16 @@ class TestXRechnungValidationEndpoint:
 
     @pytest.mark.asyncio
     async def test_validate_empty_file(self, async_client: AsyncClient) -> None:
-        """Test validation of empty file."""
+        """Test validation of empty file returns 200 with is_valid=False."""
         response = await async_client.post(
             "/api/v1/validate/xrechnung",
             files={"file": ("invoice.xml", b"", "application/xml")},
         )
 
-        assert response.status_code == 400
+        # API returns 200 with validation result showing errors
+        assert response.status_code == 200
+        data = response.json()
+        assert data["is_valid"] is False
 
     @pytest.mark.asyncio
     async def test_validate_response_has_german_messages(
@@ -175,10 +184,14 @@ class TestValidationHistoryEndpoint:
 
     @pytest.mark.asyncio
     async def test_get_history_returns_empty(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_user: tuple[User, str]
     ) -> None:
-        """Test that history endpoint returns empty list without auth."""
-        response = await async_client.get("/api/v1/validate/history")
+        """Test that history endpoint returns empty list for new user."""
+        user, token = test_user
+        response = await async_client.get(
+            "/api/v1/validate/history",
+            headers={"Authorization": f"Bearer {token}"},
+        )
 
         assert response.status_code == 200
         data = response.json()
@@ -189,12 +202,14 @@ class TestValidationHistoryEndpoint:
 
     @pytest.mark.asyncio
     async def test_get_history_with_pagination(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_user: tuple[User, str]
     ) -> None:
         """Test history endpoint accepts pagination parameters."""
+        user, token = test_user
         response = await async_client.get(
             "/api/v1/validate/history",
             params={"page": 2, "page_size": 10},
+            headers={"Authorization": f"Bearer {token}"},
         )
 
         assert response.status_code == 200

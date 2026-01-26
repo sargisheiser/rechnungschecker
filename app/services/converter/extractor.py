@@ -16,6 +16,12 @@ except ImportError:
 
 from app.services.converter.ocr import OCRService
 
+# Import rate limit error for re-raising
+try:
+    from app.services.ai.openai_service import AIRateLimitError
+except ImportError:
+    AIRateLimitError = None  # type: ignore
+
 logger = logging.getLogger(__name__)
 
 
@@ -246,6 +252,9 @@ class InvoiceExtractor:
                         return result.data
                     logger.info(f"AI extraction low confidence ({result.data.confidence:.2f}), falling back to pattern matching")
             except Exception as e:
+                # Re-raise rate limit errors so they can be handled by the API layer
+                if AIRateLimitError and isinstance(e, AIRateLimitError):
+                    raise
                 logger.warning(f"AI extraction failed, falling back to pattern matching: {e}")
 
         # Fall back to pattern matching
@@ -745,7 +754,7 @@ class InvoiceExtractor:
         pattern = r"IBAN\s*:?\s*([A-Z]{2}\s*\d{2}[\s\d]{12,30})"
         match = re.search(pattern, text, re.IGNORECASE)
         if match:
-            iban = match.group(1).replace(" ", "").upper()
+            iban = match.group(1).replace(" ", "").strip().upper()
             # Basic IBAN validation (length and format)
             if re.match(r"[A-Z]{2}\d{2}[A-Z0-9]{10,30}$", iban):
                 return iban

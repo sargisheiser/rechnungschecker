@@ -4,10 +4,7 @@ import uuid
 import pytest
 from httpx import AsyncClient
 
-from app.core.security import create_access_token
-
-# Use a valid UUID format for fake tokens
-FAKE_USER_ID = str(uuid.uuid4())
+from app.models.user import User
 
 
 class TestAPIKeyEndpoints:
@@ -39,31 +36,29 @@ class TestAPIKeyEndpoints:
 
     @pytest.mark.asyncio
     async def test_create_api_key_validation_name_required(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_pro_user: tuple[User, str]
     ) -> None:
         """Test creating API key without name fails validation."""
-        # This test uses a fake token to reach validation layer
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_pro_user
         response = await async_client.post(
             "/api/v1/api-keys/",
             json={},
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
-        # Either 422 (validation) or 401/403/500 (auth/db)
-        assert response.status_code in [422, 401, 403, 500]
+        assert response.status_code == 422
 
     @pytest.mark.asyncio
     async def test_create_api_key_validation_name_too_long(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_pro_user: tuple[User, str]
     ) -> None:
         """Test creating API key with name too long fails validation."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_pro_user
         response = await async_client.post(
             "/api/v1/api-keys/",
             json={"name": "x" * 256},  # Likely exceeds max length
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
-        assert response.status_code in [422, 401, 403, 500]
+        assert response.status_code == 422
 
     @pytest.mark.asyncio
     async def test_get_api_key_unauthorized(self, async_client: AsyncClient) -> None:
@@ -74,12 +69,14 @@ class TestAPIKeyEndpoints:
         assert response.status_code == 401
 
     @pytest.mark.asyncio
-    async def test_get_api_key_invalid_uuid(self, async_client: AsyncClient) -> None:
+    async def test_get_api_key_invalid_uuid(
+        self, async_client: AsyncClient, test_pro_user: tuple[User, str]
+    ) -> None:
         """Test getting API key with invalid UUID fails."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_pro_user
         response = await async_client.get(
             "/api/v1/api-keys/not-a-uuid",
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 422  # Validation error for UUID
 
@@ -108,31 +105,29 @@ class TestAPIKeyValidation:
 
     @pytest.mark.asyncio
     async def test_create_with_negative_expires_in_days(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_pro_user: tuple[User, str]
     ) -> None:
         """Test creating API key with negative expiration fails."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        user, token = test_pro_user
         response = await async_client.post(
             "/api/v1/api-keys/",
             json={"name": "Test Key", "expires_in_days": -1},
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
-        # Should fail validation or auth
-        assert response.status_code in [422, 401, 403, 500]
+        assert response.status_code == 422
 
     @pytest.mark.asyncio
     async def test_create_with_valid_expires_in_days(
-        self, async_client: AsyncClient
+        self, async_client: AsyncClient, test_pro_user: tuple[User, str]
     ) -> None:
-        """Test creating API key with valid expiration reaches auth layer."""
-        fake_token = create_access_token(FAKE_USER_ID)
+        """Test creating API key with valid expiration."""
+        user, token = test_pro_user
         response = await async_client.post(
             "/api/v1/api-keys/",
             json={"name": "Test Key", "expires_in_days": 30},
-            headers={"Authorization": f"Bearer {fake_token}"},
+            headers={"Authorization": f"Bearer {token}"},
         )
-        # 403 (wrong plan) or 500 (no DB) means validation passed
-        assert response.status_code in [403, 500, 201]
+        assert response.status_code == 201
 
 
 class TestAPIKeyAccessControl:

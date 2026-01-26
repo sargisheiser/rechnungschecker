@@ -228,23 +228,30 @@ class TestReportCacheModule:
 
     def test_cache_validation_and_retrieve(self) -> None:
         """Test caching a validation result and retrieving it."""
-        from app.core.cache import cache_validation, get_cached_validation
-        from datetime import datetime
+        from app.core.cache import cache_validation_result, get_cached_validation
+        from app.schemas.validation import ValidationResponse
+        from datetime import datetime, timezone
 
-        # Create a mock validation result
-        class MockResult:
-            def __init__(self):
-                self.id = uuid.uuid4()
-                self.is_valid = True
-                self.file_type = "xrechnung"
-                self.error_count = 0
-                self.warning_count = 2
-                self.validated_at = datetime.utcnow()
-
-        mock_result = MockResult()
+        # Create a proper ValidationResponse with all required fields
+        validation_id = uuid.uuid4()
+        mock_result = ValidationResponse(
+            id=validation_id,
+            is_valid=True,
+            file_type="xrechnung",
+            file_hash="abc123def456",
+            error_count=0,
+            warning_count=2,
+            info_count=0,
+            errors=[],
+            warnings=[],
+            infos=[],
+            validator_version="1.5.0",
+            processing_time_ms=150,
+            validated_at=datetime.now(timezone.utc),
+        )
 
         # Cache it
-        cache_validation(mock_result.id, mock_result)
+        cache_validation_result(mock_result)
 
         # Retrieve it
         cached = get_cached_validation(mock_result.id)
