@@ -1,6 +1,9 @@
 """Internationalization (i18n) support for error messages."""
 
+import logging
 from typing import Literal
+
+logger = logging.getLogger(__name__)
 
 SupportedLanguage = Literal["de", "en"]
 
@@ -181,8 +184,7 @@ def get_translation(
         try:
             message = message.format(**kwargs)
         except KeyError as e:
-            # Missing format key - return message as-is
-            pass
+            logger.debug(f"Missing format key {e} for translation '{key}'")
 
     return message
 

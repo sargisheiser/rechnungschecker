@@ -1,11 +1,14 @@
 """OCR service for extracting text from scanned PDFs."""
 
 import io
+import logging
 import tempfile
 from pathlib import Path
 from typing import Optional
 
 import fitz  # PyMuPDF
+
+logger = logging.getLogger(__name__)
 
 try:
     import pytesseract
@@ -42,7 +45,8 @@ class OCRService:
         try:
             pytesseract.get_tesseract_version()
             return True
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Tesseract version check failed: {e}")
             return False
 
     def extract_text_from_pdf(
@@ -106,12 +110,14 @@ class OCRService:
         try:
             text = pytesseract.image_to_string(img, lang=self.LANG)
             return text.strip()
-        except Exception:
+        except Exception as e:
+            logger.debug(f"OCR with language pack failed, trying fallback: {e}")
             # Fall back to basic OCR without language pack
             try:
                 text = pytesseract.image_to_string(img)
                 return text.strip()
-            except Exception:
+            except Exception as e2:
+                logger.warning(f"OCR fallback also failed: {e2}")
                 return ""
 
     def extract_text_from_image(self, image_content: bytes) -> str:
@@ -131,7 +137,8 @@ class OCRService:
             img = Image.open(io.BytesIO(image_content))
             text = pytesseract.image_to_string(img, lang=self.LANG)
             return text.strip()
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Failed to extract text from image: {e}")
             return ""
 
     def is_scanned_pdf(self, pdf_content: bytes) -> bool:
