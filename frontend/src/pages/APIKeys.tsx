@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import type { AxiosError } from 'axios'
 import {
   Key,
   Plus,
@@ -7,6 +8,7 @@ import {
   Check,
   Trash2,
   AlertTriangle,
+  AlertCircle,
   Clock,
   Activity,
   ArrowLeft,
@@ -33,6 +35,7 @@ export function APIKeysPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
   const [newKey, setNewKey] = useState<APIKeyCreated | null>(null)
   const [copiedKey, setCopiedKey] = useState(false)
+  const [error, setError] = useState('')
 
   // Check if user can use API
   const canUseApi = user?.plan === 'pro' || user?.plan === 'steuerberater'
@@ -42,9 +45,9 @@ export function APIKeysPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center">
           <Shield className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">API-Zugang nicht verfuegbar</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">API-Zugang nicht verfügbar</h1>
           <p className="text-gray-600 mb-6">
-            API-Zugang ist nur mit dem Pro- oder Steuerberater-Plan verfuegbar.
+            API-Zugang ist nur mit dem Pro- oder Steuerberater-Plan verfügbar.
           </p>
           <Link to="/preise" className="btn-primary">
             Jetzt wechseln
@@ -61,6 +64,7 @@ export function APIKeysPage() {
   }
 
   const handleCreateKey = async (name: string, description: string, expiresInDays: number | null) => {
+    setError('')
     try {
       const result = await createKey.mutateAsync({
         name,
@@ -69,28 +73,36 @@ export function APIKeysPage() {
       })
       setNewKey(result)
       setShowCreateModal(false)
-    } catch (error) {
-      console.error('Failed to create API key:', error)
+    } catch (err) {
+      const axiosError = err as AxiosError<{ detail?: string }>
+      const message = axiosError?.response?.data?.detail || 'API-Schlüssel konnte nicht erstellt werden'
+      setError(message)
     }
   }
 
   const handleDeleteKey = async (id: string) => {
+    setError('')
     try {
       await deleteKey.mutateAsync(id)
       setShowDeleteConfirm(null)
-    } catch (error) {
-      console.error('Failed to delete API key:', error)
+    } catch (err) {
+      const axiosError = err as AxiosError<{ detail?: string }>
+      const message = axiosError?.response?.data?.detail || 'API-Schlüssel konnte nicht gelöscht werden'
+      setError(message)
     }
   }
 
   const handleToggleKey = async (key: APIKey) => {
+    setError('')
     try {
       await updateKey.mutateAsync({
         id: key.id,
         data: { is_active: !key.is_active },
       })
-    } catch (error) {
-      console.error('Failed to toggle API key:', error)
+    } catch (err) {
+      const axiosError = err as AxiosError<{ detail?: string }>
+      const message = axiosError?.response?.data?.detail || 'Status konnte nicht geändert werden'
+      setError(message)
     }
   }
 
@@ -103,13 +115,13 @@ export function APIKeysPage() {
           className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Zurueck zum Dashboard
+          Zurück zum Dashboard
         </Link>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">API-Schluessel</h1>
+            <h1 className="text-2xl font-bold text-gray-900">API-Schlüssel</h1>
             <p className="text-gray-600 mt-1">
-              Verwalten Sie Ihre API-Schluessel fuer programmatischen Zugriff
+              Verwalten Sie Ihre API-Schlüssel für programmatischen Zugriff
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -129,11 +141,22 @@ export function APIKeysPage() {
               className="btn-primary"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Neuer Schluessel
+              Neuer Schlüssel
             </button>
           </div>
         </div>
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="flex items-center gap-2 p-3 mb-6 bg-error-50 rounded-lg text-error-600 text-sm">
+          <AlertCircle className="h-4 w-4 flex-shrink-0" />
+          <span>{error}</span>
+          <button onClick={() => setError('')} className="ml-auto text-error-400 hover:text-error-600">
+            &times;
+          </button>
+        </div>
+      )}
 
       {/* Usage Stats */}
       {apiKeysData && (
@@ -142,7 +165,7 @@ export function APIKeysPage() {
             <div className="flex items-center gap-3">
               <Key className="h-8 w-8 text-primary-500" />
               <div>
-                <p className="text-sm text-gray-500">API-Schluessel</p>
+                <p className="text-sm text-gray-500">API-Schlüssel</p>
                 <p className="text-xl font-semibold">
                   {apiKeysData.total} / {apiKeysData.max_keys}
                 </p>
@@ -178,9 +201,9 @@ export function APIKeysPage() {
           <div className="flex items-start gap-3">
             <Check className="h-5 w-5 text-success-600 mt-0.5" />
             <div className="flex-1">
-              <p className="font-medium text-success-700">API-Schluessel erstellt!</p>
+              <p className="font-medium text-success-700">API-Schlüssel erstellt!</p>
               <p className="text-sm text-success-600 mt-1">
-                Kopieren Sie den Schluessel jetzt - er wird nicht erneut angezeigt.
+                Kopieren Sie den Schlüssel jetzt - er wird nicht erneut angezeigt.
               </p>
               <div className="mt-3 flex items-center gap-2">
                 <code className="flex-1 px-3 py-2 bg-white rounded border border-success-300 text-sm font-mono break-all">
@@ -211,7 +234,7 @@ export function APIKeysPage() {
       {/* API Keys List */}
       <div className="card">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="font-semibold text-gray-900">Ihre API-Schluessel</h2>
+          <h2 className="font-semibold text-gray-900">Ihre API-Schlüssel</h2>
         </div>
 
         {isLoading ? (
@@ -221,12 +244,12 @@ export function APIKeysPage() {
         ) : apiKeysData?.items.length === 0 ? (
           <div className="p-8 text-center">
             <Key className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500">Noch keine API-Schluessel erstellt</p>
+            <p className="text-gray-500">Noch keine API-Schlüssel erstellt</p>
             <button
               onClick={() => setShowCreateModal(true)}
               className="mt-4 btn-secondary"
             >
-              Ersten Schluessel erstellen
+              Ersten Schlüssel erstellen
             </button>
           </div>
         ) : (
@@ -248,7 +271,7 @@ export function APIKeysPage() {
       <div className="mt-8 p-4 bg-gray-50 rounded-lg">
         <h3 className="font-medium text-gray-900 mb-2">API-Dokumentation</h3>
         <p className="text-sm text-gray-600 mb-3">
-          Verwenden Sie Ihren API-Schluessel im Authorization-Header:
+          Verwenden Sie Ihren API-Schlüssel im Authorization-Header:
         </p>
         <code className="block px-3 py-2 bg-gray-900 text-green-400 rounded text-sm font-mono overflow-x-auto">
           curl -H "Authorization: Bearer rc_live_xxx..." https://api.rechnungschecker.de/api/v1/validate/
@@ -336,7 +359,7 @@ function APIKeyRow({
             onClick={onDelete}
             disabled={isDeleting}
             className="p-2 rounded hover:bg-error-50 text-error-600"
-            title="Loeschen"
+            title="Löschen"
           >
             <Trash2 className="h-4 w-4" />
           </button>
@@ -369,7 +392,7 @@ function CreateAPIKeyModal({
       <div className="fixed inset-0 bg-black/50" onClick={onClose} />
       <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          Neuen API-Schluessel erstellen
+          Neuen API-Schlüssel erstellen
         </h2>
         <form onSubmit={handleSubmit}>
           <div className="space-y-4">
@@ -394,7 +417,7 @@ function CreateAPIKeyModal({
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Optional: Wofuer wird dieser Schluessel verwendet?"
+                placeholder="Optional: Wofür wird dieser Schlüssel verwendet?"
                 className="input"
                 rows={2}
                 maxLength={500}
@@ -414,7 +437,7 @@ function CreateAPIKeyModal({
                 max={365}
               />
               <p className="text-xs text-gray-500 mt-1">
-                Leer lassen fuer unbegrenzten Schluessel
+                Leer lassen für unbegrenzten Schlüssel
               </p>
             </div>
           </div>
@@ -463,12 +486,12 @@ function DeleteConfirmModal({
             <AlertTriangle className="h-5 w-5 text-error-600" />
           </div>
           <h2 className="text-lg font-semibold text-gray-900">
-            Schluessel loeschen?
+            Schlüssel löschen?
           </h2>
         </div>
         <p className="text-gray-600 mb-6">
           Diese Aktion kann nicht rueckgaengig gemacht werden. Alle Anwendungen, die
-          diesen Schluessel verwenden, werden keinen Zugriff mehr haben.
+          diesen Schlüssel verwenden, werden keinen Zugriff mehr haben.
         </p>
         <div className="flex gap-3">
           <button
@@ -486,7 +509,7 @@ function DeleteConfirmModal({
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              'Loeschen'
+              'Löschen'
             )}
           </button>
         </div>

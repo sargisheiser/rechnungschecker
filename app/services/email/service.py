@@ -46,16 +46,9 @@ class EmailService:
             True if email was sent successfully
         """
         if not self.is_configured:
-            # Dev mode - log to console with high visibility
-            print("\n" + "=" * 60)
-            print("[DEV EMAIL] - Mailgun not configured, logging email:")
-            print("=" * 60)
-            print(f"To: {to}")
-            print(f"Subject: {subject}")
-            print("-" * 60)
-            print(f"Content preview: {html_content[:500]}...")
-            print("=" * 60 + "\n")
-            logger.info(f"[DEV EMAIL] To: {to}, Subject: {subject}")
+            # Dev mode - log email details
+            logger.warning(f"[DEV EMAIL] Mailgun not configured. To: {to}, Subject: {subject}")
+            logger.debug(f"[DEV EMAIL] Content preview: {html_content[:500]}...")
             return True
 
         try:
@@ -89,19 +82,11 @@ class EmailService:
         Returns:
             True if email was sent successfully
         """
-        # In production, use actual frontend URL
-        verification_url = f"http://localhost:3000/verifizieren?token={token}"
+        verification_url = f"{settings.frontend_url}/verifizieren?token={token}"
 
-        # In dev mode, print verification URL prominently
+        # In dev mode, log verification URL
         if not self.is_configured:
-            print("\n" + "*" * 60)
-            print("*  EMAIL VERIFICATION LINK (DEV MODE)")
-            print("*" * 60)
-            print(f"*  Email: {to}")
-            print(f"*  ")
-            print(f"*  Click here to verify:")
-            print(f"*  {verification_url}")
-            print("*" * 60 + "\n")
+            logger.warning(f"[DEV EMAIL] Verification link for {to}: {verification_url}")
 
         subject = "Bitte bestätigen Sie Ihre E-Mail-Adresse - RechnungsChecker"
 
@@ -199,15 +184,9 @@ RechnungsChecker - E-Rechnung Validierung & Konvertierung
         Returns:
             True if email was sent successfully
         """
-        # In dev mode, print verification code prominently
+        # In dev mode, log verification code
         if not self.is_configured:
-            print("\n" + "*" * 60)
-            print("*  EMAIL VERIFICATION CODE (DEV MODE)")
-            print("*" * 60)
-            print(f"*  Email: {to}")
-            print(f"*  ")
-            print(f"*  Your verification code is: {code}")
-            print("*" * 60 + "\n")
+            logger.warning(f"[DEV EMAIL] Verification code for {to}: {code}")
 
         subject = "Ihr Verifizierungscode - RechnungsChecker"
 
@@ -302,18 +281,11 @@ RechnungsChecker - E-Rechnung Validierung & Konvertierung
         Returns:
             True if email was sent successfully
         """
-        reset_url = f"http://localhost:3000/passwort-zuruecksetzen?token={token}"
+        reset_url = f"{settings.frontend_url}/passwort-zuruecksetzen?token={token}"
 
-        # In dev mode, print reset URL prominently
+        # In dev mode, log reset URL
         if not self.is_configured:
-            print("\n" + "*" * 60)
-            print("*  PASSWORD RESET LINK (DEV MODE)")
-            print("*" * 60)
-            print(f"*  Email: {to}")
-            print(f"*  ")
-            print(f"*  Click here to reset password:")
-            print(f"*  {reset_url}")
-            print("*" * 60 + "\n")
+            logger.warning(f"[DEV EMAIL] Password reset link for {to}: {reset_url}")
 
         subject = "Passwort zurücksetzen - RechnungsChecker"
 
@@ -410,14 +382,9 @@ RechnungsChecker - E-Rechnung Validierung & Konvertierung
         Returns:
             True if email was sent successfully
         """
-        # In dev mode, print notification prominently
+        # In dev mode, log notification
         if not self.is_configured:
-            print("\n" + "*" * 60)
-            print("*  PAYMENT FAILED NOTIFICATION (DEV MODE)")
-            print("*" * 60)
-            print(f"*  Email: {to}")
-            print(f"*  Invoice: {invoice_id}")
-            print("*" * 60 + "\n")
+            logger.warning(f"[DEV EMAIL] Payment failed notification for {to}, invoice: {invoice_id}")
 
         subject = "Zahlung fehlgeschlagen - RechnungsChecker"
 
@@ -478,7 +445,7 @@ RechnungsChecker - E-Rechnung Validierung & Konvertierung
                     Ihres Dienstes zu vermeiden.</p>
 
                     <p style="text-align: center;">
-                        <a href="http://localhost:3000/dashboard/abrechnung" class="button">
+                        <a href="{settings.frontend_url}/dashboard/abrechnung" class="button">
                             Zahlungsmethode aktualisieren
                         </a>
                     </p>
@@ -506,7 +473,7 @@ Bitte aktualisieren Sie Ihre Zahlungsinformationen, um eine Unterbrechung
 Ihres Dienstes zu vermeiden.
 
 Zahlungsmethode aktualisieren:
-http://localhost:3000/dashboard/abrechnung
+{settings.frontend_url}/dashboard/abrechnung
 
 Falls Sie Fragen haben, kontaktieren Sie uns unter support@rechnungschecker.de.
 
@@ -531,15 +498,9 @@ RechnungsChecker - E-Rechnung Validierung & Konvertierung
         Returns:
             True if email was sent successfully
         """
-        # In dev mode, print notification prominently
+        # In dev mode, log notification
         if not self.is_configured:
-            print("\n" + "*" * 60)
-            print("*  USAGE ALERT NOTIFICATION (DEV MODE)")
-            print("*" * 60)
-            print(f"*  Email: {to}")
-            print(f"*  Usage: {usage_percent}%")
-            print(f"*  Plan: {plan}")
-            print("*" * 60 + "\n")
+            logger.warning(f"[DEV EMAIL] Usage alert for {to}: {usage_percent}% of {plan}")
 
         subject = f"Nutzungslimit fast erreicht ({usage_percent}%) - RechnungsChecker"
 
@@ -614,7 +575,7 @@ RechnungsChecker - E-Rechnung Validierung & Konvertierung
                     <p>Upgraden Sie Ihren Plan, um unbegrenzte Validierungen zu erhalten:</p>
 
                     <p style="text-align: center;">
-                        <a href="http://localhost:3000/preise" class="button">Jetzt upgraden</a>
+                        <a href="{settings.frontend_url}/preise" class="button">Jetzt upgraden</a>
                     </p>
                 </div>
                 <div class="footer">
@@ -635,7 +596,7 @@ Ihr aktueller Plan: {plan}
 Monatliches Limit: {limit} Validierungen
 
 Upgraden Sie Ihren Plan, um unbegrenzte Validierungen zu erhalten:
-http://localhost:3000/preise
+{settings.frontend_url}/preise
 
 ---
 RechnungsChecker - E-Rechnung Validierung & Konvertierung
@@ -668,15 +629,9 @@ RechnungsChecker - E-Rechnung Validierung & Konvertierung
         Returns:
             True if email was sent successfully
         """
-        # In dev mode, print notification prominently
+        # In dev mode, log notification
         if not self.is_configured:
-            print("\n" + "*" * 60)
-            print("*  BATCH COMPLETE NOTIFICATION (DEV MODE)")
-            print("*" * 60)
-            print(f"*  Email: {to}")
-            print(f"*  Job: {job_name}")
-            print(f"*  Total: {total_files}, Valid: {valid_count}, Invalid: {invalid_count}")
-            print("*" * 60 + "\n")
+            logger.warning(f"[DEV EMAIL] Batch complete for {to}: {job_name} - Total: {total_files}, Valid: {valid_count}, Invalid: {invalid_count}")
 
         status_emoji = "🎉" if failed_count == 0 else "⚠️"
         subject = f"{status_emoji} Stapelvalidierung abgeschlossen: {job_name}"
@@ -768,7 +723,7 @@ RechnungsChecker - E-Rechnung Validierung & Konvertierung
                     <p><strong>Erfolgsrate:</strong> {success_rate}% verarbeitet, {valid_rate}% gueltig</p>
 
                     <p style="text-align: center;">
-                        <a href="http://localhost:3000/batch" class="button">Ergebnisse anzeigen</a>
+                        <a href="{settings.frontend_url}/batch" class="button">Ergebnisse anzeigen</a>
                     </p>
                 </div>
                 <div class="footer">
@@ -795,7 +750,7 @@ Ergebnis:
 Erfolgsrate: {success_rate}% verarbeitet, {valid_rate}% gueltig
 
 Ergebnisse anzeigen:
-http://localhost:3000/batch
+{settings.frontend_url}/batch
 
 ---
 RechnungsChecker - E-Rechnung Validierung & Konvertierung
@@ -833,18 +788,9 @@ RechnungsChecker - E-Rechnung Validierung & Konvertierung
         Returns:
             True if email was sent successfully
         """
-        # In dev mode, print notification prominently
+        # In dev mode, log notification
         if not self.is_configured:
-            print("\n" + "*" * 60)
-            print("*  INVOICE EMAIL (DEV MODE)")
-            print("*" * 60)
-            print(f"*  To: {to}")
-            print(f"*  From: {sender_name}")
-            print(f"*  Invoice: {invoice_number}")
-            print(f"*  Amount: {gross_amount} {currency}")
-            print(f"*  Format: {output_format}")
-            print(f"*  Attachment: {filename} ({len(file_content)} bytes)")
-            print("*" * 60 + "\n")
+            logger.warning(f"[DEV EMAIL] Invoice email to {to}: {invoice_number} from {sender_name}, {gross_amount} {currency}, format: {output_format}")
             return True
 
         subject = f"Ihre E-Rechnung: {invoice_number}"

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import type { AxiosError } from 'axios'
 import {
   ArrowLeft,
   User,
@@ -9,6 +10,7 @@ import {
   Loader2,
   Check,
   AlertTriangle,
+  AlertCircle,
   Building,
   Mail,
   Shield,
@@ -42,6 +44,7 @@ export function SettingsPage() {
   const [fullName, setFullName] = useState(user?.full_name || '')
   const [companyName, setCompanyName] = useState(user?.company_name || '')
   const [profileSaved, setProfileSaved] = useState(false)
+  const [profileError, setProfileError] = useState('')
 
   // Notification preferences state
   const [emailNotifications, setEmailNotifications] = useState(user?.email_notifications ?? true)
@@ -49,6 +52,7 @@ export function SettingsPage() {
   const [notifyWeeklySummary, setNotifyWeeklySummary] = useState(user?.notify_weekly_summary ?? false)
   const [notifyMarketing, setNotifyMarketing] = useState(user?.notify_marketing ?? false)
   const [notificationsSaved, setNotificationsSaved] = useState(false)
+  const [notificationsError, setNotificationsError] = useState('')
 
   // Update state when user data loads
   useEffect(() => {
@@ -72,9 +76,11 @@ export function SettingsPage() {
   // Delete account state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [deleteError, setDeleteError] = useState('')
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
+    setProfileError('')
     try {
       await updateProfile.mutateAsync({
         full_name: fullName || undefined,
@@ -83,12 +89,15 @@ export function SettingsPage() {
       setProfileSaved(true)
       setTimeout(() => setProfileSaved(false), 3000)
     } catch (error) {
-      console.error('Failed to update profile:', error)
+      const axiosError = error as AxiosError<{ detail?: string }>
+      const message = axiosError?.response?.data?.detail || 'Profil konnte nicht gespeichert werden'
+      setProfileError(message)
     }
   }
 
   const handleUpdateNotifications = async (e: React.FormEvent) => {
     e.preventDefault()
+    setNotificationsError('')
     try {
       await updateProfile.mutateAsync({
         email_notifications: emailNotifications,
@@ -99,7 +108,9 @@ export function SettingsPage() {
       setNotificationsSaved(true)
       setTimeout(() => setNotificationsSaved(false), 3000)
     } catch (error) {
-      console.error('Failed to update notifications:', error)
+      const axiosError = error as AxiosError<{ detail?: string }>
+      const message = axiosError?.response?.data?.detail || 'Einstellungen konnten nicht gespeichert werden'
+      setNotificationsError(message)
     }
   }
 
@@ -108,7 +119,7 @@ export function SettingsPage() {
     setPasswordError('')
 
     if (newPassword !== confirmPassword) {
-      setPasswordError('Die Passwoerter stimmen nicht ueberein')
+      setPasswordError('Die Passwörter stimmen nicht überein')
       return
     }
 
@@ -124,20 +135,24 @@ export function SettingsPage() {
       setNewPassword('')
       setConfirmPassword('')
       setTimeout(() => setPasswordChanged(false), 3000)
-    } catch (error: any) {
-      const message = error?.response?.data?.detail || 'Passwort konnte nicht geaendert werden'
+    } catch (error) {
+      const axiosError = error as AxiosError<{ detail?: string }>
+      const message = axiosError?.response?.data?.detail || 'Passwort konnte nicht geändert werden'
       setPasswordError(message)
     }
   }
 
   const handleDeleteAccount = async () => {
     if (deleteConfirmText !== 'LOESCHEN') return
+    setDeleteError('')
 
     try {
       await deleteAccount.mutateAsync()
       navigate('/')
     } catch (error) {
-      console.error('Failed to delete account:', error)
+      const axiosError = error as AxiosError<{ detail?: string }>
+      const message = axiosError?.response?.data?.detail || 'Konto konnte nicht gelöscht werden'
+      setDeleteError(message)
     }
   }
 
@@ -231,6 +246,13 @@ export function SettingsPage() {
               </Link>
             </div>
           </div>
+
+          {profileError && (
+            <div className="flex items-center gap-2 p-3 bg-error-50 rounded-lg text-error-600 text-sm">
+              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              <span>{profileError}</span>
+            </div>
+          )}
 
           <div className="flex items-center gap-3 pt-2">
             <button
@@ -487,6 +509,13 @@ export function SettingsPage() {
             )}
           </div>
 
+          {notificationsError && (
+            <div className="flex items-center gap-2 p-3 bg-error-50 rounded-lg text-error-600 text-sm">
+              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              <span>{notificationsError}</span>
+            </div>
+          )}
+
           <div className="flex items-center gap-3 pt-2">
             <button
               type="submit"
@@ -580,13 +609,13 @@ export function SettingsPage() {
               {changePassword.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                'Passwort aendern'
+                'Passwort ändern'
               )}
             </button>
             {passwordChanged && (
               <span className="text-sm text-success-600 flex items-center gap-1">
                 <Check className="h-4 w-4" />
-                Passwort geaendert
+                Passwort geändert
               </span>
             )}
           </div>
@@ -606,17 +635,17 @@ export function SettingsPage() {
         </div>
 
         <div className="p-4 bg-error-50 rounded-lg">
-          <h3 className="font-medium text-error-900 mb-2">Konto loeschen</h3>
+          <h3 className="font-medium text-error-900 mb-2">Konto löschen</h3>
           <p className="text-sm text-error-700 mb-4">
-            Wenn Sie Ihr Konto loeschen, werden alle Ihre Daten unwiderruflich entfernt.
-            Diese Aktion kann nicht rueckgaengig gemacht werden.
+            Wenn Sie Ihr Konto löschen, werden alle Ihre Daten unwiderruflich entfernt.
+            Diese Aktion kann nicht rückgängig gemacht werden.
           </p>
           <button
             onClick={() => setShowDeleteConfirm(true)}
             className="btn-primary bg-error-600 hover:bg-error-700"
           >
             <Trash2 className="h-4 w-4 mr-2" />
-            Konto loeschen
+            Konto löschen
           </button>
         </div>
       </div>
@@ -631,13 +660,13 @@ export function SettingsPage() {
                 <AlertTriangle className="h-6 w-6 text-error-600" />
               </div>
               <h2 className="text-lg font-semibold text-gray-900">
-                Konto wirklich loeschen?
+                Konto wirklich löschen?
               </h2>
             </div>
 
             <p className="text-gray-600 mb-4">
-              Diese Aktion kann nicht rueckgaengig gemacht werden. Alle Ihre Daten,
-              einschliesslich Validierungshistorie und Einstellungen, werden dauerhaft geloescht.
+              Diese Aktion kann nicht rückgängig gemacht werden. Alle Ihre Daten,
+              einschliesslich Validierungshistorie und Einstellungen, werden dauerhaft gelöscht.
             </p>
 
             <div className="mb-6">
@@ -652,6 +681,13 @@ export function SettingsPage() {
                 className="input"
               />
             </div>
+
+            {deleteError && (
+              <div className="flex items-center gap-2 p-3 mb-4 bg-error-50 rounded-lg text-error-600 text-sm">
+                <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                <span>{deleteError}</span>
+              </div>
+            )}
 
             <div className="flex gap-3">
               <button
@@ -672,7 +708,7 @@ export function SettingsPage() {
                 {deleteAccount.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  'Endgueltig loeschen'
+                  'Endgültig löschen'
                 )}
               </button>
             </div>

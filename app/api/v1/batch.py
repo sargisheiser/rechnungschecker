@@ -144,8 +144,8 @@ async def process_batch_job(job_id: UUID, user_id: UUID, client_id: UUID | None)
                     (str(e), str(job_id)),
                 )
                 await db.commit()
-            except Exception:
-                pass
+            except Exception as cleanup_err:
+                logger.warning(f"Failed to mark batch job {job_id} as failed: {cleanup_err}")
 
 
 @router.post("/validate", response_model=BatchJobCreated)

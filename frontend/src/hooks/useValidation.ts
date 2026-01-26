@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import type { AxiosError } from 'axios'
 import { validationApi } from '@/lib/api'
 import { getGuestId } from '@/lib/utils'
 import type { ValidationResult } from '@/types'
@@ -54,7 +55,7 @@ export function useValidate() {
         queryClient.invalidateQueries({ queryKey: ['validation-history'] })
       }
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<{ detail?: { code?: string } }>) => {
       setValidating(false)
       // Check if guest limit reached (403 with code GUEST_LIMIT_REACHED)
       if (error.response?.status === 403) {

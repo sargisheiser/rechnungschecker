@@ -86,6 +86,9 @@ class Settings(BaseSettings):
     google_oauth_client_id: str = Field(default="")
     google_oauth_client_secret: str = Field(default="")
 
+    # Frontend URL (for email links)
+    frontend_url: str = Field(default="http://localhost:3000")
+
     @property
     def max_upload_size_bytes(self) -> int:
         """Return max upload size in bytes."""

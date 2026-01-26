@@ -431,7 +431,8 @@ class InvoiceExtractor:
                     try:
                         qty_str = str(row[qty_idx]).replace(",", ".").strip()
                         qty = Decimal(re.sub(r"[^\d.]", "", qty_str) or "1")
-                    except Exception:
+                    except Exception as e:
+                        logger.debug(f"Failed to parse quantity '{row[qty_idx]}': {e}")
                         qty = Decimal("1")
 
             # Get unit
@@ -715,7 +716,8 @@ class InvoiceExtractor:
                 cleaned = cleaned.replace(",", ".")
 
             return Decimal(cleaned)
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Failed to parse decimal from '{value}': {e}")
             return None
 
     def _extract_vat_id(self, text: str) -> Optional[str]:
@@ -839,7 +841,8 @@ class InvoiceExtractor:
                         vat_rate=Decimal("19"),
                         total=qty * price,
                     ))
-            except Exception:
+            except Exception as e:
+                logger.debug(f"Failed to parse line item (pattern 1): {e}")
                 continue
 
         # Pattern 2: Tabular line items with Pos/Nr, Description, Qty, Unit, Price, Total
@@ -864,7 +867,8 @@ class InvoiceExtractor:
                         vat_rate=Decimal("19"),
                         total=total,
                     ))
-            except Exception:
+            except Exception as e:
+                logger.debug(f"Failed to parse line item (pattern 2): {e}")
                 continue
 
         # Pattern 3: Simple "Description: Amount" or "Description Amount EUR"
@@ -886,7 +890,8 @@ class InvoiceExtractor:
                         vat_rate=Decimal("19"),
                         total=total,
                     ))
-            except Exception:
+            except Exception as e:
+                logger.debug(f"Failed to parse line item (pattern 3): {e}")
                 continue
 
         # Pattern 4: Line items with VAT rate specified
@@ -908,7 +913,8 @@ class InvoiceExtractor:
                         vat_rate=vat_rate,
                         total=total,
                     ))
-            except Exception:
+            except Exception as e:
+                logger.debug(f"Failed to parse line item (pattern 4): {e}")
                 continue
 
         # Remove duplicates based on description similarity
