@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { FileCheck, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
+import { FileCheck, Loader2, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react'
 import { useRegister } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
 
@@ -11,6 +11,8 @@ export function Register() {
   const [companyName, setCompanyName] = useState('')
   const [acceptTerms, setAcceptTerms] = useState(false)
   const [error, setError] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const register = useRegister()
   const navigate = useNavigate()
@@ -133,17 +135,31 @@ export function Register() {
               <label htmlFor="password" className="label">
                 Passwort *
               </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="input"
-                placeholder="Min. 8 Zeichen, Gross-/Kleinbuchstaben, Zahl"
-                required
-                minLength={8}
-                autoComplete="new-password"
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="input pr-10"
+                  placeholder="Min. 8 Zeichen, Gross-/Kleinbuchstaben, Zahl"
+                  required
+                  minLength={8}
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
               <p className="text-xs text-gray-500 mt-1">
                 Mindestens 8 Zeichen mit Gross-, Kleinbuchstaben und einer Zahl
               </p>
@@ -153,19 +169,33 @@ export function Register() {
               <label htmlFor="confirmPassword" className="label">
                 Passwort bestaetigen *
               </label>
-              <input
-                id="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className={cn(
-                  'input',
-                  confirmPassword && password !== confirmPassword && 'input-error'
-                )}
-                placeholder="Passwort wiederholen"
-                required
-                autoComplete="new-password"
-              />
+              <div className="relative">
+                <input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className={cn(
+                    'input pr-10',
+                    confirmPassword && password !== confirmPassword && 'input-error'
+                  )}
+                  placeholder="Passwort wiederholen"
+                  required
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  tabIndex={-1}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
             </div>
 
             <div className="flex items-start gap-2">

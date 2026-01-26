@@ -45,7 +45,7 @@ export function APIKeysPage() {
             API-Zugang ist nur mit dem Pro- oder Steuerberater-Plan verfuegbar.
           </p>
           <Link to="/preise" className="btn-primary">
-            Jetzt upgraden
+            Jetzt wechseln
           </Link>
         </div>
       </div>

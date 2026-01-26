@@ -49,6 +49,25 @@
         "gdpr": "GDPR compliant",
         "instant": "Instant results",
         "available": "Available 24/7"
+      },
+      "tryDemo": "Try demo invoice"
+    },
+    "testimonials": {
+      "trusted": "Trusted by businesses across Germany",
+      "quote1": {
+        "text": "RechnungsChecker has revolutionized our invoicing process. No more rejections from public authorities.",
+        "author": "Thomas Mueller",
+        "role": "CEO, Mueller IT GmbH"
+      },
+      "quote2": {
+        "text": "As a tax advisor, I check dozens of invoices daily. The client management saves me enormous time.",
+        "author": "Dr. Sabine Weber",
+        "role": "Tax Advisor, Weber & Partner"
+      },
+      "quote3": {
+        "text": "The API integration into our ERP system was straightforward. Now we validate automatically before sending.",
+        "author": "Michael Schmidt",
+        "role": "IT Director, Schmidt Engineering AG"
       }
     },
     "badges": {

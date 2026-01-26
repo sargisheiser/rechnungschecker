@@ -57,7 +57,7 @@ export function ClientsPage() {
             Mandantenverwaltung ist nur mit dem Steuerberater-Plan verfuegbar.
           </p>
           <Link to="/preise" className="btn-primary">
-            Jetzt upgraden
+            Jetzt wechseln
           </Link>
         </div>
       </div>

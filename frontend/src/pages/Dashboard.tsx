@@ -12,7 +12,6 @@ import {
   Users,
   Building2,
   ChevronDown,
-  ChevronUp,
   FolderUp,
   FileOutput,
   ClipboardList,
@@ -44,7 +43,6 @@ export function Dashboard() {
   const { data: history, isLoading: historyLoading } = useValidationHistory(1, 5)
   const portalSession = usePortalSession()
   const [showClientDropdown, setShowClientDropdown] = useState(false)
-  const [showMoreActions, setShowMoreActions] = useState(false)
 
   const checkoutStatus = searchParams.get('checkout')
   const canManageClients = user?.plan === 'steuerberater'
@@ -144,6 +142,38 @@ export function Dashboard() {
         )}
       </div>
 
+      {/* Usage Bar - Prominent Position */}
+      <UsageBar usage={usage} isLoading={usageLoading} />
+
+      {/* Quick Actions Row - Always Visible */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <ActionCard
+          to="/konvertierung"
+          icon={FileOutput}
+          label={t('dashboard.quickActions.convertPdf')}
+          description={t('dashboard.convertDescription')}
+        />
+        <ActionCard
+          to="/batch"
+          icon={FolderUp}
+          label={t('dashboard.quickActions.batchValidation')}
+          description={t('dashboard.batchDescription')}
+          badge={!isPro ? 'Pro' : undefined}
+        />
+        <ActionCard
+          to="/vorlagen"
+          icon={ClipboardList}
+          label={t('dashboard.quickActions.templates')}
+          description={t('dashboard.templatesDescription')}
+        />
+        <ActionCard
+          to="/analytik"
+          icon={BarChart3}
+          label={t('dashboard.quickActions.analytics')}
+          description={t('dashboard.analyticsDescription')}
+        />
+      </div>
+
       {/* HERO: File Upload Section - Primary Action */}
       <div className="card p-8 mb-6 bg-gradient-to-br from-primary-50 to-white border-primary-100">
         <div className="text-center mb-6">
@@ -176,9 +206,6 @@ export function Dashboard() {
         )}
       </div>
 
-      {/* Compact Usage Bar */}
-      <UsageBar usage={usage} isLoading={usageLoading} />
-
       {/* Recent Validations with Actions */}
       <div className="card mb-6">
         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
@@ -205,62 +232,6 @@ export function Dashboard() {
             {history?.items.map((item) => (
               <ValidationHistoryItem key={item.id} item={item} />
             ))}
-          </div>
-        )}
-      </div>
-
-      {/* Collapsible Secondary Actions */}
-      <div className="card mb-6">
-        <button
-          onClick={() => setShowMoreActions(!showMoreActions)}
-          className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
-        >
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-700">
-              {t('dashboard.moreActions')}
-            </span>
-            {!isPro && (
-              <span className="text-xs px-2 py-0.5 bg-primary-100 text-primary-700 rounded-full">
-                Pro
-              </span>
-            )}
-          </div>
-          {showMoreActions ? (
-            <ChevronUp className="h-5 w-5 text-gray-400" />
-          ) : (
-            <ChevronDown className="h-5 w-5 text-gray-400" />
-          )}
-        </button>
-
-        {showMoreActions && (
-          <div className="px-6 pb-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <ActionCard
-              to="/konvertierung"
-              icon={FileOutput}
-              label={t('dashboard.quickActions.convertPdf')}
-              description={t('dashboard.convertDescription')}
-            />
-            <ActionCard
-              to="/batch"
-              icon={FolderUp}
-              label={t('dashboard.quickActions.batchValidation')}
-              description={t('dashboard.batchDescription')}
-              badge={!isPro ? 'Pro' : undefined}
-            />
-            <ActionCard
-              to="/vorlagen"
-              icon={ClipboardList}
-              label={t('dashboard.quickActions.templates')}
-              description={t('dashboard.templatesDescription')}
-              badge={!isPro ? 'Pro' : undefined}
-            />
-            <ActionCard
-              to="/analytik"
-              icon={BarChart3}
-              label={t('dashboard.quickActions.analytics')}
-              description={t('dashboard.analyticsDescription')}
-              badge={!isPro ? 'Pro' : undefined}
-            />
           </div>
         )}
       </div>

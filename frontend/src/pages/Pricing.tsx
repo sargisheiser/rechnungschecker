@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Check, X, Loader2, AlertCircle } from 'lucide-react'
+import { Check, X, Loader2, AlertCircle, Shield } from 'lucide-react'
 import { usePlans, useCheckout } from '@/hooks/useBilling'
 import { useAuthStore } from '@/hooks/useAuth'
 import { cn, formatCurrency } from '@/lib/utils'
@@ -91,6 +91,14 @@ export function Pricing() {
               </span>
             )}
           </div>
+
+          {/* Money-back Guarantee */}
+          <div className="mt-6 flex items-center justify-center gap-2 text-sm text-gray-600">
+            <Shield className="h-5 w-5 text-success-500" />
+            <span>
+              <strong className="text-gray-900">30 Tage Geld-zurueck-Garantie</strong> - Nicht zufrieden? Volle Erstattung, keine Fragen.
+            </span>
+          </div>
         </div>
 
         {/* Plans */}
@@ -121,7 +129,7 @@ export function Pricing() {
           <div className="space-y-6">
             <FaqItem
               question="Kann ich den Plan jederzeit wechseln?"
-              answer="Ja, Sie koennen jederzeit upgraden oder downgraden. Bei einem Upgrade wird der Preisunterschied anteilig berechnet."
+              answer="Ja, Sie koennen jederzeit auf einen anderen Plan wechseln. Bei einem Upgrade wird der Preisunterschied anteilig berechnet."
             />
             <FaqItem
               question="Gibt es eine Kuendigungsfrist?"

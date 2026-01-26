@@ -132,7 +132,7 @@ export function BatchConversionPage() {
                 Die Batch-Konvertierung ist ab dem Starter-Plan verfuegbar.
               </p>
               <Link to="/preise" className="text-sm text-primary-600 hover:text-primary-700 font-medium mt-2 inline-block">
-                Jetzt upgraden
+                Jetzt wechseln
               </Link>
             </div>
           </div>

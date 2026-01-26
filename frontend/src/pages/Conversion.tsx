@@ -324,7 +324,7 @@ export function ConversionPage() {
           </div>
           {isLimitReached && (
             <Link to="/preise" className="text-sm text-primary-600 hover:text-primary-700 font-medium">
-              Limit erhoeht? Jetzt upgraden
+              Limit erhoeht? Jetzt wechseln
             </Link>
           )}
         </div>
@@ -375,7 +375,7 @@ export function ConversionPage() {
                 Sie haben Ihr monatliches Limit von {usage?.conversions_limit} Konvertierungen erreicht.
               </p>
               <Link to="/preise" className="btn-primary">
-                Jetzt upgraden
+                Jetzt wechseln
               </Link>
             </div>
           ) : (

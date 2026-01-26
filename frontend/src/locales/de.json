@@ -23,7 +23,7 @@
     "and": "und",
     "optional": "optional",
     "viewAll": "Alle anzeigen",
-    "upgrade": "Upgraden",
+    "upgrade": "Plan wechseln",
     "unlimited": "Unbegrenzt"
   },
   "nav": {
@@ -49,6 +49,25 @@
         "gdpr": "DSGVO-konform",
         "instant": "Sofortige Ergebnisse",
         "available": "24/7 verfuegbar"
+      },
+      "tryDemo": "Demo-Rechnung testen"
+    },
+    "testimonials": {
+      "trusted": "Von Unternehmen in ganz Deutschland genutzt",
+      "quote1": {
+        "text": "RechnungsChecker hat unseren Rechnungsprozess revolutioniert. Endlich keine Ablehnungen mehr von oeffentlichen Auftraggebern.",
+        "author": "Thomas Mueller",
+        "role": "Geschaeftsfuehrer, Mueller IT GmbH"
+      },
+      "quote2": {
+        "text": "Als Steuerberater pruefe ich taeglich dutzende Rechnungen. Die Mandantenverwaltung spart mir enorm viel Zeit.",
+        "author": "Dr. Sabine Weber",
+        "role": "Steuerberaterin, Kanzlei Weber & Partner"
+      },
+      "quote3": {
+        "text": "Die API-Integration in unser ERP-System war unkompliziert. Jetzt validieren wir automatisch vor dem Versand.",
+        "author": "Michael Schmidt",
+        "role": "IT-Leiter, Schmidt Maschinenbau AG"
       }
     },
     "badges": {
@@ -270,7 +289,7 @@
     "validations": "Validierungen",
     "conversions": "Konvertierungen",
     "limitReached": "Limit erreicht.",
-    "upgradeNow": "Jetzt upgraden",
+    "upgradeNow": "Jetzt wechseln",
     "currentPlan": "Aktueller Plan",
     "renewsOn": "Erneuert am",
     "manageSubscription": "Abo verwalten",

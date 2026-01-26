@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { FileCheck, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
+import { FileCheck, Loader2, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useLogin } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 export function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const login = useLogin()
   const navigate = useNavigate()
   const location = useLocation()
@@ -88,16 +89,30 @@ export function Login() {
                   {t('auth.login.forgotPassword')}
                 </Link>
               </div>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={cn('input', login.isError && 'input-error')}
-                placeholder={t('auth.passwordPlaceholder')}
-                required
-                autoComplete="current-password"
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={cn('input pr-10', login.isError && 'input-error')}
+                  placeholder={t('auth.passwordPlaceholder')}
+                  required
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
             </div>
 
             <button
