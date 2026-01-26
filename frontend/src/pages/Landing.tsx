@@ -23,17 +23,22 @@ export function Landing() {
   const { t } = useTranslation()
   const validate = useValidate()
   const [loadingDemo, setLoadingDemo] = useState(false)
+  const [demoError, setDemoError] = useState<string | null>(null)
 
   const handleDemoValidation = async () => {
     setLoadingDemo(true)
+    setDemoError(null)
     try {
       // Fetch the demo XRechnung file from public folder
       const response = await fetch('/demo-xrechnung.xml')
+      if (!response.ok) {
+        throw new Error('Demo-Datei konnte nicht geladen werden')
+      }
       const blob = await response.blob()
       const file = new File([blob], 'demo-xrechnung.xml', { type: 'application/xml' })
       validate.mutate(file)
-    } catch (error) {
-      console.error('Failed to load demo file:', error)
+    } catch {
+      setDemoError('Demo-Datei konnte nicht geladen werden. Bitte versuchen Sie es später erneut.')
     } finally {
       setLoadingDemo(false)
     }
@@ -93,6 +98,9 @@ export function Landing() {
                   )}
                   {t('landing.hero.tryDemo')}
                 </button>
+                {demoError && (
+                  <p className="mt-2 text-sm text-error-600">{demoError}</p>
+                )}
               </div>
             )}
           </div>

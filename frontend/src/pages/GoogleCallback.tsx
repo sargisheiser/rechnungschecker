@@ -34,8 +34,7 @@ export function GoogleCallback() {
         setUser(user)
 
         navigate('/dashboard', { replace: true })
-      } catch (err) {
-        console.error('Google OAuth callback failed:', err)
+      } catch {
         setError('Anmeldung fehlgeschlagen. Bitte versuchen Sie es erneut.')
       }
     }
