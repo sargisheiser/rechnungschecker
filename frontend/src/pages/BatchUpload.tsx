@@ -14,6 +14,7 @@ import {
   Trash2,
   FileText,
   Eye,
+  Download,
 } from 'lucide-react'
 import { useBatchJobs, useCreateBatch, useCancelBatch, useDeleteBatch, useBatchJob } from '@/hooks/useBatch'
 import { cn } from '@/lib/utils'
@@ -126,6 +127,39 @@ export default function BatchUpload() {
     } catch (error) {
       console.error('Failed to delete batch:', error)
     }
+  }
+
+  const handleExportCSV = () => {
+    if (!selectedJob) return
+
+    // CSV header
+    const headers = ['Dateiname', 'Status', 'Groesse (Bytes)', 'Fehler', 'Validierungs-ID']
+
+    // CSV rows
+    const rows = selectedJob.files.map((file) => [
+      file.filename,
+      file.status,
+      file.file_size_bytes.toString(),
+      file.error_message || '',
+      file.validation_id || '',
+    ])
+
+    // Combine header and rows
+    const csvContent = [
+      headers.join(';'),
+      ...rows.map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(';')),
+    ].join('\n')
+
+    // Create and download file
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${selectedJob.name.replace(/[^a-zA-Z0-9]/g, '_')}_ergebnisse.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
   }
 
   return (
@@ -267,40 +301,67 @@ export default function BatchUpload() {
                     {getStatusBadge(job.status, t)}
                   </div>
 
-                  <div className="flex items-center justify-between text-sm text-gray-600">
-                    <span>
-                      {job.processed_files} / {job.total_files} {t('batch.files')}
-                    </span>
-                    <span>
-                      {new Date(job.created_at).toLocaleDateString()}
-                    </span>
-                  </div>
-
-                  {/* Progress Bar */}
+                  {/* Progress indicator for processing jobs */}
                   {job.status === 'processing' && (
-                    <div className="mt-2">
-                      <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="mt-3 space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">
+                          <span className="font-semibold text-gray-900">{job.processed_files}</span> von{' '}
+                          <span className="font-semibold text-gray-900">{job.total_files}</span> Dateien verarbeitet
+                        </span>
+                        <span className="font-medium text-blue-600">{job.progress_percent}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
                         <div
-                          className="bg-blue-600 h-2 rounded-full transition-all"
+                          className="bg-gradient-to-r from-blue-500 to-blue-600 h-2.5 rounded-full transition-all duration-300"
                           style={{ width: `${job.progress_percent}%` }}
                         />
                       </div>
+                      <p className="text-xs text-gray-500">
+                        Wird verarbeitet... Bitte warten.
+                      </p>
                     </div>
                   )}
 
-                  {/* Results Summary */}
-                  {job.status === 'completed' && (
-                    <div className="mt-2 flex items-center gap-4 text-sm">
-                      <span className="text-green-600">
-                        <CheckCircle className="h-4 w-4 inline mr-1" />
-                        {job.successful_count} {t('batch.successful')}
+                  {/* Info for pending/other status */}
+                  {(job.status === 'pending' || job.status === 'cancelled' || job.status === 'failed') && (
+                    <div className="mt-2 flex items-center justify-between text-sm text-gray-600">
+                      <span>
+                        {job.processed_files} / {job.total_files} {t('batch.files')}
                       </span>
-                      {job.failed_count > 0 && (
-                        <span className="text-red-600">
-                          <XCircle className="h-4 w-4 inline mr-1" />
-                          {job.failed_count} {t('batch.failed')}
+                      <span>
+                        {new Date(job.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Results Summary for completed jobs */}
+                  {job.status === 'completed' && (
+                    <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-gray-700">Ergebnis</span>
+                        <span className="text-xs text-gray-500">
+                          {new Date(job.created_at).toLocaleDateString()}
                         </span>
-                      )}
+                      </div>
+                      <div className="flex items-center gap-4 text-sm">
+                        <span className="flex items-center gap-1.5 text-green-600 font-medium">
+                          <CheckCircle className="h-4 w-4" />
+                          {job.successful_count} gueltig
+                        </span>
+                        {job.failed_count > 0 && (
+                          <span className="flex items-center gap-1.5 text-red-600 font-medium">
+                            <XCircle className="h-4 w-4" />
+                            {job.failed_count} ungueltig
+                          </span>
+                        )}
+                        {job.total_files - job.successful_count - job.failed_count > 0 && (
+                          <span className="flex items-center gap-1.5 text-gray-500">
+                            <AlertTriangle className="h-4 w-4" />
+                            {job.total_files - job.successful_count - job.failed_count} uebersprungen
+                          </span>
+                        )}
+                      </div>
                     </div>
                   )}
 
@@ -343,9 +404,18 @@ export default function BatchUpload() {
       {/* Selected Job Details */}
       {selectedJob && (
         <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            {t('batch.jobDetails')}: {selectedJob.name}
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">
+              {t('batch.jobDetails')}: {selectedJob.name}
+            </h2>
+            <button
+              onClick={handleExportCSV}
+              className="btn-secondary text-sm flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Als CSV exportieren
+            </button>
+          </div>
 
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">

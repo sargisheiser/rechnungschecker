@@ -14,6 +14,8 @@ import {
   Eye,
   EyeOff,
   Shield,
+  BookOpen,
+  ExternalLink,
 } from 'lucide-react'
 import { useUser } from '@/hooks/useAuth'
 import { useAPIKeys, useCreateAPIKey, useDeleteAPIKey, useUpdateAPIKey } from '@/hooks/useAPIKeys'
@@ -110,14 +112,26 @@ export function APIKeysPage() {
               Verwalten Sie Ihre API-Schluessel fuer programmatischen Zugriff
             </p>
           </div>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            disabled={apiKeysData && apiKeysData.total >= apiKeysData.max_keys}
-            className="btn-primary"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Neuer Schluessel
-          </button>
+          <div className="flex items-center gap-3">
+            <a
+              href="/api/docs"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-secondary flex items-center gap-2"
+            >
+              <BookOpen className="h-4 w-4" />
+              API-Dokumentation
+              <ExternalLink className="h-3 w-3" />
+            </a>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              disabled={apiKeysData && apiKeysData.total >= apiKeysData.max_keys}
+              className="btn-primary"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Neuer Schluessel
+            </button>
+          </div>
         </div>
       </div>
 

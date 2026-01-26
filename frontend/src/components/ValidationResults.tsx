@@ -3,16 +3,15 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
-  Info,
   Download,
   RefreshCw,
   UserPlus,
-  Lightbulb,
 } from 'lucide-react'
 import { cn, formatDateTime } from '@/lib/utils'
 import { useValidationStore, useDownloadReport } from '@/hooks/useValidation'
 import { useAuthStore } from '@/hooks/useAuth'
-import type { ValidationError, ValidationStatus } from '@/types'
+import { ValidationErrorItem } from './ValidationErrorItem'
+import type { ValidationStatus } from '@/types'
 
 interface ValidationResultsProps {
   className?: string
@@ -149,7 +148,7 @@ export function ValidationResults({ className }: ValidationResultsProps) {
             </h4>
             <div className="space-y-2">
               {errors.map((error, index) => (
-                <ErrorItem key={index} error={error} />
+                <ValidationErrorItem key={index} error={error} />
               ))}
             </div>
           </div>
@@ -164,7 +163,7 @@ export function ValidationResults({ className }: ValidationResultsProps) {
             </h4>
             <div className="space-y-2">
               {warnings.map((warning, index) => (
-                <ErrorItem key={index} error={warning} />
+                <ValidationErrorItem key={index} error={warning} />
               ))}
             </div>
           </div>
@@ -220,56 +219,6 @@ export function ValidationResults({ className }: ValidationResultsProps) {
             </div>
           </div>
         )}
-      </div>
-    </div>
-  )
-}
-
-function ErrorItem({ error }: { error: ValidationError }) {
-  const severityConfig = {
-    error: {
-      icon: XCircle,
-      color: 'text-error-500',
-      bg: 'bg-error-50',
-    },
-    warning: {
-      icon: AlertTriangle,
-      color: 'text-warning-500',
-      bg: 'bg-warning-50',
-    },
-    info: {
-      icon: Info,
-      color: 'text-primary-500',
-      bg: 'bg-primary-50',
-    },
-  }
-
-  const config = severityConfig[error.severity]
-  const Icon = config.icon
-
-  return (
-    <div className={cn('p-3 rounded-lg', config.bg)}>
-      <div className="flex items-start gap-2">
-        <Icon className={cn('h-4 w-4 mt-0.5 flex-shrink-0', config.color)} />
-        <div className="flex-1 min-w-0">
-          <p className="text-sm text-gray-900">{error.message}</p>
-          {error.location && (
-            <p className="text-xs text-gray-500 mt-1 font-mono">
-              {error.location}
-            </p>
-          )}
-          {error.code && (
-            <p className="text-xs text-gray-400 mt-1">Code: {error.code}</p>
-          )}
-          {error.suggestion && (
-            <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-md">
-              <div className="flex items-start gap-2">
-                <Lightbulb className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-amber-800">{error.suggestion}</p>
-              </div>
-            </div>
-          )}
-        </div>
       </div>
     </div>
   )

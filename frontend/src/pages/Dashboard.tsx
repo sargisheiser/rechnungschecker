@@ -25,6 +25,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { FileUpload } from '@/components/FileUpload'
 import { ValidationResults } from '@/components/ValidationResults'
+import { OnboardingTour } from '@/components/OnboardingTour'
 import { useValidationStore, useValidationHistory, useDownloadReport } from '@/hooks/useValidation'
 import { useUser } from '@/hooks/useAuth'
 import { useUsage, useSubscription, usePortalSession } from '@/hooks/useBilling'
@@ -51,6 +52,9 @@ export function Dashboard() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Onboarding tour for new users */}
+      {user && <OnboardingTour userCreatedAt={user.created_at} />}
+
       {/* Checkout success message */}
       {checkoutStatus === 'success' && (
         <div className="mb-6 p-4 bg-success-50 border border-success-200 rounded-lg flex items-center gap-3">

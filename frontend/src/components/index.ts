@@ -1,4 +1,8 @@
 export { Layout } from './Layout'
 export { FileUpload } from './FileUpload'
 export { ValidationResults } from './ValidationResults'
+export { ValidationErrorItem } from './ValidationErrorItem'
 export { ProtectedRoute } from './ProtectedRoute'
+export { Alert } from './Alert'
+export type { AlertVariant } from './Alert'
+export { OnboardingTour } from './OnboardingTour'
