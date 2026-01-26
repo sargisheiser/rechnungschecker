@@ -13,6 +13,10 @@ import {
   Mail,
   Shield,
   Bell,
+  CreditCard,
+  Calendar,
+  ExternalLink,
+  TrendingUp,
 } from 'lucide-react'
 import {
   useUser,
@@ -20,12 +24,16 @@ import {
   useChangePassword,
   useDeleteAccount,
 } from '@/hooks/useAuth'
+import { useSubscription, useUsage, usePortalSession } from '@/hooks/useBilling'
 import { cn as _cn } from '@/lib/utils'
 
 export function SettingsPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { data: user } = useUser()
+  const { data: subscription, isLoading: subscriptionLoading } = useSubscription()
+  const { data: usage } = useUsage()
+  const portalSession = usePortalSession()
   const updateProfile = useUpdateProfile()
   const changePassword = useChangePassword()
   const deleteAccount = useDeleteAccount()
@@ -244,6 +252,154 @@ export function SettingsPage() {
             )}
           </div>
         </form>
+      </div>
+
+      {/* Subscription Management Section */}
+      <div className="card p-6 mb-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 bg-green-100 rounded-lg">
+            <CreditCard className="h-5 w-5 text-green-600" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">Abonnement</h2>
+            <p className="text-sm text-gray-600">Verwalten Sie Ihr Abonnement und Ihre Zahlungsmethode</p>
+          </div>
+        </div>
+
+        {subscriptionLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {/* Current Plan */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Shield className="h-4 w-4 text-gray-400" />
+                  <span className="text-sm text-gray-500">Aktueller Plan</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-semibold text-gray-900 capitalize">
+                    {user?.plan === 'steuerberater' ? 'Steuerberater' : user?.plan}
+                  </span>
+                  {subscription?.status === 'active' && (
+                    <span className="px-2 py-0.5 bg-success-100 text-success-700 text-xs font-medium rounded-full">
+                      Aktiv
+                    </span>
+                  )}
+                  {subscription?.status === 'canceled' && (
+                    <span className="px-2 py-0.5 bg-warning-100 text-warning-700 text-xs font-medium rounded-full">
+                      Gekuendigt
+                    </span>
+                  )}
+                  {subscription?.status === 'past_due' && (
+                    <span className="px-2 py-0.5 bg-error-100 text-error-700 text-xs font-medium rounded-full">
+                      Zahlung faellig
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {subscription && (
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Calendar className="h-4 w-4 text-gray-400" />
+                    <span className="text-sm text-gray-500">
+                      {subscription.cancel_at_period_end ? 'Endet am' : 'Naechste Abrechnung'}
+                    </span>
+                  </div>
+                  <span className="text-lg font-semibold text-gray-900">
+                    {new Date(subscription.current_period_end).toLocaleDateString('de-DE', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                    })}
+                  </span>
+                  {subscription.cancel_at_period_end && (
+                    <p className="text-xs text-warning-600 mt-1">
+                      Ihr Abonnement wurde gekuendigt und wird nicht verlaengert.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Usage Statistics */}
+            {usage && (
+              <div className="border-t border-gray-200 pt-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <TrendingUp className="h-4 w-4 text-gray-400" />
+                  <span className="text-sm font-medium text-gray-700">Nutzung diesen Monat</span>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm text-gray-600">Validierungen</span>
+                      <span className="text-sm font-medium text-gray-900">
+                        {usage.validations_used}
+                        {usage.validations_limit !== null && ` / ${usage.validations_limit}`}
+                      </span>
+                    </div>
+                    {usage.validations_limit !== null && (
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-primary-500 h-2 rounded-full transition-all"
+                          style={{
+                            width: `${Math.min((usage.validations_used / usage.validations_limit) * 100, 100)}%`,
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm text-gray-600">Konvertierungen</span>
+                      <span className="text-sm font-medium text-gray-900">
+                        {usage.conversions_used}
+                        {usage.conversions_limit !== null && ` / ${usage.conversions_limit}`}
+                      </span>
+                    </div>
+                    {usage.conversions_limit !== null && (
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-primary-500 h-2 rounded-full transition-all"
+                          style={{
+                            width: `${Math.min((usage.conversions_used / usage.conversions_limit) * 100, 100)}%`,
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              {user?.plan !== 'free' && (
+                <button
+                  onClick={() => portalSession.mutate()}
+                  disabled={portalSession.isPending}
+                  className="btn-secondary flex items-center gap-2"
+                >
+                  {portalSession.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <ExternalLink className="h-4 w-4" />
+                      Abonnement verwalten
+                    </>
+                  )}
+                </button>
+              )}
+              <Link to="/preise" className="btn-secondary flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
+                {user?.plan === 'free' ? 'Plan wechseln' : 'Alle Plaene anzeigen'}
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Notifications Section */}

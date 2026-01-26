@@ -31,6 +31,7 @@ import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { AdminRoute } from '@/components/AdminRoute'
 import { AdminDashboard } from '@/pages/admin/AdminDashboard'
 import { AdminUsers } from '@/pages/admin/AdminUsers'
+import { GoogleCallback } from '@/pages/GoogleCallback'
 
 function App() {
   return (
@@ -44,6 +45,7 @@ function App() {
         <Route path="passwort-vergessen" element={<ForgotPassword />} />
         <Route path="passwort-zuruecksetzen" element={<ResetPassword />} />
         <Route path="verifizieren" element={<Navigate to="/email-bestaetigung" replace />} />
+        <Route path="auth/google/callback" element={<GoogleCallback />} />
         <Route path="impressum" element={<Impressum />} />
         <Route path="datenschutz" element={<Datenschutz />} />
         <Route path="agb" element={<AGB />} />

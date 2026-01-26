@@ -4,6 +4,7 @@ import { FileCheck, Loader2, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucid
 import { useTranslation } from 'react-i18next'
 import { useLogin } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
+import { GoogleAuthButton } from '@/components/GoogleAuthButton'
 
 export function Login() {
   const [email, setEmail] = useState('')
@@ -129,6 +130,19 @@ export function Login() {
                 t('nav.login')
               )}
             </button>
+
+            {/* Divider */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">oder</span>
+              </div>
+            </div>
+
+            {/* Google OAuth */}
+            <GoogleAuthButton mode="login" />
           </form>
 
           <div className="mt-6 text-center text-sm text-gray-600">

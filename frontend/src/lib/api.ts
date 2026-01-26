@@ -144,6 +144,18 @@ export const authApi = {
     return response.data
   },
 
+  // Google OAuth - redirects to Google's OAuth page
+  googleLogin: () => {
+    const redirectUri = encodeURIComponent(`${window.location.origin}/auth/google/callback`)
+    window.location.href = `/api/v1/auth/google/login?redirect_uri=${redirectUri}`
+  },
+
+  // Exchange Google OAuth code for tokens
+  googleCallback: async (code: string): Promise<AuthTokens> => {
+    const response = await api.post<AuthTokens>('/auth/google/callback', { code })
+    return response.data
+  },
+
   getMe: async (): Promise<User> => {
     const response = await api.get<User>('/auth/me')
     return response.data
