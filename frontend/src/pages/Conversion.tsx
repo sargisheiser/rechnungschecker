@@ -344,7 +344,7 @@ export function ConversionPage() {
             status.ocr_available ? 'bg-success-50 text-success-700' : 'bg-gray-100 text-gray-600'
           )}>
             <Info className="h-4 w-4" />
-            {status.ocr_available ? 'OCR verfuegbar' : 'Nur digitale PDFs'}
+            {status.ocr_available ? 'OCR verfügbar' : 'Nur digitale PDFs'}
           </div>
         </div>
       )}
@@ -574,7 +574,7 @@ export function ConversionPage() {
                       override={overrides.seller_name}
                     />
                     <DataField
-                      label="Strasse"
+                      label="Straße"
                       value={extractedData.seller_street}
                       override={overrides.seller_street}
                     />
@@ -623,7 +623,7 @@ export function ConversionPage() {
                       override={overrides.buyer_name}
                     />
                     <DataField
-                      label="Strasse"
+                      label="Straße"
                       value={extractedData.buyer_street}
                       override={overrides.buyer_street}
                     />
@@ -1009,7 +1009,7 @@ export function ConversionPage() {
             ) : (
               <div className="max-w-md mx-auto space-y-4">
                 <div>
-                  <label className="label">Empfaenger-E-Mail</label>
+                  <label className="label">Empfänger-E-Mail</label>
                   <input
                     type="email"
                     value={recipientEmail}

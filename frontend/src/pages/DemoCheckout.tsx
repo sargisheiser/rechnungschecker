@@ -76,7 +76,7 @@ export function DemoCheckout() {
           <div className="bg-primary-600 text-white p-6">
             <h1 className="text-xl font-semibold">Checkout</h1>
             <p className="text-primary-100 text-sm mt-1">
-              Abonnement fuer {planInfo.name}
+              Abonnement für {planInfo.name}
             </p>
           </div>
 
@@ -211,7 +211,7 @@ export function DemoCheckout() {
             onClick={() => navigate('/preise')}
             className="text-sm text-gray-600 hover:text-gray-900"
           >
-            Zurueck zur Preisseite
+            Zurück zur Preisseite
           </button>
         </p>
       </div>

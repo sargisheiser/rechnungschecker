@@ -15,16 +15,15 @@ import {
   Package,
   CreditCard,
   FileCode,
-  AlertCircle,
 } from 'lucide-react'
 import { invoiceApi } from '@/lib/api'
-import type { InvoiceDraft, InvoiceData, InvoiceLineItem, PartyInfo } from '@/types'
+import type { InvoiceData, InvoiceLineItem, PartyInfo } from '@/types'
 import { Alert } from '@/components/Alert'
 
 const WIZARD_STEPS = [
   { id: 1, name: 'Grunddaten', icon: FileText },
-  { id: 2, name: 'Verkaeufer', icon: Building2 },
-  { id: 3, name: 'Kaeufer', icon: User },
+  { id: 2, name: 'Verkäufer', icon: Building2 },
+  { id: 3, name: 'Käufer', icon: User },
   { id: 4, name: 'Positionen', icon: Package },
   { id: 5, name: 'Zahlung', icon: CreditCard },
   { id: 6, name: 'Generieren', icon: FileCode },
@@ -143,7 +142,7 @@ export function InvoiceCreatorPage() {
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
-                    if (confirm('Entwurf wirklich loeschen?')) {
+                    if (confirm('Entwurf wirklich löschen?')) {
                       deleteDraftMutation.mutate(draft.id)
                     }
                   }}
@@ -251,7 +250,7 @@ function InvoiceWizard({ draftId }: { draftId: string }) {
           onClick={() => navigate('/rechnung-erstellen')}
           className="text-sm text-gray-600 hover:text-gray-900 mb-4"
         >
-          &larr; Zurueck zur Uebersicht
+          &larr; Zurück zur Übersicht
         </button>
         <h1 className="text-2xl font-bold text-gray-900">{draft?.name}</h1>
       </div>
@@ -297,7 +296,7 @@ function InvoiceWizard({ draftId }: { draftId: string }) {
         {/* Step 2: Seller */}
         {currentStep === 2 && (
           <PartyStep
-            title="Verkaeufer"
+            title="Verkäufer"
             party={formData.seller}
             setParty={(seller) => setFormData({ ...formData, seller })}
           />
@@ -306,7 +305,7 @@ function InvoiceWizard({ draftId }: { draftId: string }) {
         {/* Step 3: Buyer */}
         {currentStep === 3 && (
           <PartyStep
-            title="Kaeufer"
+            title="Käufer"
             party={formData.buyer}
             setParty={(buyer) => setFormData({ ...formData, buyer })}
             showLeitwegId
@@ -378,7 +377,7 @@ function InvoiceWizard({ draftId }: { draftId: string }) {
             className="btn-secondary flex items-center gap-2"
           >
             <ChevronLeft className="h-4 w-4" />
-            Zurueck
+            Zurück
           </button>
           {currentStep < 6 && (
             <button onClick={handleNext} className="btn-primary flex items-center gap-2">
@@ -463,7 +462,7 @@ function PartyStep({
   title,
   party,
   setParty,
-  showLeitwegId = false,
+  showLeitwegId: _showLeitwegId = false,
 }: {
   title: string
   party?: PartyInfo
@@ -498,7 +497,7 @@ function PartyStep({
           />
         </div>
         <div className="md:col-span-2">
-          <label className="label">Strasse</label>
+          <label className="label">Straße</label>
           <input
             type="text"
             value={data.address?.street || ''}
@@ -788,7 +787,7 @@ function PaymentStep({
         <h2 className="text-lg font-semibold mb-4">Referenzen</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="label">Leitweg-ID (fuer oeffentliche Auftraggeber)</label>
+            <label className="label">Leitweg-ID (für öffentliche Auftraggeber)</label>
             <input
               type="text"
               value={references.buyer_reference || ''}

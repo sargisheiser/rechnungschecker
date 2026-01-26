@@ -12,7 +12,7 @@ export function AGB() {
               § 1 Geltungsbereich
             </h2>
             <p className="text-gray-600 mb-4">
-              (1) Diese Allgemeinen Geschaeftsbedingungen (AGB) gelten fuer alle
+              (1) Diese Allgemeinen Geschaeftsbedingungen (AGB) gelten für alle
               Vertraege zwischen der RechnungsChecker GmbH (nachfolgend "Anbieter")
               und dem Nutzer (nachfolgend "Kunde") ueber die Nutzung der
               RechnungsChecker-Plattform zur Validierung und Konvertierung von
@@ -40,7 +40,7 @@ export function AGB() {
               <li>Validierung von XRechnung-Dateien (XML)</li>
               <li>Validierung von ZUGFeRD-Rechnungen (PDF)</li>
               <li>Erstellung von PDF-Validierungsberichten</li>
-              <li>API-Zugang fuer automatisierte Validierungen</li>
+              <li>API-Zugang für automatisierte Validierungen</li>
             </ul>
           </section>
 
@@ -111,7 +111,7 @@ export function AGB() {
             </p>
             <p className="text-gray-600">
               (2) Die Validierungsergebnisse basieren auf den offiziellen Pruefregeln
-              des KoSIT. Der Anbieter uebernimmt keine Garantie fuer die
+              des KoSIT. Der Anbieter uebernimmt keine Garantie für die
               Vollstaendigkeit oder Richtigkeit der Ergebnisse.
             </p>
           </section>
@@ -121,7 +121,7 @@ export function AGB() {
               § 7 Haftung
             </h2>
             <p className="text-gray-600 mb-4">
-              (1) Der Anbieter haftet unbeschraenkt fuer Vorsatz und grobe
+              (1) Der Anbieter haftet unbeschraenkt für Vorsatz und grobe
               Fahrlaessigkeit.
             </p>
             <p className="text-gray-600 mb-4">
@@ -130,7 +130,7 @@ export function AGB() {
               diesem Fall auf den vorhersehbaren, vertragstypischen Schaden begrenzt.
             </p>
             <p className="text-gray-600">
-              (3) Die Haftung fuer Schaeden aus der Verletzung des Lebens, des
+              (3) Die Haftung für Schaeden aus der Verletzung des Lebens, des
               Koerpers oder der Gesundheit bleibt unberuehrt.
             </p>
           </section>
@@ -174,7 +174,7 @@ export function AGB() {
               des UN-Kaufrechts.
             </p>
             <p className="text-gray-600 mb-4">
-              (2) Gerichtsstand fuer alle Streitigkeiten aus diesem Vertrag ist
+              (2) Gerichtsstand für alle Streitigkeiten aus diesem Vertrag ist
               Berlin, sofern der Kunde Kaufmann, juristische Person des oeffentlichen
               Rechts oder oeffentlich-rechtliches Sondervermoegen ist.
             </p>

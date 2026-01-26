@@ -69,7 +69,7 @@ export function Impressum() {
 
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Verantwortlich fuer den Inhalt nach § 55 Abs. 2 RStV
+              Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV
             </h2>
             <div className="text-gray-600">
               <p>Max Mustermann</p>
@@ -110,10 +110,10 @@ export function Impressum() {
 
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Haftung fuer Inhalte
+              Haftung für Inhalte
             </h2>
             <p className="text-gray-600">
-              Als Diensteanbieter sind wir gemaess § 7 Abs.1 TMG fuer eigene Inhalte
+              Als Diensteanbieter sind wir gemaess § 7 Abs.1 TMG für eigene Inhalte
               auf diesen Seiten nach den allgemeinen Gesetzen verantwortlich. Nach
               §§ 8 bis 10 TMG sind wir als Diensteanbieter jedoch nicht verpflichtet,
               uebermittelte oder gespeicherte fremde Informationen zu ueberwachen

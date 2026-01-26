@@ -12,6 +12,7 @@ import {
   Building2,
   User,
   AlertTriangle,
+  AlertCircle,
   MapPin,
 } from 'lucide-react'
 import {
@@ -35,39 +36,44 @@ export function TemplatesPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const handleCreateTemplate = async (data: TemplateCreateRequest) => {
     try {
+      setError(null)
       await createTemplate.mutateAsync(data)
       setShowCreateModal(false)
-    } catch (error) {
-      console.error('Failed to create template:', error)
+    } catch (err) {
+      setError('Vorlage konnte nicht erstellt werden')
     }
   }
 
   const handleUpdateTemplate = async (id: string, data: Partial<TemplateCreateRequest>) => {
     try {
+      setError(null)
       await updateTemplate.mutateAsync({ id, data })
       setEditingTemplate(null)
-    } catch (error) {
-      console.error('Failed to update template:', error)
+    } catch (err) {
+      setError('Vorlage konnte nicht aktualisiert werden')
     }
   }
 
   const handleDeleteTemplate = async (id: string) => {
     try {
+      setError(null)
       await deleteTemplate.mutateAsync(id)
       setShowDeleteConfirm(null)
-    } catch (error) {
-      console.error('Failed to delete template:', error)
+    } catch (err) {
+      setError('Vorlage konnte nicht gelöscht werden')
     }
   }
 
   const handleSetDefault = async (id: string) => {
     try {
+      setError(null)
       await setDefaultTemplate.mutateAsync(id)
-    } catch (error) {
-      console.error('Failed to set default:', error)
+    } catch (err) {
+      setError('Standard konnte nicht gesetzt werden')
     }
   }
 
@@ -80,13 +86,13 @@ export function TemplatesPage() {
           className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Zurueck zum Dashboard
+          Zurück zum Dashboard
         </Link>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Vorlagen</h1>
             <p className="text-gray-600 mt-1">
-              Speichern Sie haeufig verwendete Absender- und Empfaengerdaten
+              Speichern Sie häufig verwendete Absender- und Empfängerdaten
             </p>
           </div>
           <button
@@ -98,6 +104,17 @@ export function TemplatesPage() {
           </button>
         </div>
       </div>
+
+      {/* Error Banner */}
+      {error && (
+        <div className="mb-6 p-4 bg-error-50 border border-error-200 rounded-lg flex items-center gap-3">
+          <AlertCircle className="h-5 w-5 text-error-600" />
+          <p className="text-error-700">{error}</p>
+          <button onClick={() => setError(null)} className="ml-auto text-error-600 hover:text-error-700">
+            ×
+          </button>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 p-1 rounded-lg w-fit mb-6">
@@ -123,7 +140,7 @@ export function TemplatesPage() {
           )}
         >
           <User className="h-4 w-4" />
-          Empfaenger
+          Empfänger
         </button>
       </div>
 
@@ -131,7 +148,7 @@ export function TemplatesPage() {
       <div className="card">
         <div className="px-6 py-4 border-b border-gray-200">
           <h2 className="font-semibold text-gray-900">
-            {activeTab === 'sender' ? 'Absender-Vorlagen' : 'Empfaenger-Vorlagen'}
+            {activeTab === 'sender' ? 'Absender-Vorlagen' : 'Empfänger-Vorlagen'}
           </h2>
         </div>
 
@@ -143,7 +160,7 @@ export function TemplatesPage() {
           <div className="p-8 text-center">
             <FileText className="h-12 w-12 text-gray-300 mx-auto mb-3" />
             <p className="text-gray-500">
-              Noch keine {activeTab === 'sender' ? 'Absender' : 'Empfaenger'}-Vorlagen angelegt
+              Noch keine {activeTab === 'sender' ? 'Absender' : 'Empfänger'}-Vorlagen angelegt
             </p>
             <button
               onClick={() => setShowCreateModal(true)}
@@ -171,7 +188,7 @@ export function TemplatesPage() {
       {/* Create Modal */}
       {showCreateModal && (
         <TemplateFormModal
-          title={`Neue ${activeTab === 'sender' ? 'Absender' : 'Empfaenger'}-Vorlage`}
+          title={`Neue ${activeTab === 'sender' ? 'Absender' : 'Empfänger'}-Vorlage`}
           templateType={activeTab}
           onClose={() => setShowCreateModal(false)}
           onSubmit={handleCreateTemplate}
@@ -283,7 +300,7 @@ function TemplateCard({
                   className="w-full px-4 py-2 text-left text-sm text-error-600 hover:bg-error-50 flex items-center gap-2"
                 >
                   <Trash2 className="h-4 w-4" />
-                  Loeschen
+                  Löschen
                 </button>
               </div>
             </>
@@ -423,7 +440,7 @@ function TemplateFormModal({
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Strasse
+                Straße
               </label>
               <input
                 type="text"
@@ -581,10 +598,10 @@ function DeleteConfirmModal({
           <div className="p-2 bg-error-100 rounded-full">
             <AlertTriangle className="h-5 w-5 text-error-600" />
           </div>
-          <h2 className="text-lg font-semibold text-gray-900">Vorlage loeschen?</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Vorlage löschen?</h2>
         </div>
         <p className="text-gray-600 mb-6">
-          Diese Aktion kann nicht rueckgaengig gemacht werden.
+          Diese Aktion kann nicht rückgängig gemacht werden.
         </p>
         <div className="flex gap-3">
           <button onClick={onClose} className="btn-secondary flex-1" disabled={isLoading}>
@@ -595,7 +612,7 @@ function DeleteConfirmModal({
             className="btn-primary bg-error-600 hover:bg-error-700 flex-1"
             disabled={isLoading}
           >
-            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Loeschen'}
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Löschen'}
           </button>
         </div>
       </div>

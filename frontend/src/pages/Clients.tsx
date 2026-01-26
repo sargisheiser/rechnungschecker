@@ -15,6 +15,7 @@ import {
   Eye,
   EyeOff,
   AlertTriangle,
+  AlertCircle,
 } from 'lucide-react'
 import { useUser } from '@/hooks/useAuth'
 import {
@@ -43,6 +44,7 @@ export function ClientsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingClient, setEditingClient] = useState<Client | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   // Check if user can manage clients
   const canManageClients = user?.plan === 'steuerberater'
@@ -52,9 +54,9 @@ export function ClientsPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center">
           <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Mandantenverwaltung nicht verfuegbar</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Mandantenverwaltung nicht verfügbar</h1>
           <p className="text-gray-600 mb-6">
-            Mandantenverwaltung ist nur mit dem Steuerberater-Plan verfuegbar.
+            Mandantenverwaltung ist nur mit dem Steuerberater-Plan verfügbar.
           </p>
           <Link to="/preise" className="btn-primary">
             Jetzt wechseln
@@ -66,39 +68,43 @@ export function ClientsPage() {
 
   const handleCreateClient = async (data: ClientCreateRequest) => {
     try {
+      setError(null)
       await createClient.mutateAsync(data)
       setShowCreateModal(false)
-    } catch (error) {
-      console.error('Failed to create client:', error)
+    } catch (err) {
+      setError('Mandant konnte nicht erstellt werden')
     }
   }
 
   const handleUpdateClient = async (id: string, data: Partial<ClientCreateRequest> & { is_active?: boolean }) => {
     try {
+      setError(null)
       await updateClient.mutateAsync({ id, data })
       setEditingClient(null)
-    } catch (error) {
-      console.error('Failed to update client:', error)
+    } catch (err) {
+      setError('Mandant konnte nicht aktualisiert werden')
     }
   }
 
   const handleDeleteClient = async (id: string) => {
     try {
+      setError(null)
       await deleteClient.mutateAsync(id)
       setShowDeleteConfirm(null)
-    } catch (error) {
-      console.error('Failed to delete client:', error)
+    } catch (err) {
+      setError('Mandant konnte nicht gelöscht werden')
     }
   }
 
   const handleToggleActive = async (client: ClientListItem) => {
     try {
+      setError(null)
       await updateClient.mutateAsync({
         id: client.id,
         data: { is_active: !client.is_active },
       })
-    } catch (error) {
-      console.error('Failed to toggle client:', error)
+    } catch (err) {
+      setError('Status konnte nicht geändert werden')
     }
   }
 
@@ -111,7 +117,7 @@ export function ClientsPage() {
           className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Zurueck zum Dashboard
+          Zurück zum Dashboard
         </Link>
         <div className="flex items-center justify-between">
           <div>
@@ -130,6 +136,17 @@ export function ClientsPage() {
           </button>
         </div>
       </div>
+
+      {/* Error Banner */}
+      {error && (
+        <div className="mb-6 p-4 bg-error-50 border border-error-200 rounded-lg flex items-center gap-3">
+          <AlertCircle className="h-5 w-5 text-error-600" />
+          <p className="text-error-700">{error}</p>
+          <button onClick={() => setError(null)} className="ml-auto text-error-600 hover:text-error-700">
+            ×
+          </button>
+        </div>
+      )}
 
       {/* Stats Cards */}
       {stats && (
@@ -167,7 +184,7 @@ export function ClientsPage() {
             <div className="flex items-center gap-3">
               <Clock className="h-8 w-8 text-gray-400" />
               <div>
-                <p className="text-sm text-gray-500">Ausgewaehlter Mandant</p>
+                <p className="text-sm text-gray-500">Ausgewählter Mandant</p>
                 <p className="text-sm font-medium truncate">
                   {selectedClientId
                     ? clientsData?.items.find((c) => c.id === selectedClientId)?.name || 'Laden...'
@@ -260,7 +277,7 @@ export function ClientsPage() {
                 disabled={page === 1}
                 className="btn-secondary btn-sm"
               >
-                Zurueck
+                Zurück
               </button>
               <button
                 onClick={() => setPage((p) => p + 1)}
@@ -381,7 +398,7 @@ function ClientRow({
                 className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
               >
                 <FileCheck className="h-4 w-4" />
-                {isSelected ? 'Abwaehlen' : 'Auswaehlen'}
+                {isSelected ? 'Abwählen' : 'Auswählen'}
               </button>
               <button
                 onClick={() => {
@@ -421,7 +438,7 @@ function ClientRow({
                 className="w-full px-4 py-2 text-left text-sm text-error-600 hover:bg-error-50 flex items-center gap-2"
               >
                 <Trash2 className="h-4 w-4" />
-                Loeschen
+                Löschen
               </button>
             </div>
           </>
@@ -579,7 +596,7 @@ function ClientFormModal({
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Strasse
+                Straße
               </label>
               <input
                 type="text"
@@ -675,10 +692,10 @@ function DeleteConfirmModal({
           <div className="p-2 bg-error-100 rounded-full">
             <AlertTriangle className="h-5 w-5 text-error-600" />
           </div>
-          <h2 className="text-lg font-semibold text-gray-900">Mandant loeschen?</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Mandant löschen?</h2>
         </div>
         <p className="text-gray-600 mb-6">
-          Diese Aktion kann nicht rueckgaengig gemacht werden. Alle zugehoerigen
+          Diese Aktion kann nicht rückgängig gemacht werden. Alle zugehörigen
           Validierungen bleiben erhalten, werden aber nicht mehr diesem Mandanten
           zugeordnet.
         </p>
@@ -691,7 +708,7 @@ function DeleteConfirmModal({
             className="btn-primary bg-error-600 hover:bg-error-700 flex-1"
             disabled={isLoading}
           >
-            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Loeschen'}
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Löschen'}
           </button>
         </div>
       </div>

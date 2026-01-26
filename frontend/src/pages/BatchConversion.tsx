@@ -7,6 +7,7 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
+  AlertCircle,
   Loader2,
   FileText,
   Download,
@@ -38,6 +39,7 @@ export function BatchConversionPage() {
   const [outputFormat, setOutputFormat] = useState<OutputFormat>('xrechnung')
   const [zugferdProfile, setZugferdProfile] = useState<ZUGFeRDProfileType>('EN16931')
   const [results, setResults] = useState<ConversionResponse[] | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const batchConvert = useBatchConvert()
   const download = useDownloadConversion()
@@ -66,14 +68,15 @@ export function BatchConversionPage() {
     if (selectedFiles.length === 0) return
 
     try {
+      setError(null)
       const response = await batchConvert.mutateAsync({
         files: selectedFiles,
         outputFormat,
         zugferdProfile,
       })
       setResults(response)
-    } catch (error) {
-      console.error('Batch conversion failed:', error)
+    } catch (err) {
+      setError('Batch-Konvertierung fehlgeschlagen. Bitte versuchen Sie es erneut.')
     }
   }
 
@@ -129,13 +132,24 @@ export function BatchConversionPage() {
             <div>
               <h4 className="font-medium text-warning-800">Starter-Plan erforderlich</h4>
               <p className="text-sm text-warning-700 mt-1">
-                Die Batch-Konvertierung ist ab dem Starter-Plan verfuegbar.
+                Die Batch-Konvertierung ist ab dem Starter-Plan verfügbar.
               </p>
               <Link to="/preise" className="text-sm text-primary-600 hover:text-primary-700 font-medium mt-2 inline-block">
                 Jetzt wechseln
               </Link>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Error Banner */}
+      {error && (
+        <div className="mb-6 p-4 bg-error-50 border border-error-200 rounded-lg flex items-center gap-3">
+          <AlertCircle className="h-5 w-5 text-error-600" />
+          <p className="text-error-700">{error}</p>
+          <button onClick={() => setError(null)} className="ml-auto text-error-600 hover:text-error-700">
+            ×
+          </button>
         </div>
       )}
 

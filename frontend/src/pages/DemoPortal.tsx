@@ -63,7 +63,7 @@ export function DemoPortal() {
           className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-6"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Zurueck zum Dashboard
+          Zurück zum Dashboard
         </Link>
 
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -130,7 +130,7 @@ export function DemoPortal() {
                 <div className="p-4 border border-gray-200 rounded-lg">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-gray-900">Plan aendern</p>
+                      <p className="font-medium text-gray-900">Plan ändern</p>
                       <p className="text-sm text-gray-500">
                         Wechseln Sie zu einem anderen Plan
                       </p>
@@ -154,7 +154,7 @@ export function DemoPortal() {
                       </div>
                     </div>
                     <button className="btn-ghost btn-sm" disabled>
-                      Aendern
+                      Ändern
                     </button>
                   </div>
                 </div>

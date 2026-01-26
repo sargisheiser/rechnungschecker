@@ -10,6 +10,7 @@ import {
   Calendar,
   Filter,
   Check,
+  AlertCircle,
 } from 'lucide-react'
 import { useUser } from '@/hooks/useAuth'
 import { useClients } from '@/hooks/useClients'
@@ -24,6 +25,7 @@ export function ExportPage() {
   const [activeTab, setActiveTab] = useState<'validations' | 'clients'>('validations')
   const [isExporting, setIsExporting] = useState(false)
   const [exportSuccess, setExportSuccess] = useState(false)
+  const [exportError, setExportError] = useState<string | null>(null)
 
   // Validations export filters
   const [clientId, setClientId] = useState<string>('')
@@ -45,9 +47,9 @@ export function ExportPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center">
           <Shield className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Export nicht verfuegbar</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Export nicht verfügbar</h1>
           <p className="text-gray-600 mb-6">
-            Der CSV-Export ist nur mit dem Steuerberater-Plan verfuegbar.
+            Der CSV-Export ist nur mit dem Steuerberater-Plan verfügbar.
           </p>
           <Link to="/preise" className="btn-primary">
             Jetzt wechseln
@@ -59,6 +61,7 @@ export function ExportPage() {
 
   const handleExportValidations = async () => {
     setIsExporting(true)
+    setExportError(null)
     try {
       const blob = await exportApi.downloadValidations({
         client_id: clientId || undefined,
@@ -80,8 +83,8 @@ export function ExportPage() {
 
       setExportSuccess(true)
       setTimeout(() => setExportSuccess(false), 3000)
-    } catch (error) {
-      console.error('Export failed:', error)
+    } catch (err) {
+      setExportError('Export fehlgeschlagen. Bitte versuchen Sie es erneut.')
     } finally {
       setIsExporting(false)
     }
@@ -89,6 +92,7 @@ export function ExportPage() {
 
   const handleExportClients = async () => {
     setIsExporting(true)
+    setExportError(null)
     try {
       const blob = await exportApi.downloadClients({
         include_inactive: includeInactive,
@@ -109,8 +113,8 @@ export function ExportPage() {
 
       setExportSuccess(true)
       setTimeout(() => setExportSuccess(false), 3000)
-    } catch (error) {
-      console.error('Export failed:', error)
+    } catch (err) {
+      setExportError('Export fehlgeschlagen. Bitte versuchen Sie es erneut.')
     } finally {
       setIsExporting(false)
     }
@@ -125,7 +129,7 @@ export function ExportPage() {
           className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Zurueck zum Dashboard
+          Zurück zum Dashboard
         </Link>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Datenexport</h1>
@@ -140,6 +144,17 @@ export function ExportPage() {
         <div className="mb-6 p-4 bg-success-50 border border-success-200 rounded-lg flex items-center gap-3">
           <Check className="h-5 w-5 text-success-600" />
           <span className="text-success-700">Export erfolgreich! Die Datei wird heruntergeladen.</span>
+        </div>
+      )}
+
+      {/* Error Banner */}
+      {exportError && (
+        <div className="mb-6 p-4 bg-error-50 border border-error-200 rounded-lg flex items-center gap-3">
+          <AlertCircle className="h-5 w-5 text-error-600" />
+          <span className="text-error-700">{exportError}</span>
+          <button onClick={() => setExportError(null)} className="ml-auto text-error-600 hover:text-error-700">
+            ×
+          </button>
         </div>
       )}
 
@@ -411,14 +426,14 @@ export function ExportPage() {
         <h3 className="font-medium text-gray-900 mb-2">Hinweise zum Export</h3>
         <ul className="text-sm text-gray-600 space-y-1">
           <li>
-            <strong>DATEV-Format:</strong> Verwendet Semikolon als Trennzeichen, optimiert fuer
+            <strong>DATEV-Format:</strong> Verwendet Semikolon als Trennzeichen, optimiert für
             den Import in DATEV-Software.
           </li>
           <li>
             <strong>Excel-Format:</strong> Verwendet Komma als Trennzeichen, kompatibel mit
             Microsoft Excel und Google Sheets.
           </li>
-          <li>Alle Exporte enthalten deutsche Spaltenueberschriften und UTF-8-Kodierung.</li>
+          <li>Alle Exporte enthalten deutsche Spaltenüberschriften und UTF-8-Kodierung.</li>
         </ul>
       </div>
     </div>

@@ -175,7 +175,8 @@ class ZUGFeRDExtractor:
                 "ram:",
             ]
             return any(marker in content_str for marker in invoice_markers)
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Content does not appear to be invoice XML: {e}")
             return False
 
     def _detect_profile(self, xml_content: bytes) -> tuple[ZUGFeRDProfile, str | None]:
@@ -184,7 +185,8 @@ class ZUGFeRDExtractor:
 
         try:
             root = ET.fromstring(xml_content)
-        except ET.ParseError:
+        except ET.ParseError as e:
+            logger.debug(f"Failed to parse XML for profile detection: {e}")
             return ZUGFeRDProfile.UNKNOWN, None
 
         # Look for GuidelineSpecifiedDocumentContextParameter

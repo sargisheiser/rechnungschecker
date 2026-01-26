@@ -10,6 +10,7 @@ import {
   Copy,
   Trash2,
   AlertTriangle,
+  AlertCircle,
   Eye,
   EyeOff,
   TestTube,
@@ -36,12 +37,12 @@ const EVENT_OPTIONS: { value: WebhookEventType; label: string; description: stri
   {
     value: 'validation.completed',
     label: 'Validierung abgeschlossen',
-    description: 'Wird ausgeloest, wenn eine Validierung erfolgreich war',
+    description: 'Wird ausgelöst, wenn eine Validierung erfolgreich war',
   },
   {
     value: 'validation.failed',
     label: 'Validierung fehlgeschlagen',
-    description: 'Wird ausgeloest, wenn eine Validierung Fehler enthaelt',
+    description: 'Wird ausgelöst, wenn eine Validierung Fehler enthält',
   },
 ]
 
@@ -60,6 +61,7 @@ export function WebhooksPage() {
   const [copiedSecret, setCopiedSecret] = useState(false)
   const [expandedWebhook, setExpandedWebhook] = useState<string | null>(null)
   const [testResults, setTestResults] = useState<Record<string, { success: boolean; message: string }>>({})
+  const [error, setError] = useState<string | null>(null)
 
   const canUseWebhooks = user?.plan === 'pro' || user?.plan === 'steuerberater'
 
@@ -68,9 +70,9 @@ export function WebhooksPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center">
           <Shield className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Webhooks nicht verfuegbar</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Webhooks nicht verfügbar</h1>
           <p className="text-gray-600 mb-6">
-            Webhooks sind nur mit dem Pro- oder Steuerberater-Plan verfuegbar.
+            Webhooks sind nur mit dem Pro- oder Steuerberater-Plan verfügbar.
           </p>
           <Link to="/preise" className="btn-primary">
             Jetzt wechseln
@@ -88,31 +90,34 @@ export function WebhooksPage() {
 
   const handleCreate = async (url: string, events: WebhookEventType[], description?: string) => {
     try {
+      setError(null)
       const result = await createWebhook.mutateAsync({ url, events, description })
       setNewWebhook(result)
       setShowCreateModal(false)
-    } catch (error) {
-      console.error('Failed to create webhook:', error)
+    } catch (err) {
+      setError('Webhook konnte nicht erstellt werden')
     }
   }
 
   const handleDelete = async (id: string) => {
     try {
+      setError(null)
       await deleteWebhook.mutateAsync(id)
       setShowDeleteConfirm(null)
-    } catch (error) {
-      console.error('Failed to delete webhook:', error)
+    } catch (err) {
+      setError('Webhook konnte nicht gelöscht werden')
     }
   }
 
   const handleToggle = async (webhook: WebhookType) => {
     try {
+      setError(null)
       await updateWebhook.mutateAsync({
         id: webhook.id,
         data: { is_active: !webhook.is_active },
       })
-    } catch (error) {
-      console.error('Failed to toggle webhook:', error)
+    } catch (err) {
+      setError('Webhook-Status konnte nicht geändert werden')
     }
   }
 
@@ -139,10 +144,11 @@ export function WebhooksPage() {
 
   const handleRotateSecret = async (id: string) => {
     try {
+      setError(null)
       const result = await rotateSecret.mutateAsync(id)
       setNewWebhook(result)
-    } catch (error) {
-      console.error('Failed to rotate secret:', error)
+    } catch (err) {
+      setError('Secret konnte nicht erneuert werden')
     }
   }
 
@@ -155,7 +161,7 @@ export function WebhooksPage() {
           className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Zurueck zum Dashboard
+          Zurück zum Dashboard
         </Link>
         <div className="flex items-center justify-between">
           <div>
@@ -174,6 +180,17 @@ export function WebhooksPage() {
           </button>
         </div>
       </div>
+
+      {/* Error Banner */}
+      {error && (
+        <div className="mb-6 p-4 bg-error-50 border border-error-200 rounded-lg flex items-center gap-3">
+          <AlertCircle className="h-5 w-5 text-error-600" />
+          <p className="text-error-700">{error}</p>
+          <button onClick={() => setError(null)} className="ml-auto text-error-600 hover:text-error-700">
+            ×
+          </button>
+        </div>
+      )}
 
       {/* Usage Stats */}
       {webhooksData && (
@@ -245,7 +262,7 @@ export function WebhooksPage() {
                 onClick={() => setNewWebhook(null)}
                 className="mt-3 text-sm text-success-700 hover:text-success-800"
               >
-                Schliessen
+                Schließen
               </button>
             </div>
           </div>
@@ -422,7 +439,7 @@ function WebhookRow({
               onClick={onDelete}
               disabled={isDeleting}
               className="p-2 rounded hover:bg-error-50 text-error-600"
-              title="Loeschen"
+              title="Löschen"
             >
               <Trash2 className="h-4 w-4" />
             </button>
@@ -590,10 +607,10 @@ function DeleteConfirmModal({
           <div className="p-2 bg-error-100 rounded-full">
             <AlertTriangle className="h-5 w-5 text-error-600" />
           </div>
-          <h2 className="text-lg font-semibold text-gray-900">Webhook loeschen?</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Webhook löschen?</h2>
         </div>
         <p className="text-gray-600 mb-6">
-          Diese Aktion kann nicht rueckgaengig gemacht werden. Sie erhalten keine
+          Diese Aktion kann nicht rückgängig gemacht werden. Sie erhalten keine
           Benachrichtigungen mehr an diese URL.
         </p>
         <div className="flex gap-3">
@@ -605,7 +622,7 @@ function DeleteConfirmModal({
             className="btn-primary bg-error-600 hover:bg-error-700 flex-1"
             disabled={isLoading}
           >
-            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Loeschen'}
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Löschen'}
           </button>
         </div>
       </div>

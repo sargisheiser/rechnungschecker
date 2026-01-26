@@ -3,21 +3,18 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Users,
   Plus,
-  Settings,
   Mail,
   Trash2,
   Crown,
   Shield,
   User,
   Loader2,
-  AlertCircle,
   X,
 } from 'lucide-react'
 import { organizationApi } from '@/lib/api'
 import { useAuthStore } from '@/hooks/useAuth'
 import type {
   Organization,
-  OrganizationMember,
   OrganizationRole,
 } from '@/types'
 import { Alert } from '@/components/Alert'

@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useTranslation } from 'react-i18next'
 import {
   Clock,
   Cloud,
@@ -8,14 +7,11 @@ import {
   Play,
   Pause,
   Trash2,
-  Settings,
   CheckCircle,
   XCircle,
-  AlertTriangle,
   RefreshCw,
   ChevronDown,
   ChevronUp,
-  FileText,
   Loader2,
 } from 'lucide-react'
 import { scheduledValidationsApi } from '@/lib/api'
@@ -42,7 +38,6 @@ const providerOptions: { value: CloudStorageProvider; label: string }[] = [
 ]
 
 function ScheduledValidationsPage() {
-  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null)

@@ -140,7 +140,7 @@ export function Kontakt() {
                     Nachricht gesendet!
                   </h3>
                   <p className="text-gray-600 mb-4">
-                    Vielen Dank fuer Ihre Nachricht. Wir werden uns innerhalb von
+                    Vielen Dank für Ihre Nachricht. Wir werden uns innerhalb von
                     24 Stunden bei Ihnen melden.
                   </p>
                   <button

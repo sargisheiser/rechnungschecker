@@ -192,6 +192,6 @@ class IntegrationService:
 
                 parsed = urlparse(url)
                 return f"webhook_url: ...{parsed.netloc}/..."
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Failed to get config hint for integration: {e}")
         return None

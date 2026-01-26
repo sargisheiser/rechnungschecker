@@ -39,8 +39,8 @@ const INTEGRATION_INFO: Record<IntegrationType, {
     description: 'Verbinden Sie Ihr Lexoffice-Konto, um Rechnungen direkt zu importieren und zu validieren.',
     icon: FileSpreadsheet,
     configField: 'api_key',
-    configLabel: 'API-Schluessel',
-    configPlaceholder: 'Ihr Lexoffice API-Schluessel',
+    configLabel: 'API-Schlüssel',
+    configPlaceholder: 'Ihr Lexoffice API-Schlüssel',
   },
   slack: {
     name: 'Slack',
@@ -79,9 +79,9 @@ export function IntegrationsPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center">
           <Shield className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Integrationen nicht verfuegbar</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Integrationen nicht verfügbar</h1>
           <p className="text-gray-600 mb-6">
-            Integrationen sind nur mit dem Pro- oder Steuerberater-Plan verfuegbar.
+            Integrationen sind nur mit dem Pro- oder Steuerberater-Plan verfügbar.
           </p>
           <Link to="/preise" className="btn-primary">
             Jetzt wechseln
@@ -110,8 +110,9 @@ export function IntegrationsPage() {
     try {
       await deleteIntegration.mutateAsync(type)
       setShowDeleteConfirm(null)
-    } catch (error) {
-      console.error('Failed to delete integration:', error)
+    } catch (err) {
+      setTestResult({ type, success: false, message: 'Integration konnte nicht gelöscht werden' })
+      setTimeout(() => setTestResult(null), 5000)
     }
   }
 
@@ -124,12 +125,12 @@ export function IntegrationsPage() {
           className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Zurueck zum Dashboard
+          Zurück zum Dashboard
         </Link>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Integrationen</h1>
           <p className="text-gray-600 mt-1">
-            Verbinden Sie externe Dienste fuer automatische Benachrichtigungen und Import
+            Verbinden Sie externe Dienste für automatische Benachrichtigungen und Import
           </p>
         </div>
       </div>
@@ -260,7 +261,7 @@ export function IntegrationsPage() {
                         <button
                           onClick={() => setShowDeleteConfirm(type)}
                           className="btn-secondary btn-sm text-error-600 hover:bg-error-50"
-                          title="Loeschen"
+                          title="Löschen"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>

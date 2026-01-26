@@ -93,8 +93,8 @@ class KoSITValidator:
                 )
                 if result.returncode == 0:
                     return java_path
-            except (subprocess.TimeoutExpired, OSError):
-                pass
+            except (subprocess.TimeoutExpired, OSError) as e:
+                logger.debug(f"Java version check failed: {e}")
 
         return None
 

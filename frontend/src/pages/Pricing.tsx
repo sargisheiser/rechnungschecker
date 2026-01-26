@@ -40,7 +40,7 @@ export function Pricing() {
             Einfache, transparente Preise
           </h1>
           <p className="mt-4 text-lg text-gray-600">
-            Waehlen Sie den passenden Plan fuer Ihr Unternehmen. Keine
+            Waehlen Sie den passenden Plan für Ihr Unternehmen. Keine
             versteckten Kosten.
           </p>
 
@@ -140,8 +140,8 @@ export function Pricing() {
               answer="Ihre Validierungshistorie bleibt 30 Tage nach Kuendigung erhalten. Danach werden alle Daten geloescht."
             />
             <FaqItem
-              question="Bieten Sie Rabatte fuer groessere Teams?"
-              answer="Ja, fuer Unternehmen mit mehr als 10 Nutzern bieten wir individuelle Konditionen. Kontaktieren Sie uns."
+              question="Bieten Sie Rabatte für groessere Teams?"
+              answer="Ja, für Unternehmen mit mehr als 10 Nutzern bieten wir individuelle Konditionen. Kontaktieren Sie uns."
             />
           </div>
         </div>

@@ -74,7 +74,7 @@ export function Datenschutz() {
               Sie koennen sich auf unserer Website registrieren, um zusaetzliche
               Funktionen nutzen zu koennen. Die dabei eingegebenen Daten verwenden
               wir nur zum Zwecke der Nutzung des jeweiligen Angebotes oder Dienstes,
-              fuer den Sie sich registriert haben.
+              für den Sie sich registriert haben.
             </p>
             <p className="text-gray-600 mb-4">
               Bei der Registrierung erfassen wir:

@@ -40,7 +40,7 @@ export function ForgotPassword() {
             </h1>
             <p className="text-gray-600 mb-6">
               Falls ein Konto mit <strong>{email}</strong> existiert, haben wir Ihnen
-              einen Link zum Zuruecksetzen des Passworts gesendet.
+              einen Link zum Zurücksetzen des Passworts gesendet.
             </p>
             <p className="text-sm text-gray-500 mb-6">
               Bitte pruefen Sie auch Ihren Spam-Ordner.
@@ -50,7 +50,7 @@ export function ForgotPassword() {
               className="btn-primary w-full inline-flex items-center justify-center"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Zurueck zur Anmeldung
+              Zurück zur Anmeldung
             </Link>
           </div>
         </div>
@@ -72,7 +72,7 @@ export function ForgotPassword() {
             Passwort vergessen?
           </h1>
           <p className="text-gray-600 mt-2">
-            Geben Sie Ihre E-Mail Adresse ein und wir senden Ihnen einen Link zum Zuruecksetzen.
+            Geben Sie Ihre E-Mail Adresse ein und wir senden Ihnen einen Link zum Zurücksetzen.
           </p>
         </div>
 
@@ -124,7 +124,7 @@ export function ForgotPassword() {
               className="text-sm text-primary-600 hover:text-primary-700 inline-flex items-center"
             >
               <ArrowLeft className="h-4 w-4 mr-1" />
-              Zurueck zur Anmeldung
+              Zurück zur Anmeldung
             </Link>
           </div>
         </div>

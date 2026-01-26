@@ -76,7 +76,7 @@ export function ValidationDetailPage() {
               Die angeforderte Validierung existiert nicht oder Sie haben keinen Zugriff.
             </p>
             <Link to="/dashboard" className="btn-primary">
-              Zurueck zum Dashboard
+              Zurück zum Dashboard
             </Link>
           </div>
         </div>
@@ -96,7 +96,7 @@ export function ValidationDetailPage() {
             className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
-            Zurueck zum Dashboard
+            Zurück zum Dashboard
           </Link>
           <div className="flex items-start justify-between">
             <div>

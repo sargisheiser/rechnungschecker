@@ -10,6 +10,7 @@ import {
   XCircle,
   Clock,
   AlertTriangle,
+  AlertCircle,
   Loader2,
   Trash2,
   FileText,
@@ -65,6 +66,7 @@ export default function BatchUpload() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [jobName, setJobName] = useState('')
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const { data: jobs, isLoading: jobsLoading } = useBatchJobs()
   const { data: selectedJob } = useBatchJob(selectedJobId || undefined)
@@ -98,6 +100,7 @@ export default function BatchUpload() {
     if (selectedFiles.length === 0) return
 
     try {
+      setError(null)
       const result = await createBatch.mutateAsync({
         files: selectedFiles,
         name: jobName || `Batch ${new Date().toLocaleDateString()}`,
@@ -105,27 +108,29 @@ export default function BatchUpload() {
       setSelectedFiles([])
       setJobName('')
       setSelectedJobId(result.id)
-    } catch (error) {
-      console.error('Failed to create batch:', error)
+    } catch (err) {
+      setError('Batch konnte nicht erstellt werden')
     }
   }
 
   const handleCancel = async (jobId: string) => {
     try {
+      setError(null)
       await cancelBatch.mutateAsync(jobId)
-    } catch (error) {
-      console.error('Failed to cancel batch:', error)
+    } catch (err) {
+      setError('Batch konnte nicht abgebrochen werden')
     }
   }
 
   const handleDelete = async (jobId: string) => {
     try {
+      setError(null)
       await deleteBatch.mutateAsync(jobId)
       if (selectedJobId === jobId) {
         setSelectedJobId(null)
       }
-    } catch (error) {
-      console.error('Failed to delete batch:', error)
+    } catch (err) {
+      setError('Batch konnte nicht gelöscht werden')
     }
   }
 
@@ -133,7 +138,7 @@ export default function BatchUpload() {
     if (!selectedJob) return
 
     // CSV header
-    const headers = ['Dateiname', 'Status', 'Groesse (Bytes)', 'Fehler', 'Validierungs-ID']
+    const headers = ['Dateiname', 'Status', 'Größe (Bytes)', 'Fehler', 'Validierungs-ID']
 
     // CSV rows
     const rows = selectedJob.files.map((file) => [
@@ -172,6 +177,17 @@ export default function BatchUpload() {
         </h1>
         <p className="text-gray-600 mt-1">{t('batch.subtitle')}</p>
       </div>
+
+      {/* Error Banner */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+          <AlertCircle className="h-5 w-5 text-red-600" />
+          <p className="text-red-700">{error}</p>
+          <button onClick={() => setError(null)} className="ml-auto text-red-600 hover:text-red-700">
+            ×
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Upload Section */}
@@ -347,18 +363,18 @@ export default function BatchUpload() {
                       <div className="flex items-center gap-4 text-sm">
                         <span className="flex items-center gap-1.5 text-green-600 font-medium">
                           <CheckCircle className="h-4 w-4" />
-                          {job.successful_count} gueltig
+                          {job.successful_count} gültig
                         </span>
                         {job.failed_count > 0 && (
                           <span className="flex items-center gap-1.5 text-red-600 font-medium">
                             <XCircle className="h-4 w-4" />
-                            {job.failed_count} ungueltig
+                            {job.failed_count} ungültig
                           </span>
                         )}
                         {job.total_files - job.successful_count - job.failed_count > 0 && (
                           <span className="flex items-center gap-1.5 text-gray-500">
                             <AlertTriangle className="h-4 w-4" />
-                            {job.total_files - job.successful_count - job.failed_count} uebersprungen
+                            {job.total_files - job.successful_count - job.failed_count} übersprungen
                           </span>
                         )}
                       </div>

@@ -180,7 +180,8 @@ def get_translation(
     if kwargs:
         try:
             message = message.format(**kwargs)
-        except KeyError:
+        except KeyError as e:
+            # Missing format key - return message as-is
             pass
 
     return message

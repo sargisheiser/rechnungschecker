@@ -455,7 +455,8 @@ Antworte NUR mit dem JSON-Objekt, kein zusätzlicher Text."""
                 elif "," in cleaned:
                     cleaned = cleaned.replace(",", ".")
                 return Decimal(cleaned)
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Failed to parse decimal value '{value}': {e}")
             return None
         return None
 
