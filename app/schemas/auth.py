@@ -88,6 +88,7 @@ class UserResponse(BaseModel):
     full_name: str | None = None
     is_active: bool
     is_verified: bool
+    is_admin: bool = False
     plan: str
     validations_this_month: int
     conversions_this_month: int

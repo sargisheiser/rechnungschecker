@@ -228,8 +228,31 @@ async def get_verified_user(
     return current_user
 
 
+async def get_current_admin(
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> User:
+    """Get the current user and verify admin access.
+
+    Args:
+        current_user: The authenticated user
+
+    Returns:
+        The admin User
+
+    Raises:
+        HTTPException: If user is not an admin
+    """
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Administratorzugriff erforderlich",
+        )
+    return current_user
+
+
 # Type aliases for cleaner dependency injection
 CurrentUser = Annotated[User, Depends(get_current_user)]
 OptionalUser = Annotated[User | None, Depends(get_current_user_optional)]
 VerifiedUser = Annotated[User, Depends(get_verified_user)]
+CurrentAdmin = Annotated[User, Depends(get_current_admin)]
 DbSession = Annotated[AsyncSession, Depends(get_db)]

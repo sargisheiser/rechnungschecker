@@ -41,6 +41,7 @@ class User(Base):
 
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
 
     # Email verification
     verification_code: Mapped[str | None] = mapped_column(String(6), nullable=True)

@@ -7,6 +7,7 @@ export interface User {
   plan: PlanTier
   is_active: boolean
   is_verified: boolean
+  is_admin: boolean
   created_at: string
 
   // Notification preferences
@@ -14,6 +15,82 @@ export interface User {
   notify_validation_results: boolean
   notify_weekly_summary: boolean
   notify_marketing: boolean
+}
+
+// Admin types
+export interface AdminUserListItem {
+  id: string
+  email: string
+  full_name?: string
+  company_name?: string
+  plan: PlanTier
+  is_active: boolean
+  is_verified: boolean
+  is_admin: boolean
+  validations_this_month: number
+  conversions_this_month: number
+  created_at: string
+  last_login_at?: string
+}
+
+export interface AdminUserDetail extends AdminUserListItem {
+  stripe_customer_id?: string
+  stripe_subscription_id?: string
+  plan_valid_until?: string
+  updated_at: string
+  email_notifications: boolean
+  notify_validation_results: boolean
+  notify_weekly_summary: boolean
+  notify_marketing: boolean
+}
+
+export interface AdminUserList {
+  items: AdminUserListItem[]
+  total: number
+  page: number
+  page_size: number
+}
+
+export interface AdminUserUpdate {
+  is_active?: boolean
+  is_verified?: boolean
+  is_admin?: boolean
+  plan?: PlanTier
+  full_name?: string
+  company_name?: string
+}
+
+export interface PlatformStats {
+  total_users: number
+  active_users: number
+  verified_users: number
+  total_validations: number
+  total_conversions: number
+  validations_today: number
+  validations_this_week: number
+  validations_this_month: number
+  users_by_plan: Record<string, number>
+  recent_registrations: AdminUserListItem[]
+}
+
+export interface AdminAuditLogItem {
+  id: string
+  user_id: string
+  user_email?: string
+  action: string
+  resource_type?: string
+  resource_id?: string
+  ip_address?: string
+  user_agent?: string
+  details?: Record<string, unknown>
+  created_at: string
+}
+
+export interface AdminAuditLogList {
+  items: AdminAuditLogItem[]
+  total: number
+  page: number
+  page_size: number
 }
 
 export type PlanTier = 'free' | 'starter' | 'pro' | 'steuerberater'

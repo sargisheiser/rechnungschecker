@@ -28,6 +28,9 @@ import BatchConversionPage from '@/pages/BatchConversion'
 import { TemplatesPage } from '@/pages/Templates'
 import { ValidationHistory } from '@/pages/ValidationHistory'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { AdminRoute } from '@/components/AdminRoute'
+import { AdminDashboard } from '@/pages/admin/AdminDashboard'
+import { AdminUsers } from '@/pages/admin/AdminUsers'
 
 function App() {
   return (
@@ -171,6 +174,23 @@ function App() {
             <ProtectedRoute>
               <TemplatesPage />
             </ProtectedRoute>
+          }
+        />
+        {/* Admin Routes */}
+        <Route
+          path="admin"
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="admin/users"
+          element={
+            <AdminRoute>
+              <AdminUsers />
+            </AdminRoute>
           }
         />
       </Route>
