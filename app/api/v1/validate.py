@@ -12,7 +12,7 @@ from sqlalchemy import select
 from app.api.deps import DbSession, get_current_user_optional, CurrentUser, OptionalUser
 from app.config import get_settings
 from app.core.cache import cache_validation_result
-from app.core.exceptions import FileProcessingError, KoSITError, ValidationError
+from app.core.exceptions import FileProcessingError, KoSITError, ValidationError, ErrorCode, api_error
 from app.models.user import GuestUsage, User
 from app.schemas.validation import (
     GuestValidationResponse,
@@ -66,12 +66,12 @@ async def check_and_update_user_usage(user: User, db) -> None:
         limit = user.get_validation_limit()
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail={
-                "code": "VALIDATION_LIMIT_REACHED",
-                "message": f"Sie haben Ihr monatliches Limit von {limit} Validierungen erreicht. Bitte upgraden Sie Ihren Plan für mehr Validierungen.",
-                "validations_used": user.validations_this_month,
-                "validations_limit": limit,
-            }
+            detail=api_error(
+                ErrorCode.VALIDATION_LIMIT_REACHED,
+                f"Sie haben Ihr monatliches Limit von {limit} Validierungen erreicht. Bitte upgraden Sie Ihren Plan für mehr Validierungen.",
+                validations_used=user.validations_this_month,
+                validations_limit=limit,
+            )
         )
 
     # Increment validation counter
@@ -549,13 +549,13 @@ async def validate_guest(
         # Limit reached
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail={
-                "code": "GUEST_LIMIT_REACHED",
-                "message": "Sie haben Ihre kostenlose Validierung bereits genutzt. Bitte registrieren Sie sich für weitere Validierungen.",
-                "guest_id": new_guest_id,
-                "validations_used": guest_usage.validations_used,
-                "validations_limit": GUEST_VALIDATION_LIMIT,
-            }
+            detail=api_error(
+                ErrorCode.GUEST_LIMIT_REACHED,
+                "Sie haben Ihre kostenlose Validierung bereits genutzt. Bitte registrieren Sie sich für weitere Validierungen.",
+                guest_id=new_guest_id,
+                validations_used=guest_usage.validations_used,
+                validations_limit=GUEST_VALIDATION_LIMIT,
+            )
         )
 
     # Check file size
