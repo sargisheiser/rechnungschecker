@@ -991,4 +991,61 @@ export const invoiceApi = {
   },
 }
 
+// Scheduled Validations API
+import type {
+  ScheduledValidationJob,
+  ScheduledValidationRun,
+  ScheduledValidationFile,
+  CreateScheduledJobRequest,
+  UpdateScheduledJobRequest,
+  TestConnectionRequest,
+  TestConnectionResponse,
+} from '@/types'
+
+export const scheduledValidationsApi = {
+  list: async (): Promise<ScheduledValidationJob[]> => {
+    const response = await api.get<ScheduledValidationJob[]>('/scheduled-validations/')
+    return response.data
+  },
+
+  get: async (jobId: string): Promise<ScheduledValidationJob> => {
+    const response = await api.get<ScheduledValidationJob>(`/scheduled-validations/${jobId}`)
+    return response.data
+  },
+
+  create: async (data: CreateScheduledJobRequest): Promise<ScheduledValidationJob> => {
+    const response = await api.post<ScheduledValidationJob>('/scheduled-validations/', data)
+    return response.data
+  },
+
+  update: async (jobId: string, data: UpdateScheduledJobRequest): Promise<ScheduledValidationJob> => {
+    const response = await api.patch<ScheduledValidationJob>(`/scheduled-validations/${jobId}`, data)
+    return response.data
+  },
+
+  delete: async (jobId: string): Promise<void> => {
+    await api.delete(`/scheduled-validations/${jobId}`)
+  },
+
+  triggerRun: async (jobId: string): Promise<{ status: string; message: string }> => {
+    const response = await api.post<{ status: string; message: string }>(`/scheduled-validations/${jobId}/run`)
+    return response.data
+  },
+
+  getRuns: async (jobId: string, limit = 20): Promise<ScheduledValidationRun[]> => {
+    const response = await api.get<ScheduledValidationRun[]>(`/scheduled-validations/${jobId}/runs?limit=${limit}`)
+    return response.data
+  },
+
+  getRunFiles: async (runId: string): Promise<ScheduledValidationFile[]> => {
+    const response = await api.get<ScheduledValidationFile[]>(`/scheduled-validations/runs/${runId}/files`)
+    return response.data
+  },
+
+  testConnection: async (data: TestConnectionRequest): Promise<TestConnectionResponse> => {
+    const response = await api.post<TestConnectionResponse>('/scheduled-validations/test-connection', data)
+    return response.data
+  },
+}
+
 export default api

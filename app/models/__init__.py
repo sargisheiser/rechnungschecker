@@ -11,6 +11,14 @@ from app.models.audit import AuditLog, AuditAction
 from app.models.template import Template, TemplateType
 from app.models.organization import Organization, OrganizationMember, OrganizationInvitation, OrganizationRole
 from app.models.invoice_draft import InvoiceDraft
+from app.models.scheduled_validation import (
+    ScheduledValidationJob,
+    ScheduledValidationRun,
+    ScheduledValidationFile,
+    CloudStorageProvider,
+    JobStatus,
+    RunStatus,
+)
 
 __all__ = [
     "User",
@@ -37,4 +45,10 @@ __all__ = [
     "OrganizationInvitation",
     "OrganizationRole",
     "InvoiceDraft",
+    "ScheduledValidationJob",
+    "ScheduledValidationRun",
+    "ScheduledValidationFile",
+    "CloudStorageProvider",
+    "JobStatus",
+    "RunStatus",
 ]

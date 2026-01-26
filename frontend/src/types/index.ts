@@ -813,3 +813,104 @@ export interface GenerateInvoiceResponse {
   validation_errors: string[]
   validation_warnings: string[]
 }
+
+// Scheduled Validation Types
+export type CloudStorageProvider = 's3' | 'gcs' | 'azure_blob'
+export type ScheduledJobStatus = 'active' | 'paused' | 'error'
+export type ScheduledRunStatus = 'pending' | 'running' | 'completed' | 'failed'
+
+export interface S3Credentials {
+  access_key_id: string
+  secret_access_key: string
+  region: string
+}
+
+export interface CloudCredentials {
+  s3?: S3Credentials
+}
+
+export interface ScheduledValidationJob {
+  id: string
+  name: string
+  provider: CloudStorageProvider
+  bucket_name: string
+  prefix: string | null
+  file_pattern: string
+  schedule_cron: string
+  timezone: string
+  is_enabled: boolean
+  status: ScheduledJobStatus
+  delete_after_validation: boolean
+  move_to_folder: string | null
+  webhook_url: string | null
+  last_run_at: string | null
+  last_run_status: string | null
+  total_runs: number
+  total_files_validated: number
+  total_files_valid: number
+  total_files_invalid: number
+  created_at: string
+}
+
+export interface ScheduledValidationRun {
+  id: string
+  job_id: string
+  status: ScheduledRunStatus
+  started_at: string
+  completed_at: string | null
+  files_found: number
+  files_validated: number
+  files_valid: number
+  files_invalid: number
+  files_failed: number
+  error_message: string | null
+}
+
+export interface ScheduledValidationFile {
+  id: string
+  file_key: string
+  file_name: string
+  file_size_bytes: number
+  is_valid: boolean | null
+  error_count: number
+  warning_count: number
+  validation_log_id: string | null
+  error_message: string | null
+}
+
+export interface CreateScheduledJobRequest {
+  name: string
+  provider: CloudStorageProvider
+  credentials: CloudCredentials
+  bucket_name: string
+  prefix?: string
+  file_pattern?: string
+  schedule_cron: string
+  timezone?: string
+  delete_after_validation?: boolean
+  move_to_folder?: string
+  webhook_url?: string
+}
+
+export interface UpdateScheduledJobRequest {
+  name?: string
+  prefix?: string
+  file_pattern?: string
+  schedule_cron?: string
+  timezone?: string
+  is_enabled?: boolean
+  delete_after_validation?: boolean
+  move_to_folder?: string
+  webhook_url?: string
+}
+
+export interface TestConnectionRequest {
+  provider: CloudStorageProvider
+  credentials: CloudCredentials
+  bucket_name: string
+}
+
+export interface TestConnectionResponse {
+  success: boolean
+  message: string
+}

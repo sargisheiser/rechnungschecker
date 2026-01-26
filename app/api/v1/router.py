@@ -17,6 +17,7 @@ from app.api.v1 import (
     invoices,
     organizations,
     reports,
+    scheduled_validations,
     templates,
     validate,
     webhooks,
@@ -41,4 +42,5 @@ api_router.include_router(audit.router, prefix="/audit", tags=["Audit"])
 api_router.include_router(templates.router, prefix="/templates", tags=["Templates"])
 api_router.include_router(organizations.router, prefix="/organizations", tags=["Organizations"])
 api_router.include_router(invoices.router, prefix="/invoices", tags=["Invoices"])
+api_router.include_router(scheduled_validations.router, prefix="/scheduled-validations", tags=["Scheduled Validations"])
 api_router.include_router(admin.router, prefix="/admin", tags=["Admin"])

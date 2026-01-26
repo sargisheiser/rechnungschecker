@@ -29,6 +29,7 @@ import { TemplatesPage } from '@/pages/Templates'
 import { ValidationHistory } from '@/pages/ValidationHistory'
 import TeamPage from '@/pages/Team'
 import InvoiceCreatorPage from '@/pages/InvoiceCreator'
+import ScheduledValidationsPage from '@/pages/ScheduledValidations'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { AdminRoute } from '@/components/AdminRoute'
 import { AdminDashboard } from '@/pages/admin/AdminDashboard'
@@ -201,6 +202,14 @@ function App() {
           element={
             <ProtectedRoute>
               <InvoiceCreatorPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="geplante-validierungen"
+          element={
+            <ProtectedRoute>
+              <ScheduledValidationsPage />
             </ProtectedRoute>
           }
         />

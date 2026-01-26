@@ -7,9 +7,14 @@ from typing import AsyncGenerator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from sqlalchemy import select
+
 from app.api.v1.router import api_router
 from app.config import get_settings
-from app.core.database import close_db, init_db
+from app.core.database import async_session_maker, close_db, init_db
+from app.models.scheduled_validation import ScheduledValidationJob
+from app.services.scheduled_validation.service import run_scheduled_validation_job
+from app.services.scheduler.service import SchedulerService
 
 settings = get_settings()
 
@@ -29,10 +34,42 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     await init_db()
     logger.info("Database initialized")
 
+    # Start the scheduler
+    scheduler = SchedulerService.get_instance()
+    scheduler.start()
+    logger.info("Scheduler started")
+
+    # Load existing scheduled validation jobs from database
+    try:
+        async with async_session_maker() as db:
+            result = await db.execute(
+                select(ScheduledValidationJob).where(
+                    ScheduledValidationJob.is_enabled == True  # noqa: E712
+                )
+            )
+            jobs = result.scalars().all()
+            for job in jobs:
+                scheduler.add_job(
+                    job_id=job.id,
+                    cron_expression=job.schedule_cron,
+                    timezone=job.timezone,
+                    func=run_scheduled_validation_job,
+                    args=(job.id,),
+                )
+            logger.info(f"Loaded {len(jobs)} scheduled validation jobs")
+    except Exception as e:
+        logger.error(f"Failed to load scheduled jobs: {e}")
+
     yield
 
     # Shutdown
     logger.info("Shutting down RechnungsChecker API...")
+
+    # Shutdown the scheduler
+    scheduler = SchedulerService.get_instance()
+    scheduler.shutdown()
+    logger.info("Scheduler stopped")
+
     await close_db()
     logger.info("Database connections closed")
 

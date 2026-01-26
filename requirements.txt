@@ -38,6 +38,13 @@ aiosmtplib>=3.0.0
 # Caching (optional, for Redis)
 redis>=5.0.0
 
+# Scheduled tasks
+apscheduler>=3.10.4
+
+# Cloud storage
+aioboto3>=13.0.0
+croniter>=2.0.0
+
 # Monitoring & Logging
 langfuse>=3.0.0
 

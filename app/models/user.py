@@ -148,6 +148,11 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+    scheduled_validation_jobs = relationship(
+        "ScheduledValidationJob",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
 
     def can_manage_clients(self) -> bool:
         """Check if user's plan allows client management."""
