@@ -19,6 +19,7 @@ from app.schemas.invoice import (
     InvoiceDraftUpdate,
 )
 from app.services.invoice_creator import xrechnung_generator
+from app.services.validator.xrechnung import XRechnungValidator
 
 logger = logging.getLogger(__name__)
 
@@ -306,15 +307,32 @@ async def generate_invoice(
 
     logger.info(f"Invoice generated from draft: {draft_id}")
 
-    # TODO: Validate the generated XML with KoSIT validator
-    # For now, return as valid without actual validation
-    return GenerateInvoiceResponse(
-        id=draft.id,
-        xml=xml,
-        is_valid=True,
-        validation_errors=[],
-        validation_warnings=[],
-    )
+    # Validate the generated XML with KoSIT validator
+    validator = XRechnungValidator()
+    try:
+        validation_result = await validator.validate(
+            content=xml.encode("utf-8"),
+            filename=f"{draft.name}.xml",
+            user_id=current_user.id,
+        )
+
+        return GenerateInvoiceResponse(
+            id=draft.id,
+            xml=xml,
+            is_valid=validation_result.is_valid,
+            validation_errors=[e.message_de or e.code for e in validation_result.errors],
+            validation_warnings=[w.message_de or w.code for w in validation_result.warnings],
+        )
+    except Exception as e:
+        logger.warning(f"Validation of generated invoice failed: {e}")
+        # Return as unvalidated if validation service fails
+        return GenerateInvoiceResponse(
+            id=draft.id,
+            xml=xml,
+            is_valid=False,
+            validation_errors=[f"Validierung fehlgeschlagen: {str(e)}"],
+            validation_warnings=[],
+        )
 
 
 @router.get(
