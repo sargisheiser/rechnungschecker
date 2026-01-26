@@ -199,7 +199,7 @@ export function ValidationResults({ className }: ValidationResultsProps) {
                   Das war Ihre kostenlose Validierung
                 </h4>
                 <p className="text-sm text-gray-600 mt-1">
-                  Registrieren Sie sich kostenlos fuer 5 Validierungen pro Monat, oder waehlen Sie einen Plan fuer mehr.
+                  Registrieren Sie sich kostenlos für 5 Validierungen pro Monat, oder wählen Sie einen Plan für mehr.
                 </p>
                 <div className="flex flex-wrap gap-2 mt-3">
                   <Link

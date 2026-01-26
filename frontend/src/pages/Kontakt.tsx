@@ -113,7 +113,7 @@ export function Kontakt() {
                 Technischer Support
               </h3>
               <p className="text-sm text-primary-700">
-                Fuer technische Fragen zur API oder Integration wenden Sie sich an{' '}
+                Für technische Fragen zur API oder Integration wenden Sie sich an{' '}
                 <a
                   href="mailto:technik@rechnungschecker.de"
                   className="underline"
@@ -210,7 +210,7 @@ export function Kontakt() {
                         setFormData({ ...formData, subject: e.target.value })
                       }
                     >
-                      <option value="">Bitte waehlen...</option>
+                      <option value="">Bitte wählen...</option>
                       <option value="general">Allgemeine Anfrage</option>
                       <option value="technical">Technische Frage</option>
                       <option value="billing">Fragen zur Abrechnung</option>

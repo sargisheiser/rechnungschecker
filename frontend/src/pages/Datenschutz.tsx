@@ -18,7 +18,7 @@ export function Datenschutz() {
               Die folgenden Hinweise geben einen einfachen Ueberblick darueber, was
               mit Ihren personenbezogenen Daten passiert, wenn Sie diese Website
               besuchen. Personenbezogene Daten sind alle Daten, mit denen Sie
-              persoenlich identifiziert werden koennen.
+              persönlich identifiziert werden können.
             </p>
           </section>
 
@@ -71,8 +71,8 @@ export function Datenschutz() {
               4. Registrierung und Nutzerkonto
             </h2>
             <p className="text-gray-600 mb-4">
-              Sie koennen sich auf unserer Website registrieren, um zusaetzliche
-              Funktionen nutzen zu koennen. Die dabei eingegebenen Daten verwenden
+              Sie können sich auf unserer Website registrieren, um zusätzliche
+              Funktionen nutzen zu können. Die dabei eingegebenen Daten verwenden
               wir nur zum Zwecke der Nutzung des jeweiligen Angebotes oder Dienstes,
               für den Sie sich registriert haben.
             </p>
@@ -108,7 +108,7 @@ export function Datenschutz() {
               6. Zahlungsabwicklung
             </h2>
             <p className="text-gray-600 mb-4">
-              Fuer die Zahlungsabwicklung nutzen wir den Dienst Stripe. Bei
+              Für die Zahlungsabwicklung nutzen wir den Dienst Stripe. Bei
               Bezahlvorgaengen werden Ihre Zahlungsdaten direkt an Stripe
               uebermittelt und dort verarbeitet. Wir speichern keine
               Kreditkartendaten auf unseren Servern.
@@ -164,12 +164,12 @@ export function Datenschutz() {
 
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              9. Aenderungen dieser Datenschutzerklaerung
+              9. Änderungen dieser Datenschutzerklaerung
             </h2>
             <p className="text-gray-600">
               Wir behalten uns vor, diese Datenschutzerklaerung anzupassen, damit
               sie stets den aktuellen rechtlichen Anforderungen entspricht oder um
-              Aenderungen unserer Leistungen umzusetzen. Fuer Ihren erneuten Besuch
+              Änderungen unserer Leistungen umzusetzen. Für Ihren erneuten Besuch
               gilt dann die neue Datenschutzerklaerung.
             </p>
             <p className="text-gray-500 text-sm mt-4">

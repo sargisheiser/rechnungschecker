@@ -31,7 +31,7 @@ export function AGB() {
             <p className="text-gray-600 mb-4">
               (1) Der Anbieter stellt dem Kunden eine webbasierte Plattform zur
               Verfuegung, mit der E-Rechnungen im Format XRechnung und ZUGFeRD
-              validiert werden koennen.
+              validiert werden können.
             </p>
             <p className="text-gray-600 mb-4">
               (2) Die Leistungen umfassen je nach gewahltem Tarif:
@@ -89,7 +89,7 @@ export function AGB() {
               § 5 Kostenlose Nutzung
             </h2>
             <p className="text-gray-600 mb-4">
-              (1) Nicht registrierte Nutzer (Gaeste) koennen eine Validierung
+              (1) Nicht registrierte Nutzer (Gäste) können eine Validierung
               kostenlos durchfuehren.
             </p>
             <p className="text-gray-600">
@@ -101,10 +101,10 @@ export function AGB() {
 
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              § 6 Verfuegbarkeit und Gewaehrleistung
+              § 6 Verfügbarkeit und Gewährleistung
             </h2>
             <p className="text-gray-600 mb-4">
-              (1) Der Anbieter bemuecht sich um eine Verfuegbarkeit der Plattform von
+              (1) Der Anbieter bemüht sich um eine Verfügbarkeit der Plattform von
               99% im Jahresmittel. Hiervon ausgenommen sind Zeiten, in denen die
               Server aufgrund von technischen Problemen, die nicht im
               Einflussbereich des Anbieters liegen, nicht erreichbar sind.
@@ -141,7 +141,7 @@ export function AGB() {
             </h2>
             <p className="text-gray-600 mb-4">
               (1) Der Kunde kann kostenpflichtige Abonnements jederzeit zum Ende der
-              jeweiligen Abrechnungsperiode kuendigen.
+              jeweiligen Abrechnungsperiode kündigen.
             </p>
             <p className="text-gray-600 mb-4">
               (2) Die Kuendigung kann ueber das Kundenportal oder per E-Mail an
@@ -175,8 +175,8 @@ export function AGB() {
             </p>
             <p className="text-gray-600 mb-4">
               (2) Gerichtsstand für alle Streitigkeiten aus diesem Vertrag ist
-              Berlin, sofern der Kunde Kaufmann, juristische Person des oeffentlichen
-              Rechts oder oeffentlich-rechtliches Sondervermoegen ist.
+              Berlin, sofern der Kunde Kaufmann, juristische Person des öffentlichen
+              Rechts oder öffentlich-rechtliches Sondervermögen ist.
             </p>
             <p className="text-gray-600">
               (3) Sollten einzelne Bestimmungen dieser AGB unwirksam sein, bleibt die

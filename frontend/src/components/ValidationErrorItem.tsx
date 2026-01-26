@@ -17,44 +17,44 @@ const ERROR_EXPLANATIONS: Record<string, { title: string; explanation: string; f
   'BR-DE-1': {
     title: 'Fehlende XRechnung-Kennung',
     explanation: 'Das Dokument muss eine gueltige XRechnung-Versionskennung enthalten.',
-    fix: 'Fuegen Sie das Element <cbc:CustomizationID> mit dem Wert "urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0" hinzu.',
+    fix: 'Fügen Sie das Element <cbc:CustomizationID> mit dem Wert "urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0" hinzu.',
     docLink: 'https://xeinkauf.de/xrechnung/',
   },
   'BR-DE-2': {
     title: 'Fehlende Leitweg-ID',
-    explanation: 'Fuer Rechnungen an oeffentliche Auftraggeber ist eine Leitweg-ID erforderlich.',
+    explanation: 'Für Rechnungen an öffentliche Auftraggeber ist eine Leitweg-ID erforderlich.',
     fix: 'Tragen Sie die Leitweg-ID Ihres Auftraggebers im Element <cbc:BuyerReference> ein.',
     docLink: 'https://leitweg-id.de/',
   },
   'BR-DE-3': {
     title: 'Fehlende Kontaktdaten Verkaeufer',
     explanation: 'Der Verkaeufer muss mindestens eine E-Mail-Adresse oder Telefonnummer angeben.',
-    fix: 'Fuegen Sie im Bereich AccountingSupplierParty/Party/Contact eine E-Mail-Adresse oder Telefonnummer hinzu.',
+    fix: 'Fügen Sie im Bereich AccountingSupplierParty/Party/Contact eine E-Mail-Adresse oder Telefonnummer hinzu.',
   },
   'BR-DE-4': {
     title: 'Fehlende Kontaktdaten Kaeufer',
     explanation: 'Der Kaeufer muss mindestens eine E-Mail-Adresse oder Telefonnummer angeben.',
-    fix: 'Fuegen Sie im Bereich AccountingCustomerParty/Party/Contact eine E-Mail-Adresse oder Telefonnummer hinzu.',
+    fix: 'Fügen Sie im Bereich AccountingCustomerParty/Party/Contact eine E-Mail-Adresse oder Telefonnummer hinzu.',
   },
   'BR-DE-5': {
     title: 'Fehlende Zahlungsart',
     explanation: 'Es muss eine gueltige Zahlungsart angegeben werden.',
-    fix: 'Fuegen Sie ein PaymentMeans-Element mit einem gueltigen PaymentMeansCode hinzu (z.B. 58 fuer SEPA-Ueberweisung).',
+    fix: 'Fügen Sie ein PaymentMeans-Element mit einem gültigen PaymentMeansCode hinzu (z.B. 58 für SEPA-Überweisung).',
   },
   'BR-DE-6': {
     title: 'Fehlende IBAN',
-    explanation: 'Bei Zahlung per Ueberweisung ist eine gueltige IBAN erforderlich.',
+    explanation: 'Bei Zahlung per Überweisung ist eine gueltige IBAN erforderlich.',
     fix: 'Tragen Sie die IBAN im Element PayeeFinancialAccount/ID ein.',
   },
   'BR-DE-7': {
     title: 'Fehlende BIC',
     explanation: 'Bei internationalen Zahlungen ist der BIC/SWIFT-Code erforderlich.',
-    fix: 'Fuegen Sie den BIC im Element FinancialInstitutionBranch/ID hinzu.',
+    fix: 'Fügen Sie den BIC im Element FinancialInstitutionBranch/ID hinzu.',
   },
   'BR-DE-8': {
     title: 'Ungueltige Steuer-ID',
     explanation: 'Die Umsatzsteuer-Identifikationsnummer hat ein ungueltiges Format.',
-    fix: 'Die USt-IdNr. muss mit dem Laendercode beginnen (z.B. DE123456789 fuer Deutschland).',
+    fix: 'Die USt-IdNr. muss mit dem Ländercode beginnen (z.B. DE123456789 für Deutschland).',
   },
   'BR-DE-9': {
     title: 'Fehlende Rechnungsnummer',
@@ -63,7 +63,7 @@ const ERROR_EXPLANATIONS: Record<string, { title: string; explanation: string; f
   },
   'BR-DE-10': {
     title: 'Fehlende Steuerberechnung',
-    explanation: 'Die Steuerbetraege muessen korrekt berechnet sein.',
+    explanation: 'Die Steuerbeträge müssen korrekt berechnet sein.',
     fix: 'Pruefen Sie, ob TaxTotal und TaxSubtotal korrekt berechnet sind.',
   },
   'BR-DE-11': {
@@ -74,7 +74,7 @@ const ERROR_EXPLANATIONS: Record<string, { title: string; explanation: string; f
   'BR-DE-12': {
     title: 'Fehlende Steuerkategorie',
     explanation: 'Jede Rechnungsposition muss eine Steuerkategorie haben.',
-    fix: 'Fuegen Sie ClassifiedTaxCategory mit ID und Percent zu jeder InvoiceLine hinzu.',
+    fix: 'Fügen Sie ClassifiedTaxCategory mit ID und Percent zu jeder InvoiceLine hinzu.',
   },
   'BR-DE-13': {
     title: 'Fehlende Positionsbezeichnung',
@@ -84,27 +84,27 @@ const ERROR_EXPLANATIONS: Record<string, { title: string; explanation: string; f
   'BR-DE-14': {
     title: 'Ungueltige Mengeneinheit',
     explanation: 'Die Mengeneinheit entspricht nicht dem UN/ECE Rec 20 Standard.',
-    fix: 'Verwenden Sie einen gueltigen unitCode (z.B. C62 fuer Stueck, HUR fuer Stunden).',
+    fix: 'Verwenden Sie einen gültigen unitCode (z.B. C62 für Stück, HUR für Stunden).',
   },
   'BR-DE-15': {
     title: 'Fehlende Adressdaten',
-    explanation: 'Strasse, PLZ und Ort muessen angegeben werden.',
+    explanation: 'Strasse, PLZ und Ort müssen angegeben werden.',
     fix: 'Vervollstaendigen Sie die Adresse mit StreetName, PostalZone und CityName.',
   },
   'BR-DE-16': {
-    title: 'Fehlender Laendercode',
-    explanation: 'Der Laendercode muss im ISO 3166-1 Alpha-2 Format angegeben werden.',
-    fix: 'Fuegen Sie Country/IdentificationCode hinzu (z.B. "DE" fuer Deutschland).',
+    title: 'Fehlender Ländercode',
+    explanation: 'Der Ländercode muss im ISO 3166-1 Alpha-2 Format angegeben werden.',
+    fix: 'Fügen Sie Country/IdentificationCode hinzu (z.B. "DE" für Deutschland).',
   },
   'BR-DE-17': {
     title: 'Ungueltige Datumsformate',
-    explanation: 'Datumsangaben muessen im Format JJJJ-MM-TT vorliegen.',
+    explanation: 'Datumsangaben müssen im Format JJJJ-MM-TT vorliegen.',
     fix: 'Verwenden Sie das ISO-Datumsformat (z.B. 2024-01-15).',
   },
   'BR-DE-18': {
     title: 'Fehlende Bankverbindung',
-    explanation: 'Bei Ueberweisung muss eine Bankverbindung angegeben werden.',
-    fix: 'Fuegen Sie PayeeFinancialAccount mit IBAN und optional BIC hinzu.',
+    explanation: 'Bei Überweisung muss eine Bankverbindung angegeben werden.',
+    fix: 'Fügen Sie PayeeFinancialAccount mit IBAN und optional BIC hinzu.',
   },
   'CII-SR': {
     title: 'CII-Syntaxfehler',

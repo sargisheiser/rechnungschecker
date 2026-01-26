@@ -52,7 +52,7 @@ export function TemplateSelector({ type, onSelect, selectedId }: TemplateSelecto
           'truncate',
           selectedTemplate ? 'text-gray-900' : 'text-gray-500'
         )}>
-          {selectedTemplate ? selectedTemplate.name : 'Vorlage waehlen...'}
+          {selectedTemplate ? selectedTemplate.name : 'Vorlage wählen...'}
         </span>
         <ChevronDown className={cn(
           'h-4 w-4 text-gray-400 transition-transform flex-shrink-0',

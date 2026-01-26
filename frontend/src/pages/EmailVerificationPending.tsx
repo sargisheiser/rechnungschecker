@@ -81,7 +81,7 @@ export function EmailVerificationPending() {
       await verifyEmail.mutateAsync({ email, code: verificationCode })
       // Success - redirect to login
       navigate('/login', {
-        state: { message: 'E-Mail-Adresse erfolgreich verifiziert! Sie koennen sich jetzt anmelden.' }
+        state: { message: 'E-Mail-Adresse erfolgreich verifiziert! Sie können sich jetzt anmelden.' }
       })
     } catch (error: unknown) {
       const err = error as { response?: { data?: { detail?: string } } }

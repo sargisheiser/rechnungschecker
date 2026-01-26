@@ -40,7 +40,7 @@ export function Pricing() {
             Einfache, transparente Preise
           </h1>
           <p className="mt-4 text-lg text-gray-600">
-            Waehlen Sie den passenden Plan für Ihr Unternehmen. Keine
+            Wählen Sie den passenden Plan für Ihr Unternehmen. Keine
             versteckten Kosten.
           </p>
 
@@ -48,7 +48,7 @@ export function Pricing() {
             <div className="mt-6 p-4 bg-warning-50 border border-warning-200 rounded-lg inline-flex items-center gap-3">
               <AlertCircle className="h-5 w-5 text-warning-600" />
               <span className="text-warning-700">
-                Checkout abgebrochen. Sie koennen jederzeit erneut starten.
+                Checkout abgebrochen. Sie können jederzeit erneut starten.
               </span>
             </div>
           )}
@@ -96,7 +96,7 @@ export function Pricing() {
           <div className="mt-6 flex items-center justify-center gap-2 text-sm text-gray-600">
             <Shield className="h-5 w-5 text-success-500" />
             <span>
-              <strong className="text-gray-900">30 Tage Geld-zurueck-Garantie</strong> - Nicht zufrieden? Volle Erstattung, keine Fragen.
+              <strong className="text-gray-900">30 Tage Geld-zurück-Garantie</strong> - Nicht zufrieden? Volle Erstattung, keine Fragen.
             </span>
           </div>
         </div>
@@ -129,11 +129,11 @@ export function Pricing() {
           <div className="space-y-6">
             <FaqItem
               question="Kann ich den Plan jederzeit wechseln?"
-              answer="Ja, Sie koennen jederzeit auf einen anderen Plan wechseln. Bei einem Upgrade wird der Preisunterschied anteilig berechnet."
+              answer="Ja, Sie können jederzeit auf einen anderen Plan wechseln. Bei einem Upgrade wird der Preisunterschied anteilig berechnet."
             />
             <FaqItem
               question="Gibt es eine Kuendigungsfrist?"
-              answer="Nein, Sie koennen Ihr Abonnement jederzeit kuendigen. Es laeuft dann zum Ende der aktuellen Abrechnungsperiode aus."
+              answer="Nein, Sie können Ihr Abonnement jederzeit kündigen. Es läuft dann zum Ende der aktuellen Abrechnungsperiode aus."
             />
             <FaqItem
               question="Was passiert mit meinen Daten nach der Kuendigung?"

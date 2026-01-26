@@ -392,7 +392,7 @@ export function ConversionPage() {
                 {isDragActive ? 'PDF hier ablegen' : 'PDF-Rechnung hochladen'}
               </p>
               <p className="text-sm text-gray-500">
-                Ziehen Sie eine PDF-Datei hierher oder klicken Sie zum Auswaehlen
+                Ziehen Sie eine PDF-Datei hierher oder klicken Sie zum Auswählen
               </p>
               <p className="text-xs text-gray-400 mt-2">Maximale Dateigroesse: 10 MB</p>
             </div>
@@ -737,7 +737,7 @@ export function ConversionPage() {
                     <div>
                       <p className="font-medium text-gray-900">XRechnung</p>
                       <p className="text-sm text-gray-500">
-                        Fuer oeffentliche Auftraggeber in Deutschland
+                        Für öffentliche Auftraggeber in Deutschland
                       </p>
                     </div>
                   </label>

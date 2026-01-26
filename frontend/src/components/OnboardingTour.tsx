@@ -183,7 +183,7 @@ export function OnboardingTour({ userCreatedAt, onComplete }: OnboardingTourProp
             )}
           >
             <ChevronLeft className="h-4 w-4" />
-            Zurueck
+            Zurück
           </button>
 
           <div className="flex items-center gap-3">

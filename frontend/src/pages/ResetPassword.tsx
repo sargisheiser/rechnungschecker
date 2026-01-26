@@ -75,7 +75,7 @@ export function ResetPassword() {
               Passwort geaendert
             </h1>
             <p className="text-gray-600 mb-6">
-              Ihr Passwort wurde erfolgreich zurueckgesetzt. Sie koennen sich jetzt mit Ihrem neuen Passwort anmelden.
+              Ihr Passwort wurde erfolgreich zurückgesetzt. Sie können sich jetzt mit Ihrem neuen Passwort anmelden.
             </p>
             <Link
               to="/login"

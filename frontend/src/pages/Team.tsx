@@ -301,7 +301,7 @@ export function TeamPage() {
             <div className="card p-8 text-center text-gray-500">
               <Users className="h-16 w-16 mx-auto mb-4 text-gray-300" />
               <p className="text-lg font-medium text-gray-900 mb-2">
-                Waehlen Sie ein Team aus
+                Wählen Sie ein Team aus
               </p>
               <p>
                 Klicken Sie auf ein Team in der Liste, um die Mitglieder zu verwalten.

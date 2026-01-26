@@ -165,13 +165,13 @@ export function DemoPortal() {
                     onClick={() => setShowConfirm(true)}
                     className="w-full text-center text-sm text-error-600 hover:text-error-700 py-2"
                   >
-                    Abonnement kuendigen
+                    Abonnement kündigen
                   </button>
                 ) : (
                   <div className="p-4 bg-error-50 border border-error-200 rounded-lg">
                     <p className="text-sm text-error-700 mb-4">
-                      Sind Sie sicher, dass Sie Ihr Abonnement kuendigen moechten?
-                      Sie werden auf den kostenlosen Plan zurueckgestuft.
+                      Sind Sie sicher, dass Sie Ihr Abonnement kündigen möchten?
+                      Sie werden auf den kostenlosen Plan zurückgestuft.
                     </p>
                     <div className="flex gap-3">
                       <button
@@ -182,7 +182,7 @@ export function DemoPortal() {
                         {cancelSubscription.isPending ? (
                           <Loader2 className="h-4 w-4 animate-spin mr-2" />
                         ) : null}
-                        Ja, kuendigen
+                        Ja, kündigen
                       </button>
                       <button
                         onClick={() => setShowConfirm(false)}

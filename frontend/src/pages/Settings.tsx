@@ -583,7 +583,7 @@ export function SettingsPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Passwort bestaetigen
+              Passwort bestätigen
             </label>
             <input
               type="password"
@@ -671,7 +671,7 @@ export function SettingsPage() {
 
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Geben Sie <span className="font-mono font-bold">LOESCHEN</span> ein, um zu bestaetigen
+                Geben Sie <span className="font-mono font-bold">LOESCHEN</span> ein, um zu bestätigen
               </label>
               <input
                 type="text"

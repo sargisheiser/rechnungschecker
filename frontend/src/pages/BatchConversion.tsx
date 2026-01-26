@@ -285,7 +285,7 @@ export function BatchConversionPage() {
                 {isDragActive ? 'PDFs hier ablegen' : 'PDF-Rechnungen hochladen'}
               </p>
               <p className="text-sm text-gray-500">
-                Ziehen Sie PDF-Dateien hierher oder klicken Sie zum Auswaehlen
+                Ziehen Sie PDF-Dateien hierher oder klicken Sie zum Auswählen
               </p>
               <p className="text-xs text-gray-400 mt-2">
                 Maximal {MAX_FILES} Dateien, je 10 MB
@@ -350,7 +350,7 @@ export function BatchConversionPage() {
                   />
                   <div>
                     <p className="font-medium text-gray-900">XRechnung</p>
-                    <p className="text-sm text-gray-500">Fuer oeffentliche Auftraggeber</p>
+                    <p className="text-sm text-gray-500">Für öffentliche Auftraggeber</p>
                   </div>
                 </label>
                 <label
