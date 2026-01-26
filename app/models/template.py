@@ -39,7 +39,9 @@ class Template(Base):
 
     # Template identification
     name: Mapped[str] = mapped_column(String(100))  # e.g., "My Company", "Client ABC"
-    template_type: Mapped[TemplateType] = mapped_column(SQLEnum(TemplateType))
+    template_type: Mapped[TemplateType] = mapped_column(
+        SQLEnum(TemplateType, values_callable=lambda x: [e.value for e in x])
+    )
 
     # Company information
     company_name: Mapped[str] = mapped_column(String(200))

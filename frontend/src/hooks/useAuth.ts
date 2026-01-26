@@ -123,7 +123,14 @@ export function useUpdateProfile() {
   const { setUser } = useAuthStore()
 
   return useMutation({
-    mutationFn: (data: { company_name?: string }) => authApi.updateProfile(data),
+    mutationFn: (data: {
+      full_name?: string
+      company_name?: string
+      email_notifications?: boolean
+      notify_validation_results?: boolean
+      notify_weekly_summary?: boolean
+      notify_marketing?: boolean
+    }) => authApi.updateProfile(data),
     onSuccess: (user) => {
       setUser(user)
       queryClient.setQueryData(['user'], user)

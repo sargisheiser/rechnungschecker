@@ -46,6 +46,12 @@ import type {
   TemplateCreateRequest,
   TemplateUpdateRequest,
   TemplateType,
+  PlatformStats,
+  AdminUserList,
+  AdminUserDetail,
+  AdminUserUpdate,
+  AdminAuditLogList,
+  PlanTier,
 } from '@/types'
 
 const api = axios.create({
@@ -147,7 +153,14 @@ export const authApi = {
     await api.post('/auth/logout')
   },
 
-  updateProfile: async (data: { company_name?: string }): Promise<User> => {
+  updateProfile: async (data: {
+    full_name?: string
+    company_name?: string
+    email_notifications?: boolean
+    notify_validation_results?: boolean
+    notify_weekly_summary?: boolean
+    notify_marketing?: boolean
+  }): Promise<User> => {
     const response = await api.patch<User>('/auth/me', data)
     return response.data
   },
@@ -243,7 +256,7 @@ export const validationApi = {
 
   getHistory: async (page = 1, limit = 10): Promise<ValidationHistory> => {
     const response = await api.get<ValidationHistory>('/validate/history', {
-      params: { page, limit },
+      params: { page, page_size: limit },
     })
     return response.data
   },
@@ -785,6 +798,62 @@ export const templatesApi = {
 
   setDefault: async (id: string): Promise<Template> => {
     const response = await api.post<Template>(`/templates/${id}/set-default`)
+    return response.data
+  },
+}
+
+// Admin API
+export const adminApi = {
+  getStats: async (): Promise<PlatformStats> => {
+    const response = await api.get<PlatformStats>('/admin/stats')
+    return response.data
+  },
+
+  listUsers: async (
+    page = 1,
+    pageSize = 20,
+    search?: string,
+    plan?: PlanTier,
+    isActive?: boolean
+  ): Promise<AdminUserList> => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      page_size: pageSize.toString(),
+    })
+    if (search) params.set('search', search)
+    if (plan) params.set('plan', plan)
+    if (isActive !== undefined) params.set('is_active', isActive.toString())
+    const response = await api.get<AdminUserList>(`/admin/users?${params}`)
+    return response.data
+  },
+
+  getUser: async (userId: string): Promise<AdminUserDetail> => {
+    const response = await api.get<AdminUserDetail>(`/admin/users/${userId}`)
+    return response.data
+  },
+
+  updateUser: async (userId: string, data: AdminUserUpdate): Promise<AdminUserDetail> => {
+    const response = await api.patch<AdminUserDetail>(`/admin/users/${userId}`, data)
+    return response.data
+  },
+
+  deleteUser: async (userId: string): Promise<void> => {
+    await api.delete(`/admin/users/${userId}`)
+  },
+
+  getAuditLogs: async (
+    page = 1,
+    pageSize = 50,
+    userId?: string,
+    action?: string
+  ): Promise<AdminAuditLogList> => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      page_size: pageSize.toString(),
+    })
+    if (userId) params.set('user_id', userId)
+    if (action) params.set('action', action)
+    const response = await api.get<AdminAuditLogList>(`/admin/audit?${params}`)
     return response.data
   },
 }

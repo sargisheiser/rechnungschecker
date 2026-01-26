@@ -32,6 +32,7 @@ from app.services.converter.service import (
     ZUGFeRDProfile as ServiceZUGFeRDProfile,
 )
 from app.services.converter.extractor import Address, InvoiceData
+from app.services.ai.openai_service import AIRateLimitError
 
 router = APIRouter(tags=["conversion"])
 
@@ -183,6 +184,11 @@ async def preview_extraction(
     # Extract data (using AI if available)
     try:
         data = await conversion_service.preview_extraction_async(content)
+    except AIRateLimitError as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=e.message,
+        )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -251,12 +257,18 @@ async def convert_pdf(
     )
 
     # Perform conversion (using AI-enhanced extraction if available)
-    result = await conversion_service.convert_async(
-        pdf_content=content,
-        output_format=ServiceOutputFormat(output_format.value),
-        zugferd_profile=ServiceZUGFeRDProfile(zugferd_profile.value),
-        embed_in_pdf=embed_in_pdf,
-    )
+    try:
+        result = await conversion_service.convert_async(
+            pdf_content=content,
+            output_format=ServiceOutputFormat(output_format.value),
+            zugferd_profile=ServiceZUGFeRDProfile(zugferd_profile.value),
+            embed_in_pdf=embed_in_pdf,
+        )
+    except AIRateLimitError as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=e.message,
+        )
 
     if not result.success:
         raise HTTPException(

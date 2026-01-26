@@ -1,5 +1,6 @@
 """OpenAI service for enhanced invoice data extraction."""
 
+import asyncio
 import base64
 import json
 import logging
@@ -8,12 +9,26 @@ from datetime import date
 from decimal import Decimal
 from typing import Any, Optional
 
-from openai import AsyncOpenAI
+from openai import AsyncOpenAI, RateLimitError
 
 from app.config import get_settings
 from app.services.converter.extractor import Address, InvoiceData, LineItem
 
 logger = logging.getLogger(__name__)
+
+# Retry configuration
+MAX_RETRIES = 3
+INITIAL_RETRY_DELAY = 2.0  # seconds
+MAX_RETRY_DELAY = 30.0  # seconds
+
+
+class AIRateLimitError(Exception):
+    """Raised when AI service rate limit is exceeded after retries."""
+
+    def __init__(self, message: str = "AI-Service vorübergehend nicht verfügbar. Bitte versuchen Sie es in einigen Minuten erneut."):
+        self.message = message
+        super().__init__(self.message)
+
 
 # Initialize Langfuse if configured
 _langfuse_client = None
@@ -251,21 +266,55 @@ Antworte NUR mit dem JSON-Objekt, kein zusätzlicher Text."""
         return self._parse_response(response)
 
     async def _call_api(self, messages: list[dict]) -> dict[str, Any]:
-        """Make API call to OpenAI using SDK with Langfuse tracing."""
-        response = await self.client.chat.completions.create(
-            model=self.model,
-            messages=messages,
-            max_tokens=4096,
-            temperature=0.1,  # Low temperature for consistent extraction
-        )
+        """Make API call to OpenAI using SDK with Langfuse tracing and retry logic."""
+        last_exception = None
+        delay = INITIAL_RETRY_DELAY
 
-        # Convert to dict format for compatibility
-        return {
-            "choices": [{"message": {"content": response.choices[0].message.content}}],
-            "usage": {
-                "total_tokens": response.usage.total_tokens if response.usage else 0
-            }
-        }
+        for attempt in range(MAX_RETRIES):
+            try:
+                response = await self.client.chat.completions.create(
+                    model=self.model,
+                    messages=messages,
+                    max_tokens=4096,
+                    temperature=0.1,  # Low temperature for consistent extraction
+                )
+
+                # Convert to dict format for compatibility
+                return {
+                    "choices": [{"message": {"content": response.choices[0].message.content}}],
+                    "usage": {
+                        "total_tokens": response.usage.total_tokens if response.usage else 0
+                    }
+                }
+
+            except RateLimitError as e:
+                last_exception = e
+                if attempt < MAX_RETRIES - 1:
+                    # Extract retry-after from error if available
+                    retry_after = delay
+                    if hasattr(e, 'response') and e.response:
+                        retry_header = e.response.headers.get('retry-after')
+                        if retry_header:
+                            try:
+                                retry_after = float(retry_header)
+                            except ValueError:
+                                pass
+
+                    wait_time = min(retry_after, MAX_RETRY_DELAY)
+                    logger.warning(
+                        f"Rate limit hit, waiting {wait_time:.1f}s before retry "
+                        f"(attempt {attempt + 1}/{MAX_RETRIES})"
+                    )
+                    await asyncio.sleep(wait_time)
+                    delay = min(delay * 2, MAX_RETRY_DELAY)  # Exponential backoff
+                else:
+                    logger.error(f"Rate limit exceeded after {MAX_RETRIES} retries")
+                    raise AIRateLimitError() from e
+
+        # Should not reach here, but just in case
+        if last_exception:
+            raise AIRateLimitError() from last_exception
+        raise AIRateLimitError()
 
     def _parse_response(self, response: dict[str, Any]) -> ExtractionResult:
         """Parse OpenAI response into InvoiceData."""

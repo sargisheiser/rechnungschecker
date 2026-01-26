@@ -1,5 +1,5 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom'
-import { FileCheck, Menu, X, User, LogOut, Settings, BarChart3, FolderUp, Files, BookTemplate } from 'lucide-react'
+import { FileCheck, Menu, X, User, LogOut, Settings, BarChart3, FolderUp, Files, BookTemplate, Shield } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore, useLogout } from '@/hooks/useAuth'
@@ -87,6 +87,18 @@ export function Layout() {
                       <span className="text-sm">{user?.email}</span>
                     </button>
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                      {user?.is_admin && (
+                        <>
+                          <Link
+                            to="/admin"
+                            className="flex items-center gap-2 px-4 py-2 text-sm text-primary-600 hover:bg-primary-50"
+                          >
+                            <Shield className="h-4 w-4" />
+                            {t('nav.admin')}
+                          </Link>
+                          <hr className="my-1 border-gray-200" />
+                        </>
+                      )}
                       <Link
                         to="/vorlagen"
                         className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
@@ -205,6 +217,18 @@ export function Layout() {
                   >
                     Vorlagen
                   </Link>
+                  {user?.is_admin && (
+                    <Link
+                      to="/admin"
+                      className="block px-3 py-2 rounded-lg text-primary-600 hover:bg-primary-50 font-medium"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <span className="flex items-center gap-2">
+                        <Shield className="h-4 w-4" />
+                        {t('nav.admin')}
+                      </span>
+                    </Link>
+                  )}
                   <Link
                     to="/einstellungen"
                     className="block px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
