@@ -2,13 +2,11 @@
 
 import asyncio
 import logging
-from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 
-from app.core.auth import get_current_user
-from app.core.database import DbSession
+from app.api.deps import CurrentUser, DbSession
 from app.models.user import User
 from app.schemas.scheduled_validation import (
     ScheduledValidationFileResponse,
@@ -27,9 +25,6 @@ from app.services.scheduled_validation.service import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-
-
-CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 def require_pro_plan(user: User) -> None:
