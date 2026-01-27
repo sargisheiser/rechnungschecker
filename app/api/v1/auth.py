@@ -1,7 +1,7 @@
 """Authentication API endpoints."""
 
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, HTTPException, Request, status
@@ -75,7 +75,7 @@ async def register(
 
     # Generate verification code
     verification_code = generate_verification_code()
-    code_expires = datetime.utcnow() + timedelta(minutes=15)
+    code_expires = datetime.now(UTC).replace(tzinfo=None) + timedelta(minutes=15)
 
     # Create new user
     user = User(
@@ -147,7 +147,7 @@ async def login(
         )
 
     # Update last login
-    user.last_login_at = datetime.utcnow()
+    user.last_login_at = datetime.now(UTC).replace(tzinfo=None)
     await db.flush()
 
     # Log successful login
@@ -246,7 +246,7 @@ async def verify_email(
         )
 
     # Check if code has expired
-    if user.verification_code_expires and datetime.utcnow() > user.verification_code_expires:
+    if user.verification_code_expires and datetime.now(UTC).replace(tzinfo=None) > user.verification_code_expires:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Verifizierungscode abgelaufen. Bitte fordern Sie einen neuen an.",
@@ -284,7 +284,7 @@ async def resend_verification(
         # Generate new verification code
         verification_code = generate_verification_code()
         user.verification_code = verification_code
-        user.verification_code_expires = datetime.utcnow() + timedelta(minutes=15)
+        user.verification_code_expires = datetime.now(UTC).replace(tzinfo=None) + timedelta(minutes=15)
         await db.flush()
 
         await email_service.send_verification_code_email(data.email, verification_code)
@@ -589,7 +589,7 @@ async def google_callback(
             )
 
         # Update last login
-        user.last_login_at = datetime.utcnow()
+        user.last_login_at = datetime.now(UTC).replace(tzinfo=None)
 
         # Update name if not set
         if not user.full_name and google_user.name:

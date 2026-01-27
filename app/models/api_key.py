@@ -1,7 +1,7 @@
 """API Key model for programmatic access."""
 
 import secrets
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, func
@@ -71,7 +71,7 @@ class APIKey(Base):
         """Check if API key has expired."""
         if self.expires_at is None:
             return False
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(UTC).replace(tzinfo=None) > self.expires_at
 
     def is_valid(self) -> bool:
         """Check if API key is valid (active and not expired)."""
@@ -79,7 +79,7 @@ class APIKey(Base):
 
     def record_usage(self) -> None:
         """Record API key usage."""
-        self.last_used_at = datetime.utcnow()
+        self.last_used_at = datetime.now(UTC).replace(tzinfo=None)
         self.usage_count += 1
         self.requests_this_month += 1
 

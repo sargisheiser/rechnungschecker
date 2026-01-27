@@ -2,7 +2,7 @@
 
 import csv
 import io
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional
 
 from fastapi import APIRouter, Query
@@ -62,7 +62,7 @@ async def export_audit_logs(
     current_user: CurrentUser,
     date_from: Optional[datetime] = Query(default=None, description="Start date filter"),
     date_to: Optional[datetime] = Query(default=None, description="End date filter"),
-    format: str = Query(default="json", regex="^(json|csv)$", description="Export format"),
+    format: str = Query(default="json", pattern="^(json|csv)$", description="Export format"),
 ) -> StreamingResponse:
     """Export all audit logs for the current user.
 
@@ -78,7 +78,7 @@ async def export_audit_logs(
         date_to=date_to,
     )
 
-    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(UTC).replace(tzinfo=None).strftime("%Y%m%d_%H%M%S")
 
     if format == "csv":
         # Generate CSV

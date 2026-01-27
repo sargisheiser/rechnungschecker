@@ -1,7 +1,7 @@
 """Validation history service for storing and retrieving validation logs."""
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import select, func
@@ -185,7 +185,7 @@ class ValidationHistoryService:
         """
         from datetime import timedelta
 
-        cutoff = datetime.utcnow() - timedelta(days=days)
+        cutoff = datetime.now(UTC).replace(tzinfo=None) - timedelta(days=days)
 
         # Base query
         base_query = select(ValidationLog).where(ValidationLog.created_at >= cutoff)

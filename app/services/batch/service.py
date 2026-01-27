@@ -1,7 +1,7 @@
 """Batch validation service for processing multiple files."""
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import select, func
@@ -81,7 +81,9 @@ class BatchService:
         """
         result = await self.db.execute(
             select(BatchJob)
-            .options(selectinload(BatchJob.files))
+            .options(
+                selectinload(BatchJob.files).selectinload(BatchFile.validation)
+            )
             .where(BatchJob.id == job_id, BatchJob.user_id == user_id)
         )
         return result.scalar_one_or_none()
@@ -236,7 +238,7 @@ class BatchService:
             return
 
         file.status = status
-        file.processed_at = datetime.utcnow()
+        file.processed_at = datetime.now(UTC).replace(tzinfo=None)
 
         if validation_id:
             file.validation_id = validation_id
@@ -292,7 +294,7 @@ class BatchService:
             return False
 
         job.status = BatchJobStatus.CANCELLED
-        job.completed_at = datetime.utcnow()
+        job.completed_at = datetime.now(UTC).replace(tzinfo=None)
 
         # Mark pending files as skipped
         pending_files = await self.get_pending_files(job_id)
@@ -355,20 +357,15 @@ class BatchService:
                 error_message=file.error_message,
             )
 
-            if file.validation_id:
-                # Get validation details
-                val_result = await self.db.execute(
-                    select(ValidationLog).where(ValidationLog.id == file.validation_id)
-                )
-                validation = val_result.scalar_one_or_none()
-                if validation:
-                    result.is_valid = validation.is_valid
-                    result.error_count = validation.error_count
-                    result.warning_count = validation.warning_count
-                    if validation.is_valid:
-                        valid_count += 1
-                    else:
-                        invalid_count += 1
+            # Use eager-loaded validation (no extra query needed)
+            if file.validation:
+                result.is_valid = file.validation.is_valid
+                result.error_count = file.validation.error_count
+                result.warning_count = file.validation.warning_count
+                if file.validation.is_valid:
+                    valid_count += 1
+                else:
+                    invalid_count += 1
 
             results.append(result)
 

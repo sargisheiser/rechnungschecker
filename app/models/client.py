@@ -1,6 +1,6 @@
 """Client model for multi-tenant support (Steuerberater plan)."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, func
@@ -71,4 +71,4 @@ class Client(Base):
     def increment_validation_count(self) -> None:
         """Increment validation count and update last validation time."""
         self.validation_count += 1
-        self.last_validation_at = datetime.utcnow()
+        self.last_validation_at = datetime.now(UTC).replace(tzinfo=None)

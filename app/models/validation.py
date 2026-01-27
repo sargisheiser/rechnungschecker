@@ -4,7 +4,7 @@ import enum
 from datetime import datetime
 from uuid import uuid4
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String, Boolean, func
+from sqlalchemy import DateTime, Enum, ForeignKey, Index, Integer, String, Boolean, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -22,6 +22,10 @@ class ValidationLog(Base):
     """Validation log for tracking user validation history."""
 
     __tablename__ = "validation_logs"
+    __table_args__ = (
+        Index("ix_validation_user_created", "user_id", "created_at"),
+        Index("ix_validation_client_created", "client_id", "created_at"),
+    )
 
     id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid4

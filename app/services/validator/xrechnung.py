@@ -3,7 +3,7 @@
 import hashlib
 import logging
 import tempfile
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from uuid import UUID, uuid4
 
@@ -76,7 +76,7 @@ class XRechnungValidator:
                 xrechnung_version=None,
                 validator_version=KoSITValidator.VALIDATOR_VERSION,
                 processing_time_ms=0,
-                validated_at=datetime.utcnow(),
+                validated_at=datetime.now(UTC).replace(tzinfo=None),
             )
 
         # Write to temp file for KoSIT
@@ -165,7 +165,7 @@ class XRechnungValidator:
             xrechnung_version=result.xrechnung_version,
             validator_version=KoSITValidator.VALIDATOR_VERSION,
             processing_time_ms=result.processing_time_ms,
-            validated_at=datetime.utcnow(),
+            validated_at=datetime.now(UTC).replace(tzinfo=None),
             report_url=None,  # Will be set by API layer
         )
 

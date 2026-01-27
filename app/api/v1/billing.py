@@ -1,7 +1,7 @@
 """Billing API endpoints for subscription management."""
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Request, status
@@ -216,9 +216,9 @@ async def confirm_demo_checkout(
     # Set plan validity (1 year for annual, 1 month for monthly)
     from datetime import timedelta
     if annual:
-        current_user.plan_valid_until = datetime.utcnow() + timedelta(days=365)
+        current_user.plan_valid_until = datetime.now(UTC).replace(tzinfo=None) + timedelta(days=365)
     else:
-        current_user.plan_valid_until = datetime.utcnow() + timedelta(days=30)
+        current_user.plan_valid_until = datetime.now(UTC).replace(tzinfo=None) + timedelta(days=30)
 
     await db.commit()
 

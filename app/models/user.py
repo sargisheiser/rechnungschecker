@@ -1,7 +1,7 @@
 """User and guest usage models."""
 
 import enum
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from uuid import uuid4
 
 from sqlalchemy import Boolean, Date, DateTime, Enum, Index, Integer, String, func
@@ -207,7 +207,7 @@ class EmailVerificationToken(Base):
 
     def is_expired(self) -> bool:
         """Check if token has expired."""
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(UTC).replace(tzinfo=None) > self.expires_at
 
     def is_valid(self) -> bool:
         """Check if token is valid (not expired and not used)."""

@@ -1,10 +1,10 @@
 """Batch validation models for processing multiple files."""
 
 import enum
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import uuid4
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String, Text, LargeBinary, func
+from sqlalchemy import DateTime, Enum, ForeignKey, Index, Integer, String, Text, LargeBinary, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -85,18 +85,18 @@ class BatchJob(Base):
     def start_processing(self) -> None:
         """Mark job as processing."""
         self.status = BatchJobStatus.PROCESSING
-        self.started_at = datetime.utcnow()
+        self.started_at = datetime.now(UTC).replace(tzinfo=None)
 
     def mark_completed(self) -> None:
         """Mark job as completed."""
         self.status = BatchJobStatus.COMPLETED
-        self.completed_at = datetime.utcnow()
+        self.completed_at = datetime.now(UTC).replace(tzinfo=None)
 
     def mark_failed(self, error_message: str) -> None:
         """Mark job as failed."""
         self.status = BatchJobStatus.FAILED
         self.error_message = error_message
-        self.completed_at = datetime.utcnow()
+        self.completed_at = datetime.now(UTC).replace(tzinfo=None)
 
     def increment_progress(self, successful: bool) -> None:
         """Update progress counters."""
@@ -127,6 +127,9 @@ class BatchFile(Base):
     """Individual file within a batch job."""
 
     __tablename__ = "batch_files"
+    __table_args__ = (
+        Index("ix_batch_file_job_status", "batch_job_id", "status"),
+    )
 
     id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid4
@@ -177,7 +180,7 @@ class BatchFile(Base):
         """Mark file as completed with validation result."""
         self.status = BatchFileStatus.COMPLETED
         self.validation_id = validation_id
-        self.processed_at = datetime.utcnow()
+        self.processed_at = datetime.now(UTC).replace(tzinfo=None)
         # Clear file content to save space
         self.file_content = None
 
@@ -185,7 +188,7 @@ class BatchFile(Base):
         """Mark file as failed."""
         self.status = BatchFileStatus.FAILED
         self.error_message = error_message
-        self.processed_at = datetime.utcnow()
+        self.processed_at = datetime.now(UTC).replace(tzinfo=None)
         # Clear file content to save space
         self.file_content = None
 
@@ -193,5 +196,5 @@ class BatchFile(Base):
         """Mark file as skipped."""
         self.status = BatchFileStatus.SKIPPED
         self.error_message = reason
-        self.processed_at = datetime.utcnow()
+        self.processed_at = datetime.now(UTC).replace(tzinfo=None)
         self.file_content = None

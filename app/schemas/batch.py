@@ -3,7 +3,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.batch import BatchJobStatus, BatchFileStatus
 
@@ -26,8 +26,7 @@ class BatchFileResponse(BaseModel):
     error_message: str | None
     processed_at: datetime | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class BatchJobResponse(BaseModel):
@@ -47,8 +46,7 @@ class BatchJobResponse(BaseModel):
     completed_at: datetime | None
     client_id: UUID | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class BatchJobCreated(BaseModel):

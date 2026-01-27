@@ -3,7 +3,7 @@
 import logging
 import re
 import secrets
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Request, status
@@ -125,7 +125,7 @@ async def create_organization(
         organization_id=org.id,
         user_id=current_user.id,
         role=OrganizationRole.OWNER,
-        joined_at=datetime.utcnow(),
+        joined_at=datetime.now(UTC).replace(tzinfo=None),
     )
 
     db.add(member)
@@ -422,7 +422,7 @@ async def invite_member(
         email=data.email,
         role=role,
         created_by_id=current_user.id,
-        expires_at=datetime.utcnow() + timedelta(days=7),
+        expires_at=datetime.now(UTC).replace(tzinfo=None) + timedelta(days=7),
     )
 
     db.add(invitation)
@@ -675,13 +675,13 @@ async def accept_invitation(
         role=invitation.role,
         invited_by_id=invitation.created_by_id,
         invited_at=invitation.created_at,
-        joined_at=datetime.utcnow(),
+        joined_at=datetime.now(UTC).replace(tzinfo=None),
     )
 
     db.add(member)
 
     # Mark invitation as accepted
-    invitation.accepted_at = datetime.utcnow()
+    invitation.accepted_at = datetime.now(UTC).replace(tzinfo=None)
 
     await db.flush()
 

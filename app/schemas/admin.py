@@ -3,7 +3,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class AdminUserListItem(BaseModel):
@@ -22,8 +22,7 @@ class AdminUserListItem(BaseModel):
     created_at: datetime
     last_login_at: datetime | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AdminUserDetail(BaseModel):
@@ -52,8 +51,7 @@ class AdminUserDetail(BaseModel):
     notify_weekly_summary: bool
     notify_marketing: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AdminUserUpdate(BaseModel):
@@ -105,8 +103,7 @@ class AdminAuditLogItem(BaseModel):
     details: dict | None = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AdminAuditLogList(BaseModel):

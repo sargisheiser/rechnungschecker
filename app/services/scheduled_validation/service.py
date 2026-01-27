@@ -1,7 +1,7 @@
 """Service for managing scheduled validation jobs from cloud storage."""
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import select
@@ -307,7 +307,7 @@ async def run_scheduled_validation_job(job_id: UUID) -> None:
 
             if len(files) == 0:
                 run.status = RunStatus.COMPLETED
-                run.completed_at = datetime.utcnow()
+                run.completed_at = datetime.now(UTC).replace(tzinfo=None)
                 job.last_run_at = run.started_at
                 job.last_run_status = "success"
                 job.total_runs += 1
@@ -387,7 +387,7 @@ async def run_scheduled_validation_job(job_id: UUID) -> None:
 
             # Update run status
             run.status = RunStatus.COMPLETED
-            run.completed_at = datetime.utcnow()
+            run.completed_at = datetime.now(UTC).replace(tzinfo=None)
 
             # Update job stats
             job.last_run_at = run.started_at
@@ -408,7 +408,7 @@ async def run_scheduled_validation_job(job_id: UUID) -> None:
             logger.error(f"Scheduled validation job {job_id} failed: {e}")
             run.status = RunStatus.FAILED
             run.error_message = str(e)
-            run.completed_at = datetime.utcnow()
+            run.completed_at = datetime.now(UTC).replace(tzinfo=None)
             job.last_run_status = "error"
             job.status = JobStatus.ERROR
 

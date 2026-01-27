@@ -2,7 +2,7 @@
 
 import enum
 import secrets
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, func
@@ -174,7 +174,7 @@ class WebhookDelivery(Base):
             return None
 
         index = min(self.attempt_count, len(self.RETRY_SCHEDULE) - 1)
-        return datetime.utcnow() + timedelta(minutes=self.RETRY_SCHEDULE[index])
+        return datetime.now(UTC).replace(tzinfo=None) + timedelta(minutes=self.RETRY_SCHEDULE[index])
 
     def mark_success(
         self,
@@ -187,8 +187,8 @@ class WebhookDelivery(Base):
         self.response_status_code = status_code
         self.response_body = response_body[:5000] if response_body else None
         self.response_time_ms = response_time_ms
-        self.completed_at = datetime.utcnow()
-        self.last_attempt_at = datetime.utcnow()
+        self.completed_at = datetime.now(UTC).replace(tzinfo=None)
+        self.last_attempt_at = datetime.now(UTC).replace(tzinfo=None)
 
     def mark_failed(
         self,
@@ -198,14 +198,14 @@ class WebhookDelivery(Base):
     ) -> None:
         """Mark delivery attempt as failed and schedule retry if possible."""
         self.attempt_count += 1
-        self.last_attempt_at = datetime.utcnow()
+        self.last_attempt_at = datetime.now(UTC).replace(tzinfo=None)
         self.response_status_code = status_code
         self.response_body = response_body[:5000] if response_body else None
         self.error_message = error[:1000] if error else None
 
         if self.attempt_count >= self.max_attempts:
             self.status = DeliveryStatus.FAILED.value
-            self.completed_at = datetime.utcnow()
+            self.completed_at = datetime.now(UTC).replace(tzinfo=None)
         else:
             self.status = DeliveryStatus.RETRYING.value
             self.next_retry_at = self.calculate_next_retry()

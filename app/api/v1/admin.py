@@ -1,11 +1,11 @@
 """Admin API endpoints."""
 
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, status
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 
 from app.api.deps import CurrentAdmin, DbSession
 from app.models.audit import AuditLog
@@ -37,68 +37,56 @@ async def get_platform_stats(
     db: DbSession,
 ) -> PlatformStats:
     """Get platform-wide statistics."""
-    # Total users count
-    total_users_result = await db.execute(select(func.count(User.id)))
-    total_users = total_users_result.scalar() or 0
-
-    # Active users count
-    active_users_result = await db.execute(
-        select(func.count(User.id)).where(User.is_active == True)
+    # Consolidated user statistics query (1 query instead of 7+)
+    user_stats_query = select(
+        func.count(User.id).label("total"),
+        func.count(User.id).filter(User.is_active == True).label("active"),  # noqa: E712
+        func.count(User.id).filter(User.is_verified == True).label("verified"),  # noqa: E712
+        func.sum(User.conversions_this_month).label("conversions"),
+        func.count(User.id).filter(User.plan == PlanType.FREE).label("plan_free"),
+        func.count(User.id).filter(User.plan == PlanType.STARTER).label("plan_starter"),
+        func.count(User.id).filter(User.plan == PlanType.PRO).label("plan_pro"),
+        func.count(User.id).filter(User.plan == PlanType.STEUERBERATER).label("plan_steuerberater"),
     )
-    active_users = active_users_result.scalar() or 0
+    user_stats_result = await db.execute(user_stats_query)
+    user_stats = user_stats_result.one()
 
-    # Verified users count
-    verified_users_result = await db.execute(
-        select(func.count(User.id)).where(User.is_verified == True)
-    )
-    verified_users = verified_users_result.scalar() or 0
+    total_users = user_stats.total or 0
+    active_users = user_stats.active or 0
+    verified_users = user_stats.verified or 0
+    total_conversions = user_stats.conversions or 0
 
-    # Total validations (sum of all users)
-    total_validations_result = await db.execute(
-        select(func.count(ValidationLog.id))
-    )
-    total_validations = total_validations_result.scalar() or 0
+    users_by_plan = {
+        PlanType.FREE.value: user_stats.plan_free or 0,
+        PlanType.STARTER.value: user_stats.plan_starter or 0,
+        PlanType.PRO.value: user_stats.plan_pro or 0,
+        PlanType.STEUERBERATER.value: user_stats.plan_steuerberater or 0,
+    }
 
-    # Total conversions (sum from users)
-    total_conversions_result = await db.execute(
-        select(func.sum(User.conversions_this_month))
-    )
-    total_conversions = total_conversions_result.scalar() or 0
-
-    # Validations today
-    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-    validations_today_result = await db.execute(
-        select(func.count(ValidationLog.id)).where(
-            ValidationLog.validated_at >= today_start
-        )
-    )
-    validations_today = validations_today_result.scalar() or 0
-
-    # Validations this week
+    # Consolidated validation statistics query (1 query instead of 4)
+    today_start = datetime.now(UTC).replace(tzinfo=None).replace(hour=0, minute=0, second=0, microsecond=0)
     week_start = today_start - timedelta(days=today_start.weekday())
-    validations_week_result = await db.execute(
-        select(func.count(ValidationLog.id)).where(
-            ValidationLog.validated_at >= week_start
-        )
-    )
-    validations_this_week = validations_week_result.scalar() or 0
-
-    # Validations this month
     month_start = today_start.replace(day=1)
-    validations_month_result = await db.execute(
-        select(func.count(ValidationLog.id)).where(
-            ValidationLog.validated_at >= month_start
-        )
-    )
-    validations_this_month = validations_month_result.scalar() or 0
 
-    # Users by plan
-    users_by_plan = {}
-    for plan in PlanType:
-        plan_count_result = await db.execute(
-            select(func.count(User.id)).where(User.plan == plan)
-        )
-        users_by_plan[plan.value] = plan_count_result.scalar() or 0
+    validation_stats_query = select(
+        func.count(ValidationLog.id).label("total"),
+        func.count(ValidationLog.id).filter(
+            ValidationLog.created_at >= today_start
+        ).label("today"),
+        func.count(ValidationLog.id).filter(
+            ValidationLog.created_at >= week_start
+        ).label("week"),
+        func.count(ValidationLog.id).filter(
+            ValidationLog.created_at >= month_start
+        ).label("month"),
+    )
+    validation_stats_result = await db.execute(validation_stats_query)
+    validation_stats = validation_stats_result.one()
+
+    total_validations = validation_stats.total or 0
+    validations_today = validation_stats.today or 0
+    validations_this_week = validation_stats.week or 0
+    validations_this_month = validation_stats.month or 0
 
     # Recent registrations (last 10)
     recent_result = await db.execute(

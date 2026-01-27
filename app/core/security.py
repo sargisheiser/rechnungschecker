@@ -2,7 +2,7 @@
 
 import random
 import string
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
@@ -52,15 +52,15 @@ def create_access_token(
         Encoded JWT token string
     """
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(UTC).replace(tzinfo=None) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=settings.access_token_expire_minutes)
+        expire = datetime.now(UTC).replace(tzinfo=None) + timedelta(minutes=settings.access_token_expire_minutes)
 
     to_encode: dict[str, Any] = {
         "sub": str(subject),
         "exp": expire,
         "type": "access",
-        "iat": datetime.utcnow(),
+        "iat": datetime.now(UTC).replace(tzinfo=None),
     }
 
     if extra_claims:
@@ -83,15 +83,15 @@ def create_refresh_token(
         Encoded JWT refresh token string
     """
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(UTC).replace(tzinfo=None) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(days=settings.refresh_token_expire_days)
+        expire = datetime.now(UTC).replace(tzinfo=None) + timedelta(days=settings.refresh_token_expire_days)
 
     to_encode: dict[str, Any] = {
         "sub": str(subject),
         "exp": expire,
         "type": "refresh",
-        "iat": datetime.utcnow(),
+        "iat": datetime.now(UTC).replace(tzinfo=None),
     }
 
     return jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
@@ -162,7 +162,7 @@ def create_email_verification_token(email: str) -> str:
     Returns:
         Encoded verification token
     """
-    expire = datetime.utcnow() + timedelta(hours=24)
+    expire = datetime.now(UTC).replace(tzinfo=None) + timedelta(hours=24)
     to_encode = {
         "sub": email,
         "exp": expire,
@@ -199,7 +199,7 @@ def create_password_reset_token(email: str) -> str:
     Returns:
         Encoded password reset token
     """
-    expire = datetime.utcnow() + timedelta(hours=1)  # 1 hour validity
+    expire = datetime.now(UTC).replace(tzinfo=None) + timedelta(hours=1)  # 1 hour validity
     to_encode = {
         "sub": email,
         "exp": expire,

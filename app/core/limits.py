@@ -2,7 +2,7 @@
 
 import hashlib
 import logging
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from uuid import uuid4
 
 from fastapi import Request
@@ -137,7 +137,7 @@ async def increment_guest_usage(guest: GuestUsage) -> None:
         guest: GuestUsage record to update
     """
     guest.validations_used += 1
-    guest.last_validation_at = datetime.utcnow()
+    guest.last_validation_at = datetime.now(UTC).replace(tzinfo=None)
 
 
 async def check_user_validation_limit(user: User) -> None:
@@ -232,7 +232,7 @@ class RateLimiter:
         if key not in self._requests:
             return
 
-        cutoff = datetime.utcnow()
+        cutoff = datetime.now(UTC).replace(tzinfo=None)
         self._requests[key] = [
             ts for ts in self._requests[key]
             if (cutoff - ts).total_seconds() < window_seconds
@@ -262,7 +262,7 @@ class RateLimiter:
         if len(self._requests[key]) >= limit:
             return False
 
-        self._requests[key].append(datetime.utcnow())
+        self._requests[key].append(datetime.now(UTC).replace(tzinfo=None))
         return True
 
     def get_remaining(self, key: str, limit: int) -> int:

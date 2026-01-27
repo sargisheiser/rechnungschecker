@@ -3,7 +3,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.scheduled_validation import CloudStorageProvider, JobStatus, RunStatus
 
@@ -78,8 +78,7 @@ class ScheduledValidationJobResponse(BaseModel):
     total_files_invalid: int
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ScheduledValidationRunResponse(BaseModel):
@@ -97,8 +96,7 @@ class ScheduledValidationRunResponse(BaseModel):
     files_failed: int
     error_message: str | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ScheduledValidationFileResponse(BaseModel):
@@ -114,8 +112,7 @@ class ScheduledValidationFileResponse(BaseModel):
     validation_log_id: UUID | None
     error_message: str | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TestConnectionRequest(BaseModel):

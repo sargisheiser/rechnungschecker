@@ -8,7 +8,7 @@ import hashlib
 import logging
 import tempfile
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 from typing import BinaryIO
@@ -372,7 +372,7 @@ class ZUGFeRDValidator:
             xrechnung_version=kosit_result.xrechnung_version,
             validator_version=KoSITValidator.VALIDATOR_VERSION,
             processing_time_ms=kosit_result.processing_time_ms,
-            validated_at=datetime.utcnow(),
+            validated_at=datetime.now(UTC).replace(tzinfo=None),
             report_url=None,
         )
 

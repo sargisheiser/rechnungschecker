@@ -1,7 +1,7 @@
 """Audit logging service for tracking user actions."""
 
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from fastapi import Request
@@ -195,7 +195,7 @@ class AuditService:
         Returns:
             Dictionary with activity summary
         """
-        cutoff = datetime.utcnow() - timedelta(days=days)
+        cutoff = datetime.now(UTC).replace(tzinfo=None) - timedelta(days=days)
 
         # Total actions
         total_query = select(func.count(AuditLog.id)).where(

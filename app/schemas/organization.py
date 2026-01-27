@@ -3,7 +3,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class OrganizationCreate(BaseModel):
@@ -36,8 +36,7 @@ class OrganizationResponse(BaseModel):
     member_count: int | None = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class OrganizationListResponse(BaseModel):
@@ -71,8 +70,7 @@ class MemberResponse(BaseModel):
     invited_at: datetime
     joined_at: datetime | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MemberListResponse(BaseModel):
@@ -92,8 +90,7 @@ class InvitationResponse(BaseModel):
     expires_at: datetime
     is_valid: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class InvitationAccept(BaseModel):

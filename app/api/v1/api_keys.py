@@ -1,7 +1,7 @@
 """API Key management endpoints."""
 
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Request, status
@@ -124,7 +124,7 @@ async def create_api_key(
     # Calculate expiration date
     expires_at = None
     if data.expires_in_days:
-        expires_at = datetime.utcnow() + timedelta(days=data.expires_in_days)
+        expires_at = datetime.now(UTC).replace(tzinfo=None) + timedelta(days=data.expires_in_days)
 
     # Create the key
     api_key, raw_key = APIKey.create_key(

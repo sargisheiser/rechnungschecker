@@ -3,7 +3,7 @@
 import hashlib
 import hmac
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 import httpx
@@ -120,7 +120,7 @@ class WebhookService:
         return ValidationEventPayload(
             event_type=event_type.value,
             event_id=f"evt_{uuid4().hex}",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC).replace(tzinfo=None),
             validation_id=validation_id,
             file_name=file_name,
             file_type=file_type,
@@ -233,7 +233,7 @@ class WebhookService:
 
             # Update subscription stats
             subscription.total_deliveries += 1
-            subscription.last_triggered_at = datetime.utcnow()
+            subscription.last_triggered_at = datetime.now(UTC).replace(tzinfo=None)
 
         logger.info(
             f"Triggered {len(delivery_ids)} webhooks for user {user_id}, "
@@ -274,7 +274,7 @@ class WebhookService:
             logger.warning(f"Subscription inactive for delivery {delivery_id}")
             delivery.status = DeliveryStatus.FAILED.value
             delivery.error_message = "Subscription is inactive"
-            delivery.completed_at = datetime.utcnow()
+            delivery.completed_at = datetime.now(UTC).replace(tzinfo=None)
             return False
 
         # Prepare request
@@ -291,7 +291,7 @@ class WebhookService:
         }
 
         # Attempt delivery
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC).replace(tzinfo=None)
         try:
             async with httpx.AsyncClient(timeout=self.DELIVERY_TIMEOUT_SECONDS) as client:
                 response = await client.post(
@@ -300,7 +300,7 @@ class WebhookService:
                     headers=headers,
                 )
 
-            response_time_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+            response_time_ms = int((datetime.now(UTC).replace(tzinfo=None) - start_time).total_seconds() * 1000)
             response_body = response.text[:self.MAX_RESPONSE_BODY_SIZE] if response.text else None
 
             # Check for success (2xx status codes)
@@ -311,7 +311,7 @@ class WebhookService:
                     response_time_ms=response_time_ms,
                 )
                 subscription.successful_deliveries += 1
-                subscription.last_success_at = datetime.utcnow()
+                subscription.last_success_at = datetime.now(UTC).replace(tzinfo=None)
                 logger.info(
                     f"Webhook delivered successfully: delivery={delivery_id}, "
                     f"status={response.status_code}, time={response_time_ms}ms"
@@ -325,7 +325,7 @@ class WebhookService:
                 )
                 if delivery.status == DeliveryStatus.FAILED.value:
                     subscription.failed_deliveries += 1
-                    subscription.last_failure_at = datetime.utcnow()
+                    subscription.last_failure_at = datetime.now(UTC).replace(tzinfo=None)
                 logger.warning(
                     f"Webhook delivery failed: delivery={delivery_id}, "
                     f"status={response.status_code}, attempt={delivery.attempt_count}"
@@ -336,7 +336,7 @@ class WebhookService:
             delivery.mark_failed(error="Request timed out")
             if delivery.status == DeliveryStatus.FAILED.value:
                 subscription.failed_deliveries += 1
-                subscription.last_failure_at = datetime.utcnow()
+                subscription.last_failure_at = datetime.now(UTC).replace(tzinfo=None)
             logger.warning(f"Webhook timed out: delivery={delivery_id}")
             return False
 
@@ -344,7 +344,7 @@ class WebhookService:
             delivery.mark_failed(error=f"Request error: {str(e)}")
             if delivery.status == DeliveryStatus.FAILED.value:
                 subscription.failed_deliveries += 1
-                subscription.last_failure_at = datetime.utcnow()
+                subscription.last_failure_at = datetime.now(UTC).replace(tzinfo=None)
             logger.warning(f"Webhook request error: delivery={delivery_id}, error={e}")
             return False
 
@@ -352,7 +352,7 @@ class WebhookService:
             delivery.mark_failed(error=f"Unexpected error: {str(e)}")
             if delivery.status == DeliveryStatus.FAILED.value:
                 subscription.failed_deliveries += 1
-                subscription.last_failure_at = datetime.utcnow()
+                subscription.last_failure_at = datetime.now(UTC).replace(tzinfo=None)
             logger.exception(f"Unexpected webhook error: delivery={delivery_id}")
             return False
 
@@ -371,7 +371,7 @@ class WebhookService:
             raise ValueError("Database session required")
 
         # Find deliveries due for retry
-        now = datetime.utcnow()
+        now = datetime.now(UTC).replace(tzinfo=None)
         query = (
             select(WebhookDelivery)
             .where(
@@ -424,7 +424,7 @@ class WebhookService:
         test_payload = ValidationEventPayload(
             event_type="test",
             event_id=f"evt_test_{uuid4().hex}",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC).replace(tzinfo=None),
             validation_id=uuid4(),
             file_name="test-invoice.xml",
             file_type="xrechnung",
@@ -435,7 +435,7 @@ class WebhookService:
             info_count=2,
             xrechnung_version="3.0.2",
             processing_time_ms=150,
-            validated_at=datetime.utcnow(),
+            validated_at=datetime.now(UTC).replace(tzinfo=None),
         )
 
         # Create delivery record

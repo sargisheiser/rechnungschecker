@@ -4,7 +4,7 @@ from datetime import datetime
 from enum import Enum
 from uuid import UUID
 
-from pydantic import BaseModel, Field, HttpUrl, field_validator
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
 
 
 class IntegrationType(str, Enum):
@@ -33,8 +33,7 @@ class LexofficeInvoiceListItem(BaseModel):
     total_amount: float | None = Field(None, alias="totalAmount")
     status: str | None = None
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class LexofficeInvoiceList(BaseModel):
@@ -45,8 +44,7 @@ class LexofficeInvoiceList(BaseModel):
     total_elements: int = Field(0, alias="totalElements")
     page: int = 0
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class LexofficeFetchRequest(BaseModel):

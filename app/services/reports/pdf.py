@@ -2,7 +2,7 @@
 
 import io
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -348,7 +348,7 @@ def generate_validation_report_pdf(result: ValidationResponse) -> bytes:
         styles["FooterText"]
     ))
     story.append(Paragraph(
-        f"Generiert: {datetime.utcnow().strftime('%d.%m.%Y %H:%M:%S')} UTC",
+        f"Generiert: {datetime.now(UTC).replace(tzinfo=None).strftime('%d.%m.%Y %H:%M:%S')} UTC",
         styles["FooterText"]
     ))
 
@@ -548,7 +548,7 @@ def generate_validation_report_html(result: ValidationResponse) -> str:
         <footer>
             <p>Erstellt von RechnungsChecker - E-Rechnung Validierung &amp; Konvertierung</p>
             <p>Dieser Bericht dient der Information und stellt keine rechtliche Beratung dar.</p>
-            <p class="timestamp">Generiert: {datetime.utcnow().strftime('%d.%m.%Y %H:%M:%S')} UTC</p>
+            <p class="timestamp">Generiert: {datetime.now(UTC).replace(tzinfo=None).strftime('%d.%m.%Y %H:%M:%S')} UTC</p>
         </footer>
     </body>
     </html>

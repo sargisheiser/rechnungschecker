@@ -1,7 +1,7 @@
 """Integration settings model for third-party services."""
 
 import enum
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Index, Integer, String, Text, func
@@ -91,7 +91,7 @@ class IntegrationSettings(Base):
         Args:
             success: Whether the request was successful
         """
-        self.last_used_at = datetime.utcnow()
+        self.last_used_at = datetime.now(UTC).replace(tzinfo=None)
         self.total_requests += 1
         if success:
             self.successful_requests += 1

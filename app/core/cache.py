@@ -1,7 +1,7 @@
 """Simple in-memory cache for validation results."""
 
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Dict, Optional
 from uuid import UUID
 
@@ -21,7 +21,7 @@ def cache_validation_result(result: ValidationResponse) -> None:
         result: ValidationResponse to cache
     """
     key = str(result.id)
-    _validation_cache[key] = (result, datetime.utcnow())
+    _validation_cache[key] = (result, datetime.now(UTC).replace(tzinfo=None))
     logger.debug(f"Cached validation result: {key}")
 
     # Clean up expired entries
@@ -44,7 +44,7 @@ def get_cached_validation(validation_id: str | UUID) -> Optional[ValidationRespo
         return None
 
     result, cached_at = entry
-    if datetime.utcnow() - cached_at > timedelta(minutes=CACHE_EXPIRY_MINUTES):
+    if datetime.now(UTC).replace(tzinfo=None) - cached_at > timedelta(minutes=CACHE_EXPIRY_MINUTES):
         # Expired
         del _validation_cache[key]
         return None
@@ -54,7 +54,7 @@ def get_cached_validation(validation_id: str | UUID) -> Optional[ValidationRespo
 
 def _cleanup_expired() -> None:
     """Remove expired entries from cache."""
-    now = datetime.utcnow()
+    now = datetime.now(UTC).replace(tzinfo=None)
     expired_keys = [
         key for key, (_, cached_at) in _validation_cache.items()
         if now - cached_at > timedelta(minutes=CACHE_EXPIRY_MINUTES)

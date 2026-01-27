@@ -1,16 +1,20 @@
 """Analytics service for validation statistics and trends."""
 
 import logging
-from datetime import datetime, date, timedelta
+from datetime import UTC, datetime, date, timedelta
 from uuid import UUID
 
 from sqlalchemy import select, func, case, cast, Date
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.redis_cache import cache_get, cache_set, analytics_cache_key
 from app.models.validation import FileType, ValidationLog
 from app.models.user import User
 
 logger = logging.getLogger(__name__)
+
+# Cache TTL for analytics dashboard (5 minutes)
+ANALYTICS_CACHE_TTL = 300
 
 
 class AnalyticsService:
@@ -36,7 +40,30 @@ class AnalyticsService:
         Returns:
             Dictionary with all analytics data
         """
-        cutoff = datetime.utcnow() - timedelta(days=days)
+        # Build cache key
+        cache_suffix = f":{client_id}" if client_id else ""
+        cache_key = analytics_cache_key(str(user_id), f"{days}d{cache_suffix}")
+
+        # Try to get from cache
+        cached = await cache_get(cache_key)
+        if cached:
+            logger.debug(f"Analytics cache hit for user {user_id}")
+            # Still fetch fresh usage data (not cached)
+            user_result = await self.db.execute(
+                select(User).where(User.id == user_id)
+            )
+            user = user_result.scalar_one_or_none()
+            if user:
+                cached["usage"] = {
+                    "validations_used": user.validations_this_month,
+                    "validations_limit": user.get_validation_limit(),
+                    "conversions_used": user.conversions_this_month,
+                    "conversions_limit": user.get_conversion_limit(),
+                    "plan": user.plan.value,
+                }
+            return cached
+
+        cutoff = datetime.now(UTC).replace(tzinfo=None) - timedelta(days=days)
         end_date = date.today()
         start_date = end_date - timedelta(days=days - 1)
 
@@ -76,7 +103,7 @@ class AnalyticsService:
                 "plan": user.plan.value,
             }
 
-        return {
+        result = {
             "period": {
                 "start": start_date.isoformat(),
                 "end": end_date.isoformat(),
@@ -88,6 +115,14 @@ class AnalyticsService:
             "top_errors": top_errors,
             "usage": usage,
         }
+
+        # Cache the result (excluding usage which changes frequently)
+        cache_data = {**result}
+        cache_data.pop("usage", None)
+        await cache_set(cache_key, cache_data, ANALYTICS_CACHE_TTL)
+        logger.debug(f"Analytics cached for user {user_id}")
+
+        return result
 
     async def _get_summary_stats(self, filters: list) -> dict:
         """Get summary statistics."""
@@ -253,7 +288,7 @@ class AnalyticsService:
         """
         from app.models.client import Client
 
-        cutoff = datetime.utcnow() - timedelta(days=days)
+        cutoff = datetime.now(UTC).replace(tzinfo=None) - timedelta(days=days)
 
         query = (
             select(
