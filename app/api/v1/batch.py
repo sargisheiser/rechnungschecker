@@ -1,15 +1,24 @@
 """Batch validation API endpoints."""
 
 import logging
-from typing import Annotated, Optional
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, Request, UploadFile, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    File,
+    Form,
+    HTTPException,
+    Request,
+    UploadFile,
+    status,
+)
 
 from app.api.deps import CurrentUser, DbSession
 from app.config import get_settings
 from app.models.audit import AuditAction
-from app.models.batch import BatchJobStatus, BatchFileStatus
+from app.models.batch import BatchFileStatus
 from app.schemas.batch import (
     BatchJobCreated,
     BatchJobList,
@@ -29,8 +38,8 @@ MAX_FILES_PER_BATCH = 50
 async def process_batch_job(job_id: UUID, user_id: UUID, client_id: UUID | None) -> None:
     """Background task to process a batch validation job."""
     from app.core.database import async_session_maker
-    from app.services.validator import XRechnungValidator, ZUGFeRDValidator
     from app.services.validation_history import ValidationHistoryService
+    from app.services.validator import XRechnungValidator, ZUGFeRDValidator
 
     async with async_session_maker() as db:
         try:
@@ -156,7 +165,7 @@ async def create_batch_validation(
     request: Request,
     files: Annotated[list[UploadFile], File(description="Invoice files to validate")],
     name: Annotated[str, Form()] = "Batch Validation",
-    client_id: Annotated[Optional[UUID], Form()] = None,
+    client_id: Annotated[UUID | None, Form()] = None,
 ) -> BatchJobCreated:
     """Create a new batch validation job.
 
@@ -183,9 +192,10 @@ async def create_batch_validation(
         size = len(content)
 
         if size > get_settings().max_upload_size_bytes:
+            max_size = get_settings().max_upload_size_mb
             raise HTTPException(
                 status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                detail=f"File {file.filename} exceeds maximum size of {get_settings().max_upload_size_mb}MB",
+                detail=f"File {file.filename} exceeds maximum size of {max_size}MB",
             )
 
         # Check file extension
@@ -193,7 +203,8 @@ async def create_batch_validation(
         if not filename.lower().endswith((".xml", ".pdf")):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"File {filename} has unsupported format. Only XML and PDF files are accepted.",
+                detail=f"File {filename} has unsupported format. "
+                "Only XML and PDF files are accepted.",
             )
 
         file_data.append((filename, content, size))

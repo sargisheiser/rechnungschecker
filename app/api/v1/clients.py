@@ -54,7 +54,7 @@ async def list_clients(
     query = select(Client).where(Client.user_id == current_user.id)
 
     if active_only:
-        query = query.where(Client.is_active == True)
+        query = query.where(Client.is_active)
 
     if search:
         search_term = f"%{search}%"
@@ -118,7 +118,7 @@ async def get_client_stats(
     active_result = await db.execute(
         select(func.count(Client.id)).where(
             Client.user_id == current_user.id,
-            Client.is_active == True,
+            Client.is_active,
         )
     )
     active_clients = active_result.scalar() or 0

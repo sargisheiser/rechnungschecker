@@ -4,21 +4,28 @@ import logging
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Request, status
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 
 from app.api.deps import CurrentUser, DbSession
 from app.models.audit import AuditAction
-from app.models.webhook import WebhookSubscription, WebhookDelivery, DeliveryStatus, generate_webhook_secret
+from app.models.webhook import (
+    DeliveryStatus,
+    WebhookDelivery,
+    WebhookSubscription,
+    generate_webhook_secret,
+)
+from app.schemas.webhook import (
+    DeliveryStatus as DeliveryStatusSchema,
+)
 from app.schemas.webhook import (
     WebhookCreate,
     WebhookCreated,
+    WebhookDeliveryResponse,
     WebhookList,
     WebhookResponse,
+    WebhookTestResponse,
     WebhookUpdate,
     WebhookWithDeliveries,
-    WebhookDeliveryResponse,
-    WebhookTestResponse,
-    DeliveryStatus as DeliveryStatusSchema,
 )
 from app.services.audit import AuditService
 from app.services.webhook import WebhookService

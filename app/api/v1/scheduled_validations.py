@@ -182,6 +182,7 @@ async def get_run_files(
     # Verify user has access to this run by checking the job
     if files:
         from sqlalchemy import select
+
         from app.models.scheduled_validation import ScheduledValidationRun
 
         result = await db.execute(

@@ -1,6 +1,5 @@
 """Tests for ZUGFeRD extraction and validation services."""
 
-import pytest
 
 from app.services.validator.zugferd import (
     ZUGFeRDExtractor,

@@ -1,6 +1,7 @@
 """Tests for API key management endpoints."""
 
 import uuid
+
 import pytest
 from httpx import AsyncClient
 
@@ -63,7 +64,6 @@ class TestAPIKeyEndpoints:
     @pytest.mark.asyncio
     async def test_get_api_key_unauthorized(self, async_client: AsyncClient) -> None:
         """Test getting API key without authentication fails."""
-        import uuid
         key_id = uuid.uuid4()
         response = await async_client.get(f"/api/v1/api-keys/{key_id}")
         assert response.status_code == 401
@@ -83,7 +83,6 @@ class TestAPIKeyEndpoints:
     @pytest.mark.asyncio
     async def test_update_api_key_unauthorized(self, async_client: AsyncClient) -> None:
         """Test updating API key without authentication fails."""
-        import uuid
         key_id = uuid.uuid4()
         response = await async_client.patch(
             f"/api/v1/api-keys/{key_id}",
@@ -94,7 +93,6 @@ class TestAPIKeyEndpoints:
     @pytest.mark.asyncio
     async def test_delete_api_key_unauthorized(self, async_client: AsyncClient) -> None:
         """Test deleting API key without authentication fails."""
-        import uuid
         key_id = uuid.uuid4()
         response = await async_client.delete(f"/api/v1/api-keys/{key_id}")
         assert response.status_code == 401

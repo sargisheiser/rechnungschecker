@@ -1,15 +1,15 @@
 """Analytics service for validation statistics and trends."""
 
 import logging
-from datetime import UTC, datetime, date, timedelta
+from datetime import UTC, date, datetime, timedelta
 from uuid import UUID
 
-from sqlalchemy import select, func, case, cast, Date
+from sqlalchemy import Date, case, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.redis_cache import cache_get, cache_set, analytics_cache_key
-from app.models.validation import FileType, ValidationLog
+from app.core.redis_cache import analytics_cache_key, cache_get, cache_set
 from app.models.user import User
+from app.models.validation import FileType, ValidationLog
 
 logger = logging.getLogger(__name__)
 

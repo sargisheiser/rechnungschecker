@@ -8,8 +8,14 @@ Based on official KoSIT/XRechnung business rules.
 GERMAN_MESSAGES: dict[str, str] = {
     # XRechnung specific rules (BR-DE)
     "BR-DE-01": "Eine Rechnung muss eine Leitweg-ID enthalten.",
-    "BR-DE-02": "Die Bankverbindungsinformationen des Verkäufers müssen angegeben werden, wenn Lastschrift oder Überweisung als Zahlungsmittel vereinbart wurde.",
-    "BR-DE-03": "Wenn Skonto gewährt wird, müssen die Skontobedingungen im Element Zahlungsbedingungen angegeben werden.",
+    "BR-DE-02": (
+        "Die Bankverbindungsinformationen des Verkäufers müssen angegeben werden, "
+        "wenn Lastschrift oder Überweisung als Zahlungsmittel vereinbart wurde."
+    ),
+    "BR-DE-03": (
+        "Wenn Skonto gewährt wird, müssen die Skontobedingungen "
+        "im Element Zahlungsbedingungen angegeben werden."
+    ),
     "BR-DE-04": "Die Umsatzsteuer-Identifikationsnummer des Verkäufers muss angegeben werden.",
     "BR-DE-05": "Die Kontaktinformationen des Verkäufers müssen eine Telefonnummer oder E-Mail-Adresse enthalten.",
     "BR-DE-06": "Die E-Mail-Adresse des Verkäufers muss angegeben werden.",

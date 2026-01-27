@@ -2,7 +2,6 @@
 
 import logging
 from datetime import UTC, datetime, timedelta
-from typing import Dict, Optional
 from uuid import UUID
 
 from app.schemas.validation import ValidationResponse
@@ -10,7 +9,7 @@ from app.schemas.validation import ValidationResponse
 logger = logging.getLogger(__name__)
 
 # Simple in-memory cache with expiration
-_validation_cache: Dict[str, tuple[ValidationResponse, datetime]] = {}
+_validation_cache: dict[str, tuple[ValidationResponse, datetime]] = {}
 CACHE_EXPIRY_MINUTES = 30
 
 
@@ -28,7 +27,7 @@ def cache_validation_result(result: ValidationResponse) -> None:
     _cleanup_expired()
 
 
-def get_cached_validation(validation_id: str | UUID) -> Optional[ValidationResponse]:
+def get_cached_validation(validation_id: str | UUID) -> ValidationResponse | None:
     """Retrieve a cached validation result.
 
     Args:

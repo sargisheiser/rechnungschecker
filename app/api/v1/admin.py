@@ -5,7 +5,7 @@ from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, status
-from sqlalchemy import case, func, select
+from sqlalchemy import func, select
 
 from app.api.deps import CurrentAdmin, DbSession
 from app.models.audit import AuditLog
@@ -64,7 +64,8 @@ async def get_platform_stats(
     }
 
     # Consolidated validation statistics query (1 query instead of 4)
-    today_start = datetime.now(UTC).replace(tzinfo=None).replace(hour=0, minute=0, second=0, microsecond=0)
+    now = datetime.now(UTC).replace(tzinfo=None)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     week_start = today_start - timedelta(days=today_start.weekday())
     month_start = today_start.replace(day=1)
 

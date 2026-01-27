@@ -5,7 +5,6 @@ import logging
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
 
 from app.config import get_settings
 from app.core.exceptions import KoSITError
@@ -130,7 +129,7 @@ class KoSITValidator:
             result = await self._run_kosit(file_path)
             result.processing_time_ms = int((time.time() - start_time) * 1000)
             return result
-        except asyncio.TimeoutError:
+        except TimeoutError:
             raise KoSITError(f"Validation timed out after {self.timeout} seconds")
         except Exception as e:
             logger.error(f"KoSIT validation failed: {e}")
@@ -171,7 +170,7 @@ class KoSITValidator:
             stdout, stderr = await asyncio.wait_for(
                 process.communicate(), timeout=self.timeout
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             process.kill()
             raise
 

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {
   FileCheck,
@@ -24,6 +24,17 @@ export function Landing() {
   const validate = useValidate()
   const [loadingDemo, setLoadingDemo] = useState(false)
   const [demoError, setDemoError] = useState<string | null>(null)
+  const [activeTestimonial, setActiveTestimonial] = useState(0)
+  const [isPaused, setIsPaused] = useState(false)
+
+  // Auto-rotate testimonials on mobile
+  useEffect(() => {
+    if (isPaused) return
+    const interval = setInterval(() => {
+      setActiveTestimonial((prev) => (prev + 1) % 3)
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [isPaused])
 
   const handleDemoValidation = async () => {
     setLoadingDemo(true)
@@ -115,7 +126,9 @@ export function Landing() {
               {t('landing.testimonials.trusted')}
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
+
+          {/* Desktop: Grid layout (all visible) */}
+          <div className="hidden md:grid md:grid-cols-3 gap-8">
             <TestimonialCard
               quote={t('landing.testimonials.quote1.text')}
               author={t('landing.testimonials.quote1.author')}
@@ -131,6 +144,60 @@ export function Landing() {
               author={t('landing.testimonials.quote3.author')}
               role={t('landing.testimonials.quote3.role')}
             />
+          </div>
+
+          {/* Mobile: Carousel layout */}
+          <div
+            className="md:hidden"
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
+            onTouchStart={() => setIsPaused(true)}
+            onTouchEnd={() => setIsPaused(false)}
+          >
+            <div className="relative overflow-hidden">
+              <div
+                className="flex transition-transform duration-500 ease-in-out"
+                style={{ transform: `translateX(-${activeTestimonial * 100}%)` }}
+              >
+                <div className="w-full flex-shrink-0 px-2">
+                  <TestimonialCard
+                    quote={t('landing.testimonials.quote1.text')}
+                    author={t('landing.testimonials.quote1.author')}
+                    role={t('landing.testimonials.quote1.role')}
+                  />
+                </div>
+                <div className="w-full flex-shrink-0 px-2">
+                  <TestimonialCard
+                    quote={t('landing.testimonials.quote2.text')}
+                    author={t('landing.testimonials.quote2.author')}
+                    role={t('landing.testimonials.quote2.role')}
+                  />
+                </div>
+                <div className="w-full flex-shrink-0 px-2">
+                  <TestimonialCard
+                    quote={t('landing.testimonials.quote3.text')}
+                    author={t('landing.testimonials.quote3.author')}
+                    role={t('landing.testimonials.quote3.role')}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Navigation dots */}
+            <div className="flex justify-center gap-2 mt-4">
+              {[0, 1, 2].map((index) => (
+                <button
+                  key={index}
+                  onClick={() => setActiveTestimonial(index)}
+                  className={`w-2.5 h-2.5 rounded-full transition-colors ${
+                    activeTestimonial === index
+                      ? 'bg-primary-600'
+                      : 'bg-gray-300 hover:bg-gray-400'
+                  }`}
+                  aria-label={`Go to testimonial ${index + 1}`}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </section>

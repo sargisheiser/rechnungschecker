@@ -5,7 +5,7 @@ from enum import Enum
 from typing import Any
 
 import stripe
-from stripe import Customer, Subscription, checkout, billing_portal
+from stripe import Subscription
 
 from app.config import get_settings
 from app.core.exceptions import PaymentError

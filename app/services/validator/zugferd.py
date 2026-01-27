@@ -11,19 +11,20 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import BinaryIO
 from uuid import UUID, uuid4
 
 import fitz  # PyMuPDF
 
-from app.core.exceptions import FileProcessingError, ValidationError
+from app.core.exceptions import FileProcessingError
 from app.schemas.validation import (
     ValidationError as ValidationErrorSchema,
+)
+from app.schemas.validation import (
     ValidationResponse,
     ValidationSeverity,
 )
-from app.services.validator.kosit import KoSITValidator
 from app.services.validator.error_messages import get_german_message
+from app.services.validator.kosit import KoSITValidator
 
 logger = logging.getLogger(__name__)
 
@@ -191,10 +192,6 @@ class ZUGFeRDExtractor:
 
         # Look for GuidelineSpecifiedDocumentContextParameter
         # which contains the profile information
-        namespaces = {
-            "rsm": "urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100",
-            "ram": "urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100",
-        }
 
         # Try to find the guideline ID
         guideline_id = None
@@ -334,7 +331,6 @@ class ZUGFeRDValidator:
         kosit_result,
     ) -> ValidationResponse:
         """Build validation response from extraction and KoSIT result."""
-        from app.services.validator.kosit import KoSITResult
 
         errors: list[ValidationErrorSchema] = []
         warnings: list[ValidationErrorSchema] = []
@@ -471,9 +467,15 @@ class ZUGFeRDValidator:
             "BR-CO-13": "Pruefen Sie: Positionsnetto = Menge x Einzelpreis.",
             "BR-CO-15": "Die Nettosumme muss die Summe aller Positionen sein.",
             "BR-CO-16": "Die MwSt-Summe muss die Summe aller MwSt-Betraege sein.",
-            "BR-CO-25": "Bei positivem Zahlbetrag muss entweder das Faelligkeitsdatum oder Zahlungsbedingungen angegeben werden.",
+            "BR-CO-25": (
+                "Bei positivem Zahlbetrag muss entweder das Faelligkeitsdatum "
+                "oder Zahlungsbedingungen angegeben werden."
+            ),
             # PEPPOL rules
-            "PEPPOL-EN16931-R120": "Pruefen Sie: Positionsnetto = Menge × (Einzelpreis / Preisbasis) + Zuschlage - Abzuege.",
+            "PEPPOL-EN16931-R120": (
+                "Pruefen Sie: Positionsnetto = Menge × (Einzelpreis / Preisbasis) "
+                "+ Zuschlage - Abzuege."
+            ),
             "PEPPOL-EN16931-R121": "Die Summe der Positionsnettobetraege muss dem Gesamtnetto entsprechen.",
             # BR-S Standard rate VAT rules
             "BR-S-01": "Steuerkategorie S erfordert MwSt-Satz > 0%.",

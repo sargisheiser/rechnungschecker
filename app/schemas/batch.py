@@ -5,7 +5,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.models.batch import BatchJobStatus, BatchFileStatus
+from app.models.batch import BatchFileStatus, BatchJobStatus
 
 
 class BatchJobCreate(BaseModel):

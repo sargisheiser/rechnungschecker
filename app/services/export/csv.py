@@ -5,12 +5,12 @@ import io
 from datetime import date, datetime
 from uuid import UUID
 
-from sqlalchemy import select, func, and_
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models.client import Client
-from app.models.validation import ValidationLog, FileType
+from app.models.validation import FileType, ValidationLog
 from app.schemas.export import ExportFormat, ValidationStatus
 
 

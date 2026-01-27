@@ -2,9 +2,6 @@
 
 import io
 import logging
-import tempfile
-from pathlib import Path
-from typing import Optional
 
 import fitz  # PyMuPDF
 
@@ -27,7 +24,7 @@ class OCRService:
     # Tesseract language configuration for German
     LANG = "deu+eng"
 
-    def __init__(self, tesseract_cmd: Optional[str] = None):
+    def __init__(self, tesseract_cmd: str | None = None):
         """
         Initialize OCR service.
 

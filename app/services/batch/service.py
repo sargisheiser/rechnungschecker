@@ -4,18 +4,17 @@ import logging
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models.batch import BatchJob, BatchFile, BatchJobStatus, BatchFileStatus
-from app.models.validation import ValidationLog
+from app.models.batch import BatchFile, BatchFileStatus, BatchJob, BatchJobStatus
 from app.schemas.batch import (
+    BatchFileResult,
+    BatchJobList,
     BatchJobResponse,
     BatchJobWithFiles,
-    BatchJobList,
     BatchResultsSummary,
-    BatchFileResult,
 )
 
 logger = logging.getLogger(__name__)

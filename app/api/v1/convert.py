@@ -2,14 +2,14 @@
 
 import logging
 import uuid
-from typing import Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import Response
 
-from app.api.deps import get_current_user, get_current_user_optional as get_optional_user
-from app.core.limits import check_user_conversion_limit, increment_user_conversion
+from app.api.deps import get_current_user
+from app.api.deps import get_current_user_optional as get_optional_user
 from app.core.exceptions import UsageLimitError
+from app.core.limits import check_user_conversion_limit
 from app.models.user import User
 from app.schemas.conversion import (
     ConversionRequest,
@@ -24,15 +24,13 @@ from app.schemas.conversion import (
     ValidationResultSchema,
     ZUGFeRDProfile,
 )
+from app.services.ai.openai_service import AIRateLimitError
+from app.services.converter.extractor import Address, InvoiceData
+from app.services.converter.service import ConversionService
+from app.services.converter.service import OutputFormat as ServiceOutputFormat
+from app.services.converter.service import ZUGFeRDProfile as ServiceZUGFeRDProfile
 
 logger = logging.getLogger(__name__)
-from app.services.converter.service import (
-    ConversionService,
-    OutputFormat as ServiceOutputFormat,
-    ZUGFeRDProfile as ServiceZUGFeRDProfile,
-)
-from app.services.converter.extractor import Address, InvoiceData
-from app.services.ai.openai_service import AIRateLimitError
 
 router = APIRouter(tags=["conversion"])
 
@@ -156,7 +154,7 @@ async def get_conversion_status() -> ConversionStatusResponse:
 @router.post("/preview", response_model=PreviewResponse)
 async def preview_extraction(
     file: UploadFile = File(...),
-    current_user: Optional[User] = Depends(get_optional_user),
+    current_user: User | None = Depends(get_optional_user),
 ) -> PreviewResponse:
     """
     Preview extracted data from a PDF without converting.
@@ -210,10 +208,10 @@ async def convert_pdf(
     zugferd_profile: ZUGFeRDProfile = Form(ZUGFeRDProfile.EN16931),
     embed_in_pdf: bool = Form(True),
     # Optional overrides
-    invoice_number: Optional[str] = Form(None),
-    seller_vat_id: Optional[str] = Form(None),
-    buyer_reference: Optional[str] = Form(None),
-    leitweg_id: Optional[str] = Form(None),
+    invoice_number: str | None = Form(None),
+    seller_vat_id: str | None = Form(None),
+    buyer_reference: str | None = Form(None),
+    leitweg_id: str | None = Form(None),
     current_user: User = Depends(get_current_user),
 ) -> ConversionResponse:
     """
@@ -246,7 +244,7 @@ async def convert_pdf(
         )
 
     # Build conversion request
-    request = ConversionRequest(
+    ConversionRequest(
         output_format=output_format,
         zugferd_profile=zugferd_profile,
         embed_in_pdf=embed_in_pdf,

@@ -3,7 +3,6 @@
 import csv
 import io
 from datetime import UTC, datetime
-from typing import Optional
 
 from fastapi import APIRouter, Query
 from fastapi.responses import StreamingResponse
@@ -26,9 +25,9 @@ async def get_audit_logs(
     current_user: CurrentUser,
     page: int = Query(default=1, ge=1, description="Page number"),
     limit: int = Query(default=50, ge=1, le=100, description="Items per page"),
-    action: Optional[AuditAction] = Query(default=None, description="Filter by action type"),
-    date_from: Optional[datetime] = Query(default=None, description="Start date filter"),
-    date_to: Optional[datetime] = Query(default=None, description="End date filter"),
+    action: AuditAction | None = Query(default=None, description="Filter by action type"),
+    date_from: datetime | None = Query(default=None, description="Start date filter"),
+    date_to: datetime | None = Query(default=None, description="End date filter"),
 ) -> AuditLogList:
     """Get paginated audit logs for the current user.
 
@@ -60,8 +59,8 @@ async def get_audit_logs(
 async def export_audit_logs(
     db: DbSession,
     current_user: CurrentUser,
-    date_from: Optional[datetime] = Query(default=None, description="Start date filter"),
-    date_to: Optional[datetime] = Query(default=None, description="End date filter"),
+    date_from: datetime | None = Query(default=None, description="Start date filter"),
+    date_to: datetime | None = Query(default=None, description="End date filter"),
     format: str = Query(default="json", pattern="^(json|csv)$", description="Export format"),
 ) -> StreamingResponse:
     """Export all audit logs for the current user.

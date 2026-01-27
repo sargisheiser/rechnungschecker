@@ -2,7 +2,6 @@
 
 import fnmatch
 import logging
-from datetime import datetime
 
 import aioboto3
 from botocore.exceptions import ClientError, NoCredentialsError

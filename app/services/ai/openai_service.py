@@ -7,7 +7,7 @@ import logging
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
-from typing import Any, Optional
+from typing import Any
 
 from openai import AsyncOpenAI, RateLimitError
 
@@ -25,7 +25,11 @@ MAX_RETRY_DELAY = 30.0  # seconds
 class AIRateLimitError(Exception):
     """Raised when AI service rate limit is exceeded after retries."""
 
-    def __init__(self, message: str = "AI-Service vorübergehend nicht verfügbar. Bitte versuchen Sie es in einigen Minuten erneut."):
+    def __init__(
+        self,
+        message: str = "AI-Service vorübergehend nicht verfügbar. "
+        "Bitte versuchen Sie es in einigen Minuten erneut."
+    ):
         self.message = message
         super().__init__(self.message)
 
@@ -78,7 +82,8 @@ class ExtractionResult:
 class OpenAIExtractor:
     """Extract invoice data using OpenAI GPT models."""
 
-    EXTRACTION_PROMPT = """Du bist ein Experte für deutsche Rechnungen (XRechnung/ZUGFeRD). Extrahiere alle Rechnungsdaten aus diesem Dokument.
+    EXTRACTION_PROMPT = """Du bist ein Experte für deutsche Rechnungen (XRechnung/ZUGFeRD). \
+Extrahiere alle Rechnungsdaten aus diesem Dokument.
 
 WICHTIG - Deutsche Formate:
 - Datum: "15.01.2024" → "2024-01-15"
@@ -187,7 +192,11 @@ Antworte NUR mit dem JSON-Objekt, kein zusätzlicher Text."""
             raise ValueError("OpenAI API key not configured")
 
         messages = [
-            {"role": "system", "content": "You are an expert invoice data extraction assistant. Extract structured data from invoices accurately."},
+            {
+                "role": "system",
+                "content": "You are an expert invoice data extraction assistant. "
+                "Extract structured data from invoices accurately."
+            },
             {"role": "user", "content": f"{self.EXTRACTION_PROMPT}\n\nInvoice text:\n{text}"}
         ]
 
@@ -212,7 +221,11 @@ Antworte NUR mit dem JSON-Objekt, kein zusätzlicher Text."""
         base64_image = base64.b64encode(image_data).decode("utf-8")
 
         messages = [
-            {"role": "system", "content": "You are an expert invoice data extraction assistant. Extract structured data from invoice images accurately."},
+            {
+                "role": "system",
+                "content": "You are an expert invoice data extraction assistant. "
+                "Extract structured data from invoice images accurately."
+            },
             {
                 "role": "user",
                 "content": [
@@ -258,7 +271,11 @@ Antworte NUR mit dem JSON-Objekt, kein zusätzlicher Text."""
             })
 
         messages = [
-            {"role": "system", "content": "You are an expert invoice data extraction assistant. Extract structured data from invoice images accurately."},
+            {
+                "role": "system",
+                "content": "You are an expert invoice data extraction assistant. "
+                "Extract structured data from invoice images accurately."
+            },
             {"role": "user", "content": content}
         ]
 
@@ -424,7 +441,7 @@ Antworte NUR mit dem JSON-Objekt, kein zusätzlicher Text."""
 
         return data
 
-    def _parse_date(self, value: Optional[str]) -> Optional[date]:
+    def _parse_date(self, value: str | None) -> date | None:
         """Parse date string to date object."""
         if not value:
             return None
@@ -439,7 +456,7 @@ Antworte NUR mit dem JSON-Objekt, kein zusätzlicher Text."""
             except ValueError:
                 return None
 
-    def _parse_decimal(self, value: Any) -> Optional[Decimal]:
+    def _parse_decimal(self, value: Any) -> Decimal | None:
         """Parse value to Decimal."""
         if value is None:
             return None
@@ -460,7 +477,7 @@ Antworte NUR mit dem JSON-Objekt, kein zusätzlicher Text."""
             return None
         return None
 
-    def _parse_unit(self, value: Optional[str]) -> str:
+    def _parse_unit(self, value: str | None) -> str:
         """Parse unit string to UN/ECE unit code."""
         if not value:
             return "C62"  # Default: piece/unit

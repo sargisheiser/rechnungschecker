@@ -480,7 +480,8 @@ def generate_validation_report_html(result: ValidationResponse) -> str:
             li.error {{ background-color: #f8d7da; border-left-color: #E74C3C; }}
             li.warning {{ background-color: #fff3cd; border-left-color: #F39C12; }}
             li.info {{ background-color: #d1ecf1; border-left-color: #2E86AB; }}
-            footer {{ margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 9px; color: #666; }}
+            footer {{ margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd;
+                     text-align: center; font-size: 9px; color: #666; }}
         </style>
     </head>
     <body>
@@ -548,7 +549,9 @@ def generate_validation_report_html(result: ValidationResponse) -> str:
         <footer>
             <p>Erstellt von RechnungsChecker - E-Rechnung Validierung &amp; Konvertierung</p>
             <p>Dieser Bericht dient der Information und stellt keine rechtliche Beratung dar.</p>
-            <p class="timestamp">Generiert: {datetime.now(UTC).replace(tzinfo=None).strftime('%d.%m.%Y %H:%M:%S')} UTC</p>
+            <p class="timestamp">Generiert: {
+                datetime.now(UTC).replace(tzinfo=None).strftime('%d.%m.%Y %H:%M:%S')
+            } UTC</p>
         </footer>
     </body>
     </html>

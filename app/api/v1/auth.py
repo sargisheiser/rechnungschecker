@@ -2,7 +2,6 @@
 
 import logging
 from datetime import UTC, datetime, timedelta
-from urllib.parse import urlencode
 
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
@@ -22,9 +21,6 @@ from app.core.security import (
 )
 from app.models.audit import AuditAction
 from app.models.user import User
-from app.services.audit import AuditService
-from app.services.email import email_service
-from app.services.oauth.google import google_oauth_service
 from app.schemas.auth import (
     EmailVerification,
     GoogleOAuthCallback,
@@ -34,11 +30,14 @@ from app.schemas.auth import (
     TokenRefresh,
     TokenResponse,
     UsageResponse,
-    UserUpdate,
     UserLogin,
     UserRegister,
     UserResponse,
+    UserUpdate,
 )
+from app.services.audit import AuditService
+from app.services.email import email_service
+from app.services.oauth.google import google_oauth_service
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -246,7 +245,8 @@ async def verify_email(
         )
 
     # Check if code has expired
-    if user.verification_code_expires and datetime.now(UTC).replace(tzinfo=None) > user.verification_code_expires:
+    now = datetime.now(UTC).replace(tzinfo=None)
+    if user.verification_code_expires and now > user.verification_code_expires:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Verifizierungscode abgelaufen. Bitte fordern Sie einen neuen an.",
@@ -284,14 +284,16 @@ async def resend_verification(
         # Generate new verification code
         verification_code = generate_verification_code()
         user.verification_code = verification_code
-        user.verification_code_expires = datetime.now(UTC).replace(tzinfo=None) + timedelta(minutes=15)
+        now = datetime.now(UTC).replace(tzinfo=None)
+        user.verification_code_expires = now + timedelta(minutes=15)
         await db.flush()
 
         await email_service.send_verification_code_email(data.email, verification_code)
         logger.info(f"Verification code resent to: {data.email}")
 
     return {
-        "message": "Falls das Konto existiert und nicht verifiziert ist, wurde ein neuer Code gesendet"
+        "message": "Falls das Konto existiert und nicht verifiziert ist, "
+        "wurde ein neuer Code gesendet"
     }
 
 
@@ -333,7 +335,8 @@ async def forgot_password(
 
     # Always return success to prevent email enumeration
     return {
-        "message": "Falls ein Konto mit dieser E-Mail existiert, wurde eine Anleitung zum Zurücksetzen gesendet"
+        "message": "Falls ein Konto mit dieser E-Mail existiert, "
+        "wurde eine Anleitung zum Zurücksetzen gesendet"
     }
 
 

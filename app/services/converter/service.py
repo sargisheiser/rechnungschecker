@@ -1,12 +1,11 @@
 """Main conversion service orchestrating PDF to e-invoice conversion."""
 
-from enum import Enum
-from typing import Optional
 from dataclasses import dataclass
+from enum import Enum
 
-from app.services.converter.ocr import OCRService
-from app.services.converter.extractor import InvoiceExtractor, InvoiceData
+from app.services.converter.extractor import InvoiceData, InvoiceExtractor
 from app.services.converter.generator import XRechnungGenerator, ZUGFeRDGenerator
+from app.services.converter.ocr import OCRService
 
 
 class OutputFormat(str, Enum):
@@ -35,8 +34,8 @@ class ConversionResult:
     filename: str
     extracted_data: InvoiceData
     warnings: list[str]
-    error: Optional[str] = None
-    xml_content: Optional[bytes] = None  # Always contains the XML, even for ZUGFeRD PDFs
+    error: str | None = None
+    xml_content: bytes | None = None  # Always contains the XML, even for ZUGFeRD PDFs
 
 
 class ConversionService:
@@ -44,7 +43,7 @@ class ConversionService:
 
     def __init__(
         self,
-        tesseract_cmd: Optional[str] = None,
+        tesseract_cmd: str | None = None,
     ):
         """
         Initialize conversion service.

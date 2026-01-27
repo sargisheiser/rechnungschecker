@@ -18,7 +18,6 @@ from app.models.organization import (
 )
 from app.models.user import User
 from app.schemas.organization import (
-    InvitationAccept,
     InvitationResponse,
     MemberInvite,
     MemberListResponse,

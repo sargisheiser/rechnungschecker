@@ -1,11 +1,11 @@
 """API dependencies for dependency injection."""
 
 import logging
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -65,9 +65,11 @@ async def _authenticate_with_api_key(
 
     # Check monthly API call limits
     today = date.today()
-    if api_key.requests_reset_date.month != today.month or api_key.requests_reset_date.year != today.year:
+    reset_month = api_key.requests_reset_date.month
+    reset_year = api_key.requests_reset_date.year
+    if reset_month != today.month or reset_year != today.year:
         api_key.requests_this_month = 0
-        api_key.requests_reset_date = datetime.utcnow()
+        api_key.requests_reset_date = datetime.now(UTC).replace(tzinfo=None)
 
     # Check if user has reached API call limit
     api_limit = user.get_api_calls_limit()

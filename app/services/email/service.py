@@ -1,7 +1,6 @@
 """Email sending service."""
 
 import logging
-from typing import Optional
 
 import httpx
 
@@ -31,7 +30,7 @@ class EmailService:
         to: str,
         subject: str,
         html_content: str,
-        text_content: Optional[str] = None,
+        text_content: str | None = None,
     ) -> bool:
         """
         Send an email.
@@ -231,7 +230,8 @@ RechnungsChecker - E-Rechnung Validierung & Konvertierung
                 </div>
                 <div class="content">
                     <h2>Willkommen bei RechnungsChecker!</h2>
-                    <p>Vielen Dank für Ihre Registrierung. Bitte geben Sie den folgenden Code ein, um Ihre E-Mail-Adresse zu bestätigen:</p>
+                    <p>Vielen Dank für Ihre Registrierung. Bitte geben Sie den folgenden
+                    Code ein, um Ihre E-Mail-Adresse zu bestätigen:</p>
 
                     <div class="code-box">
                         <span class="code">{code}</span>
@@ -562,7 +562,8 @@ RechnungsChecker - E-Rechnung Validierung & Konvertierung
                 <div class="content">
                     <div class="alert">
                         <h2 style="margin-top: 0;">Ihr monatliches Limit ist fast erreicht</h2>
-                        <p>Sie haben <strong>{usage_percent}%</strong> Ihres monatlichen Validierungskontingents verbraucht.</p>
+                        <p>Sie haben <strong>{usage_percent}%</strong> Ihres monatlichen
+                        Validierungskontingents verbraucht.</p>
                     </div>
 
                     <div class="progress-bar">
@@ -631,7 +632,10 @@ RechnungsChecker - E-Rechnung Validierung & Konvertierung
         """
         # In dev mode, log notification
         if not self.is_configured:
-            logger.warning(f"[DEV EMAIL] Batch complete for {to}: {job_name} - Total: {total_files}, Valid: {valid_count}, Invalid: {invalid_count}")
+            logger.warning(
+                f"[DEV EMAIL] Batch complete for {to}: {job_name} - "
+                f"Total: {total_files}, Valid: {valid_count}, Invalid: {invalid_count}"
+            )
 
         status_emoji = "🎉" if failed_count == 0 else "⚠️"
         subject = f"{status_emoji} Stapelvalidierung abgeschlossen: {job_name}"
@@ -790,7 +794,10 @@ RechnungsChecker - E-Rechnung Validierung & Konvertierung
         """
         # In dev mode, log notification
         if not self.is_configured:
-            logger.warning(f"[DEV EMAIL] Invoice email to {to}: {invoice_number} from {sender_name}, {gross_amount} {currency}, format: {output_format}")
+            logger.warning(
+                f"[DEV EMAIL] Invoice email to {to}: {invoice_number} from {sender_name}, "
+                f"{gross_amount} {currency}, format: {output_format}"
+            )
             return True
 
         subject = f"Ihre E-Rechnung: {invoice_number}"

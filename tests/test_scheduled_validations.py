@@ -1,23 +1,21 @@
 """Tests for scheduled validation feature."""
 
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from uuid import uuid4
-
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.user import User
+from app.core.encryption import EncryptionService
 from app.models.scheduled_validation import (
-    ScheduledValidationJob,
-    ScheduledValidationRun,
     CloudStorageProvider,
     JobStatus,
     RunStatus,
+    ScheduledValidationJob,
+    ScheduledValidationRun,
 )
+from app.models.user import User
 from app.services.scheduler.service import SchedulerService
 from app.services.storage.s3_client import S3StorageClient
-from app.core.encryption import EncryptionService
 
 
 class TestScheduledValidationAPI:
@@ -259,7 +257,6 @@ class TestScheduledValidationModels:
 
     def test_job_model_defaults(self):
         """Test that job model has correct default values."""
-        from app.models.scheduled_validation import ScheduledValidationJob
 
         # Check that the model has expected attributes
         assert hasattr(ScheduledValidationJob, "is_enabled")
@@ -269,7 +266,6 @@ class TestScheduledValidationModels:
 
     def test_run_model_defaults(self):
         """Test that run model has correct default values."""
-        from app.models.scheduled_validation import ScheduledValidationRun
 
         # Check that the model has expected attributes
         assert hasattr(ScheduledValidationRun, "files_found")

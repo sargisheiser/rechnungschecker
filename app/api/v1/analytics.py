@@ -1,6 +1,5 @@
 """Analytics API endpoints for validation statistics and trends."""
 
-from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Query
@@ -16,7 +15,7 @@ async def get_dashboard_analytics(
     db: DbSession,
     current_user: CurrentUser,
     days: int = Query(default=30, ge=1, le=365, description="Number of days to include"),
-    client_id: Optional[UUID] = Query(default=None, description="Filter by client ID"),
+    client_id: UUID | None = Query(default=None, description="Filter by client ID"),
 ) -> dict:
     """Get comprehensive analytics for the dashboard.
 

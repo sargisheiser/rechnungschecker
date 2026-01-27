@@ -4,10 +4,10 @@ import pytest
 from httpx import AsyncClient
 
 from app.schemas.billing import (
+    PLAN_DEFINITIONS,
     PlanTier,
     get_all_plans,
     get_plan_info,
-    PLAN_DEFINITIONS,
 )
 
 

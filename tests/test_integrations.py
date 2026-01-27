@@ -331,6 +331,7 @@ class TestIntegrationSchemas:
     def test_lexoffice_fetch_request_schema_limit(self) -> None:
         """Test LexofficeFetchRequest schema max limit."""
         from pydantic import ValidationError
+
         from app.schemas.integration import LexofficeFetchRequest
 
         with pytest.raises(ValidationError):

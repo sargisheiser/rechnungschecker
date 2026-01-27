@@ -34,7 +34,7 @@ class Base(DeclarativeBase):
 
 async def init_db() -> None:
     """Initialize database connection."""
-    async with engine.begin() as conn:
+    async with engine.begin():
         # In production, use Alembic migrations instead
         # await conn.run_sync(Base.metadata.create_all)
         pass

@@ -251,7 +251,7 @@ async def _unset_defaults(
     query = select(Template).where(
         Template.user_id == user_id,
         Template.template_type == template_type,
-        Template.is_default == True,
+        Template.is_default,
     )
 
     if exclude_id:

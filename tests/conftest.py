@@ -5,19 +5,19 @@ async connection conflicts between tests.
 """
 
 import uuid
+from collections.abc import AsyncGenerator
 from datetime import date
 from pathlib import Path
-from typing import AsyncGenerator
 
 import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from app.config import get_settings
-from app.main import app
 from app.api.deps import get_db
-from app.models.user import User, PlanType
+from app.config import get_settings
 from app.core.security import create_access_token, get_password_hash
+from app.main import app
+from app.models.user import PlanType, User
 
 
 @pytest.fixture(scope="function")
@@ -138,7 +138,7 @@ def fixtures_path() -> Path:
 @pytest.fixture
 def sample_xrechnung_valid() -> bytes:
     """Return a valid minimal XRechnung XML for testing."""
-    return """<?xml version="1.0" encoding="UTF-8"?>
+    return b"""<?xml version="1.0" encoding="UTF-8"?>
 <ubl:Invoice xmlns:ubl="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
              xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
              xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
@@ -233,7 +233,7 @@ def sample_xrechnung_valid() -> bytes:
             <cbc:PriceAmount currencyID="EUR">100.00</cbc:PriceAmount>
         </cac:Price>
     </cac:InvoiceLine>
-</ubl:Invoice>""".encode("utf-8")
+</ubl:Invoice>"""
 
 
 @pytest.fixture

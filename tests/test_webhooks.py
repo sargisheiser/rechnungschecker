@@ -1,11 +1,12 @@
 """Tests for webhook management endpoints."""
 
 import uuid
+from datetime import UTC
+
 import pytest
 from httpx import AsyncClient
 
-from app.core.security import create_access_token
-from app.schemas.webhook import WebhookEventType, DeliveryStatus
+from app.schemas.webhook import DeliveryStatus, WebhookEventType
 
 # Use a valid UUID format for fake tokens
 FAKE_USER_ID = str(uuid.uuid4())
@@ -415,8 +416,9 @@ class TestWebhookSchemas:
 
     def test_webhook_list_schema(self) -> None:
         """Test WebhookList schema."""
+        from datetime import datetime
+
         from app.schemas.webhook import WebhookList, WebhookResponse
-        from datetime import datetime, timezone
 
         items = [
             WebhookResponse(
@@ -428,10 +430,10 @@ class TestWebhookSchemas:
                 total_deliveries=10,
                 successful_deliveries=8,
                 failed_deliveries=2,
-                last_triggered_at=datetime.now(timezone.utc),
-                last_success_at=datetime.now(timezone.utc),
-                created_at=datetime.now(timezone.utc),
-                updated_at=datetime.now(timezone.utc),
+                last_triggered_at=datetime.now(UTC),
+                last_success_at=datetime.now(UTC),
+                created_at=datetime.now(UTC),
+                updated_at=datetime.now(UTC),
             )
         ]
         webhook_list = WebhookList(items=items, total=1, max_webhooks=5)
@@ -440,13 +442,14 @@ class TestWebhookSchemas:
 
     def test_validation_event_payload_schema(self) -> None:
         """Test ValidationEventPayload schema."""
+        from datetime import datetime
+
         from app.schemas.webhook import ValidationEventPayload
-        from datetime import datetime, timezone
 
         payload = ValidationEventPayload(
             event_type="validation.completed",
             event_id="evt-123",
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             validation_id=uuid.uuid4(),
             file_name="rechnung.xml",
             file_type="xrechnung",
@@ -457,7 +460,7 @@ class TestWebhookSchemas:
             info_count=5,
             xrechnung_version="3.0",
             processing_time_ms=150,
-            validated_at=datetime.now(timezone.utc),
+            validated_at=datetime.now(UTC),
         )
         assert payload.is_valid is True
         assert payload.error_count == 0

@@ -270,6 +270,7 @@ async def test_integration(
         )
 
     import json
+
     from app.core.encryption import encryption_service
 
     config = json.loads(encryption_service.decrypt(integration.encrypted_config))

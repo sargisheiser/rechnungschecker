@@ -84,7 +84,9 @@ class APIKey(Base):
         self.requests_this_month += 1
 
     @classmethod
-    def create_key(cls, user_id: UUID, name: str, description: str | None = None, expires_at: datetime | None = None) -> tuple["APIKey", str]:
+    def create_key(
+        cls, user_id: UUID, name: str, description: str | None = None, expires_at: datetime | None = None
+    ) -> tuple["APIKey", str]:
         """Create a new API key and return the model and the raw key.
 
         The raw key is only available at creation time.

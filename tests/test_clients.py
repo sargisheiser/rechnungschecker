@@ -1,6 +1,7 @@
 """Tests for client management (Mandantenverwaltung) endpoints."""
 
 import uuid
+
 import pytest
 from httpx import AsyncClient
 

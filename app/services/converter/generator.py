@@ -4,7 +4,6 @@ import io
 import uuid
 from datetime import date, timedelta
 from decimal import Decimal
-from typing import Optional
 from xml.etree import ElementTree as ET
 
 import fitz  # PyMuPDF
@@ -713,7 +712,7 @@ class ZUGFeRDGenerator:
         return buffer.getvalue()
 
     def generate_pdf(
-        self, data: InvoiceData, source_pdf: Optional[bytes] = None
+        self, data: InvoiceData, source_pdf: bytes | None = None
     ) -> bytes:
         """
         Generate a complete ZUGFeRD PDF.

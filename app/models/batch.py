@@ -4,7 +4,7 @@ import enum
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Index, Integer, String, Text, LargeBinary, func
+from sqlalchemy import DateTime, Enum, ForeignKey, Index, Integer, LargeBinary, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -148,7 +148,10 @@ class BatchFile(Base):
 
     # Status
     status: Mapped[BatchFileStatus] = mapped_column(
-        Enum(BatchFileStatus, name="batchfilestatus", values_callable=lambda x: [e.value for e in x], create_type=False),
+        Enum(
+            BatchFileStatus, name="batchfilestatus",
+            values_callable=lambda x: [e.value for e in x], create_type=False
+        ),
         default=BatchFileStatus.PENDING,
     )
 

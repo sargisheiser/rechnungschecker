@@ -16,15 +16,14 @@ from app.schemas.billing import (
     BillingPortalResponse,
     CheckoutRequest,
     CheckoutResponse,
-    InvoicesResponse,
     PlanInfo,
     PlansResponse,
+    PlanTier,
     SubscriptionInfo,
     SubscriptionStatus,
     WebhookResponse,
     get_all_plans,
     get_plan_info,
-    PlanTier,
 )
 from app.services.billing.stripe import StripeService, WebhookHandler
 from app.services.email import email_service
@@ -84,7 +83,7 @@ async def get_subscription(
         )
         cancel_at_period_end = subscription_data.get("cancel_at_period_end", False)
     else:
-        status = SubscriptionStatus.ACTIVE if current_user.plan != PlanType.FREE else SubscriptionStatus.ACTIVE
+        status = SubscriptionStatus.ACTIVE
         current_period_end = current_user.plan_valid_until
         cancel_at_period_end = False
 
@@ -143,7 +142,8 @@ async def create_checkout(
     if current_user.plan != PlanType.FREE and current_user.stripe_subscription_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Sie haben bereits ein aktives Abonnement. Nutzen Sie das Kundenportal zum Ändern.",
+            detail="Sie haben bereits ein aktives Abonnement. "
+            "Nutzen Sie das Kundenportal zum Ändern.",
         )
 
     # Demo mode - redirect to demo checkout page
@@ -222,7 +222,10 @@ async def confirm_demo_checkout(
 
     await db.commit()
 
-    logger.info(f"Demo checkout completed: user={current_user.email}, plan={plan.value}, annual={annual}")
+    logger.info(
+        f"Demo checkout completed: user={current_user.email}, "
+        f"plan={plan.value}, annual={annual}"
+    )
 
     return {
         "status": "success",

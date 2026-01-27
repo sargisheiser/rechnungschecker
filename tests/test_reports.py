@@ -1,10 +1,10 @@
 """Tests for reports endpoints."""
 
 import uuid
+from datetime import UTC
+
 import pytest
 from httpx import AsyncClient
-
-from app.core.security import create_access_token
 
 
 class TestReportGetEndpoint:
@@ -228,9 +228,10 @@ class TestReportCacheModule:
 
     def test_cache_validation_and_retrieve(self) -> None:
         """Test caching a validation result and retrieving it."""
+        from datetime import datetime
+
         from app.core.cache import cache_validation_result, get_cached_validation
         from app.schemas.validation import ValidationResponse
-        from datetime import datetime, timezone
 
         # Create a proper ValidationResponse with all required fields
         validation_id = uuid.uuid4()
@@ -247,7 +248,7 @@ class TestReportCacheModule:
             infos=[],
             validator_version="1.5.0",
             processing_time_ms=150,
-            validated_at=datetime.now(timezone.utc),
+            validated_at=datetime.now(UTC),
         )
 
         # Cache it
@@ -258,7 +259,7 @@ class TestReportCacheModule:
 
         if cached is not None:
             assert cached.id == mock_result.id
-            assert cached.is_valid == True
+            assert cached.is_valid
             assert cached.error_count == 0
 
 

@@ -1,11 +1,11 @@
 """XRechnung XML generator."""
 
 import logging
-from datetime import date, datetime
+from datetime import date
 from decimal import Decimal
 from uuid import uuid4
-from xml.etree.ElementTree import Element, SubElement, tostring
 from xml.dom import minidom
+from xml.etree.ElementTree import Element, SubElement, tostring
 
 from app.schemas.invoice import InvoiceData, LineItem, PartyInfo
 

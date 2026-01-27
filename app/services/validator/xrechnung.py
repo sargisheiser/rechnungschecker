@@ -7,14 +7,15 @@ from datetime import UTC, datetime
 from pathlib import Path
 from uuid import UUID, uuid4
 
-from app.core.exceptions import FileProcessingError, ValidationError
 from app.schemas.validation import (
     ValidationError as ValidationErrorSchema,
+)
+from app.schemas.validation import (
     ValidationResponse,
     ValidationSeverity,
 )
-from app.services.validator.kosit import KoSITValidator, KoSITResult
 from app.services.validator.error_messages import get_german_message
+from app.services.validator.kosit import KoSITResult, KoSITValidator
 
 logger = logging.getLogger(__name__)
 
@@ -173,7 +174,10 @@ class XRechnungValidator:
         """Get fix suggestion for an error code."""
         suggestions = {
             # BR-DE German-specific rules
-            "BR-DE-01": "Fuegen Sie eine Leitweg-ID im Format XX-XXXX-XXXX-XX hinzu (z.B. 04011000-1234512345-06).",
+            "BR-DE-01": (
+                "Fuegen Sie eine Leitweg-ID im Format XX-XXXX-XXXX-XX hinzu "
+                "(z.B. 04011000-1234512345-06)."
+            ),
             "BR-DE-02": "Geben Sie IBAN und optional BIC des Verkaeufers an.",
             "BR-DE-03": "Ergaenzen Sie die Zahlungsbedingungen oder das Faelligkeitsdatum.",
             "BR-DE-04": "Tragen Sie eine gueltige USt-IdNr. ein (DE + 9 Ziffern, z.B. DE123456789).",
@@ -231,7 +235,10 @@ class XRechnungValidator:
             "BR-CO-19": "Die Summe der Vorauszahlungen muss stimmen.",
             "BR-CO-20": "Pruefen Sie die Rundung aller Betraege.",
             "BR-CO-21": "Der Positionsbetrag muss korrekt gerundet sein.",
-            "BR-CO-25": "Bei positivem Zahlbetrag muss entweder das Faelligkeitsdatum oder Zahlungsbedingungen angegeben werden.",
+            "BR-CO-25": (
+                "Bei positivem Zahlbetrag muss entweder das Faelligkeitsdatum "
+                "oder Zahlungsbedingungen angegeben werden."
+            ),
             "BR-CO-26": "Der Einzelpreis muss korrekt angegeben sein.",
             # BR-S Standard rate VAT rules
             "BR-S-01": "Steuerkategorie S erfordert MwSt-Satz > 0% (z.B. 19% oder 7%).",
@@ -283,7 +290,10 @@ class XRechnungValidator:
             "PEPPOL-EN16931-R002": "Die Peppol-Participant-ID muss gueltig sein.",
             "PEPPOL-EN16931-R003": "Verwenden Sie gueltige EAS-Codes.",
             "PEPPOL-EN16931-R004": "Die Peppol-Dokumenttyp-ID muss korrekt sein.",
-            "PEPPOL-EN16931-R120": "Pruefen Sie: Positionsnetto = Menge × (Einzelpreis / Preisbasis) + Zuschlage - Abzuege.",
+            "PEPPOL-EN16931-R120": (
+                "Pruefen Sie: Positionsnetto = Menge × (Einzelpreis / Preisbasis) "
+                "+ Zuschlage - Abzuege."
+            ),
             "PEPPOL-EN16931-R121": "Die Summe der Positionsnettobetraege muss dem Gesamtnetto entsprechen.",
             # Additional BR rules
             "BR-52": "Geben Sie die Zahlungsmethode an (z.B. Ueberweisung, Lastschrift).",

@@ -1,10 +1,11 @@
 """Tests for PDF to e-invoice conversion."""
 
-import pytest
-from decimal import Decimal
 from datetime import date
+from decimal import Decimal
 
-from app.services.converter.extractor import InvoiceExtractor, InvoiceData, Address
+import pytest
+
+from app.services.converter.extractor import Address, InvoiceData, InvoiceExtractor
 from app.services.converter.generator import XRechnungGenerator, ZUGFeRDGenerator
 from app.services.converter.service import ConversionService, OutputFormat
 
@@ -341,8 +342,9 @@ class TestConversionService:
         """Test preview extraction without conversion."""
         service = ConversionService()
 
-        import fitz
         import io
+
+        import fitz
 
         doc = fitz.open()
         page = doc.new_page()

@@ -3,7 +3,6 @@
 from datetime import date
 from decimal import Decimal
 from enum import Enum
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -28,9 +27,9 @@ class AddressSchema(BaseModel):
     """Address data."""
 
     name: str
-    street: Optional[str] = None
-    postal_code: Optional[str] = None
-    city: Optional[str] = None
+    street: str | None = None
+    postal_code: str | None = None
+    city: str | None = None
     country_code: str = "DE"
 
 
@@ -48,36 +47,36 @@ class LineItemSchema(BaseModel):
 class ExtractedDataSchema(BaseModel):
     """Extracted invoice data for preview/editing."""
 
-    invoice_number: Optional[str] = None
-    invoice_date: Optional[date] = None
-    due_date: Optional[date] = None
-    delivery_date: Optional[date] = None
+    invoice_number: str | None = None
+    invoice_date: date | None = None
+    due_date: date | None = None
+    delivery_date: date | None = None
 
-    seller_name: Optional[str] = None
-    seller_street: Optional[str] = None
-    seller_postal_code: Optional[str] = None
-    seller_city: Optional[str] = None
-    seller_vat_id: Optional[str] = None
-    seller_tax_id: Optional[str] = None
+    seller_name: str | None = None
+    seller_street: str | None = None
+    seller_postal_code: str | None = None
+    seller_city: str | None = None
+    seller_vat_id: str | None = None
+    seller_tax_id: str | None = None
 
-    buyer_name: Optional[str] = None
-    buyer_street: Optional[str] = None
-    buyer_postal_code: Optional[str] = None
-    buyer_city: Optional[str] = None
-    buyer_reference: Optional[str] = None
+    buyer_name: str | None = None
+    buyer_street: str | None = None
+    buyer_postal_code: str | None = None
+    buyer_city: str | None = None
+    buyer_reference: str | None = None
 
-    net_amount: Optional[Decimal] = None
-    vat_amount: Optional[Decimal] = None
-    gross_amount: Optional[Decimal] = None
+    net_amount: Decimal | None = None
+    vat_amount: Decimal | None = None
+    gross_amount: Decimal | None = None
     currency: str = "EUR"
 
-    iban: Optional[str] = None
-    bic: Optional[str] = None
-    bank_name: Optional[str] = None
-    payment_reference: Optional[str] = None
+    iban: str | None = None
+    bic: str | None = None
+    bank_name: str | None = None
+    payment_reference: str | None = None
 
-    leitweg_id: Optional[str] = None
-    order_reference: Optional[str] = None
+    leitweg_id: str | None = None
+    order_reference: str | None = None
 
     confidence: float = Field(default=0.0, ge=0, le=1)
     warnings: list[str] = Field(default_factory=list)
@@ -91,30 +90,30 @@ class ConversionRequest(BaseModel):
     embed_in_pdf: bool = True
 
     # Optional overrides for extracted data
-    invoice_number: Optional[str] = None
-    invoice_date: Optional[date] = None
-    due_date: Optional[date] = None
-    delivery_date: Optional[date] = None
+    invoice_number: str | None = None
+    invoice_date: date | None = None
+    due_date: date | None = None
+    delivery_date: date | None = None
 
-    seller_name: Optional[str] = None
-    seller_street: Optional[str] = None
-    seller_postal_code: Optional[str] = None
-    seller_city: Optional[str] = None
-    seller_vat_id: Optional[str] = None
+    seller_name: str | None = None
+    seller_street: str | None = None
+    seller_postal_code: str | None = None
+    seller_city: str | None = None
+    seller_vat_id: str | None = None
 
-    buyer_name: Optional[str] = None
-    buyer_street: Optional[str] = None
-    buyer_postal_code: Optional[str] = None
-    buyer_city: Optional[str] = None
-    buyer_reference: Optional[str] = None
+    buyer_name: str | None = None
+    buyer_street: str | None = None
+    buyer_postal_code: str | None = None
+    buyer_city: str | None = None
+    buyer_reference: str | None = None
 
-    net_amount: Optional[Decimal] = None
-    vat_amount: Optional[Decimal] = None
-    gross_amount: Optional[Decimal] = None
+    net_amount: Decimal | None = None
+    vat_amount: Decimal | None = None
+    gross_amount: Decimal | None = None
 
-    iban: Optional[str] = None
-    bic: Optional[str] = None
-    leitweg_id: Optional[str] = None
+    iban: str | None = None
+    bic: str | None = None
+    leitweg_id: str | None = None
 
 
 class ValidationErrorSchema(BaseModel):
@@ -123,9 +122,9 @@ class ValidationErrorSchema(BaseModel):
     severity: str
     code: str
     message_de: str
-    message_en: Optional[str] = None
-    location: Optional[str] = None
-    suggestion: Optional[str] = None
+    message_en: str | None = None
+    location: str | None = None
+    suggestion: str | None = None
 
 
 class ValidationResultSchema(BaseModel):
@@ -138,8 +137,8 @@ class ValidationResultSchema(BaseModel):
     errors: list[ValidationErrorSchema] = Field(default_factory=list)
     warnings: list[ValidationErrorSchema] = Field(default_factory=list)
     infos: list[ValidationErrorSchema] = Field(default_factory=list)
-    validator_version: Optional[str] = None
-    processing_time_ms: Optional[int] = None
+    validator_version: str | None = None
+    processing_time_ms: int | None = None
 
 
 class ConversionResponse(BaseModel):
@@ -151,8 +150,8 @@ class ConversionResponse(BaseModel):
     output_format: OutputFormat
     extracted_data: ExtractedDataSchema
     warnings: list[str] = Field(default_factory=list)
-    error: Optional[str] = None
-    validation_result: Optional[ValidationResultSchema] = None
+    error: str | None = None
+    validation_result: ValidationResultSchema | None = None
 
 
 class PreviewResponse(BaseModel):
@@ -176,7 +175,7 @@ class ConversionStatusResponse(BaseModel):
 class SendInvoiceEmailRequest(BaseModel):
     """Request to send converted invoice via email."""
 
-    recipient_email: Optional[str] = None
+    recipient_email: str | None = None
     send_copy_to_self: bool = False
 
 

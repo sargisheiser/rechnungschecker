@@ -1,25 +1,39 @@
 """Validation API endpoints."""
 
-import hashlib
 import logging
 from datetime import date
-from typing import Annotated, Optional
+from typing import Annotated
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Request, UploadFile, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    File,
+    Form,
+    HTTPException,
+    Request,
+    UploadFile,
+    status,
+)
 from sqlalchemy import select
 
-from app.api.deps import DbSession, get_current_user_optional, CurrentUser, OptionalUser
+from app.api.deps import CurrentUser, DbSession, OptionalUser
 from app.config import get_settings
 from app.core.cache import cache_validation_result
-from app.core.exceptions import FileProcessingError, KoSITError, ValidationError, ErrorCode, api_error
+from app.core.exceptions import (
+    ErrorCode,
+    FileProcessingError,
+    KoSITError,
+    ValidationError,
+    api_error,
+)
 from app.models.user import GuestUsage, User
 from app.schemas.validation import (
     GuestValidationResponse,
+    UpdateNotesRequest,
+    ValidationDetailResponse,
     ValidationHistoryResponse,
     ValidationResponse,
-    ValidationDetailResponse,
-    UpdateNotesRequest,
 )
 from app.services.validation_history import ValidationHistoryService
 from app.services.validator.xrechnung import XRechnungValidator
@@ -68,7 +82,8 @@ async def check_and_update_user_usage(user: User, db) -> None:
             status_code=status.HTTP_403_FORBIDDEN,
             detail=api_error(
                 ErrorCode.VALIDATION_LIMIT_REACHED,
-                f"Sie haben Ihr monatliches Limit von {limit} Validierungen erreicht. Bitte upgraden Sie Ihren Plan für mehr Validierungen.",
+                f"Sie haben Ihr monatliches Limit von {limit} Validierungen erreicht. "
+                "Bitte upgraden Sie Ihren Plan für mehr Validierungen.",
                 validations_used=user.validations_this_month,
                 validations_limit=limit,
             )
@@ -97,7 +112,7 @@ async def validate_file(
     background_tasks: BackgroundTasks,
     file: Annotated[UploadFile, File(description="Invoice file (XML or PDF)")],
     current_user: OptionalUser,
-    client_id: Annotated[Optional[UUID], Form(description="Optional client ID for Steuerberater")] = None,
+    client_id: Annotated[UUID | None, Form(description="Optional client ID for Steuerberater")] = None,
 ) -> ValidationResponse:
     """Validate an invoice file with auto-detection.
 
@@ -460,7 +475,7 @@ async def get_validation_history(
     current_user: CurrentUser,
     page: int = 1,
     page_size: int = 20,
-    client_id: Optional[UUID] = None,
+    client_id: UUID | None = None,
 ) -> ValidationHistoryResponse:
     """Get validation history for the authenticated user.
 
@@ -521,7 +536,7 @@ async def validate_guest(
     request: Request,
     db: DbSession,
     file: Annotated[UploadFile, File(description="Invoice file (XML or PDF)")],
-    guest_id: Annotated[Optional[str], Form()] = None,
+    guest_id: Annotated[str | None, Form()] = None,
 ) -> GuestValidationResponse:
     """Validate an invoice file as a guest.
 
@@ -551,7 +566,8 @@ async def validate_guest(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=api_error(
                 ErrorCode.GUEST_LIMIT_REACHED,
-                "Sie haben Ihre kostenlose Validierung bereits genutzt. Bitte registrieren Sie sich für weitere Validierungen.",
+                "Sie haben Ihre kostenlose Validierung bereits genutzt. "
+                "Bitte registrieren Sie sich für weitere Validierungen.",
                 guest_id=new_guest_id,
                 validations_used=guest_usage.validations_used,
                 validations_limit=GUEST_VALIDATION_LIMIT,

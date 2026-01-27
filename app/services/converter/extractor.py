@@ -6,7 +6,6 @@ import re
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Optional
 
 try:
     import pdfplumber
@@ -30,9 +29,9 @@ class Address:
     """Address data structure."""
 
     name: str
-    street: Optional[str] = None
-    postal_code: Optional[str] = None
-    city: Optional[str] = None
+    street: str | None = None
+    postal_code: str | None = None
+    city: str | None = None
     country_code: str = "DE"
 
 
@@ -83,34 +82,34 @@ class InvoiceData:
     """Extracted invoice data."""
 
     # Required fields
-    invoice_number: Optional[str] = None
-    invoice_date: Optional[date] = None
-    seller: Optional[Address] = None
-    buyer: Optional[Address] = None
+    invoice_number: str | None = None
+    invoice_date: date | None = None
+    seller: Address | None = None
+    buyer: Address | None = None
 
     # Financial data
-    net_amount: Optional[Decimal] = None
-    vat_amount: Optional[Decimal] = None
-    gross_amount: Optional[Decimal] = None
+    net_amount: Decimal | None = None
+    vat_amount: Decimal | None = None
+    gross_amount: Decimal | None = None
     currency: str = "EUR"
 
     # Optional fields
-    due_date: Optional[date] = None
-    payment_reference: Optional[str] = None
-    seller_tax_id: Optional[str] = None
-    seller_vat_id: Optional[str] = None
-    seller_email: Optional[str] = None
-    seller_phone: Optional[str] = None
-    buyer_reference: Optional[str] = None
-    leitweg_id: Optional[str] = None
-    order_reference: Optional[str] = None
-    delivery_date: Optional[date] = None
+    due_date: date | None = None
+    payment_reference: str | None = None
+    seller_tax_id: str | None = None
+    seller_vat_id: str | None = None
+    seller_email: str | None = None
+    seller_phone: str | None = None
+    buyer_reference: str | None = None
+    leitweg_id: str | None = None
+    order_reference: str | None = None
+    delivery_date: date | None = None
     vat_rate: Decimal = Decimal("19")  # Main VAT rate
 
     # Bank details
-    iban: Optional[str] = None
-    bic: Optional[str] = None
-    bank_name: Optional[str] = None
+    iban: str | None = None
+    bic: str | None = None
+    bank_name: str | None = None
 
     # Line items
     line_items: list[LineItem] = field(default_factory=list)
@@ -207,7 +206,7 @@ class InvoiceData:
 class InvoiceExtractor:
     """Extract invoice data from text using pattern matching and AI."""
 
-    def __init__(self, ocr_service: Optional[OCRService] = None, use_ai: bool = True):
+    def __init__(self, ocr_service: OCRService | None = None, use_ai: bool = True):
         """Initialize extractor with optional OCR service and AI enhancement."""
         self.ocr_service = ocr_service or OCRService()
         self.use_ai = use_ai
@@ -250,7 +249,10 @@ class InvoiceExtractor:
                     if result.data.confidence > 0.5:
                         logger.info(f"AI extraction successful with confidence {result.data.confidence:.2f}")
                         return result.data
-                    logger.info(f"AI extraction low confidence ({result.data.confidence:.2f}), falling back to pattern matching")
+                    logger.info(
+                        f"AI extraction low confidence ({result.data.confidence:.2f}), "
+                        "falling back to pattern matching"
+                    )
             except Exception as e:
                 # Re-raise rate limit errors so they can be handled by the API layer
                 if AIRateLimitError and isinstance(e, AIRateLimitError):
@@ -326,7 +328,7 @@ class InvoiceExtractor:
 
         return self._deduplicate_line_items(items)
 
-    def _identify_table_columns(self, header: list) -> Optional[dict]:
+    def _identify_table_columns(self, header: list) -> dict | None:
         """
         Identify column indices from table header.
 
@@ -374,7 +376,7 @@ class InvoiceExtractor:
 
         return None
 
-    def _guess_column_indices(self, table: list) -> Optional[dict]:
+    def _guess_column_indices(self, table: list) -> dict | None:
         """
         Guess column indices based on data patterns when no clear header exists.
         """
@@ -403,7 +405,7 @@ class InvoiceExtractor:
 
         return None
 
-    def _extract_item_from_row(self, row: list, col_indices: dict) -> Optional[LineItem]:
+    def _extract_item_from_row(self, row: list, col_indices: dict) -> LineItem | None:
         """
         Extract a LineItem from a table row using identified column indices.
         """
@@ -547,7 +549,7 @@ class InvoiceExtractor:
 
         return data
 
-    def _extract_invoice_number(self, text: str) -> Optional[str]:
+    def _extract_invoice_number(self, text: str) -> str | None:
         """Extract invoice number from text."""
         patterns = [
             r"Rechnungs?\.?\s*-?\s*Nr\.?\s*:?\s*([A-Za-z0-9\-/]+)",
@@ -565,7 +567,7 @@ class InvoiceExtractor:
 
         return None
 
-    def _extract_invoice_date(self, text: str) -> Optional[date]:
+    def _extract_invoice_date(self, text: str) -> date | None:
         """Extract invoice date from text."""
         patterns = [
             r"Rechnungsdatum\s*:?\s*(\d{1,2}[./]\d{1,2}[./]\d{2,4})",
@@ -586,7 +588,7 @@ class InvoiceExtractor:
 
         return None
 
-    def _extract_due_date(self, text: str) -> Optional[date]:
+    def _extract_due_date(self, text: str) -> date | None:
         """Extract payment due date from text."""
         patterns = [
             r"Zahlbar\s+bis\s*:?\s*(\d{1,2}[./]\d{1,2}[./]\d{2,4})",
@@ -602,7 +604,7 @@ class InvoiceExtractor:
 
         return None
 
-    def _extract_delivery_date(self, text: str) -> Optional[date]:
+    def _extract_delivery_date(self, text: str) -> date | None:
         """Extract delivery/service date from text."""
         patterns = [
             r"Lieferdatum\s*:?\s*(\d{1,2}[./]\d{1,2}[./]\d{2,4})",
@@ -617,7 +619,7 @@ class InvoiceExtractor:
 
         return None
 
-    def _parse_date(self, date_str: str) -> Optional[date]:
+    def _parse_date(self, date_str: str) -> date | None:
         """Parse a date string in German format."""
         # Normalize separators
         date_str = date_str.replace("/", ".")
@@ -632,9 +634,9 @@ class InvoiceExtractor:
 
         return None
 
-    def _extract_amounts(self, text: str) -> dict[str, Optional[Decimal]]:
+    def _extract_amounts(self, text: str) -> dict[str, Decimal | None]:
         """Extract financial amounts from text."""
-        amounts: dict[str, Optional[Decimal]] = {
+        amounts: dict[str, Decimal | None] = {
             "net": None,
             "vat": None,
             "gross": None,
@@ -698,7 +700,7 @@ class InvoiceExtractor:
 
         return amounts
 
-    def _parse_amount(self, amount_str: str) -> Optional[Decimal]:
+    def _parse_amount(self, amount_str: str) -> Decimal | None:
         """Parse a German-formatted amount string."""
         try:
             # Remove spaces and currency symbols
@@ -717,10 +719,10 @@ class InvoiceExtractor:
 
             return Decimal(cleaned)
         except Exception as e:
-            logger.debug(f"Failed to parse decimal from '{value}': {e}")
+            logger.debug(f"Failed to parse decimal from '{amount_str}': {e}")
             return None
 
-    def _extract_vat_id(self, text: str) -> Optional[str]:
+    def _extract_vat_id(self, text: str) -> str | None:
         """Extract VAT ID (USt-IdNr.) from text."""
         patterns = [
             r"USt\.?\s*-?\s*Id\.?\s*-?\s*Nr\.?\s*:?\s*(DE\s*\d{9})",
@@ -737,7 +739,7 @@ class InvoiceExtractor:
 
         return None
 
-    def _extract_tax_id(self, text: str) -> Optional[str]:
+    def _extract_tax_id(self, text: str) -> str | None:
         """Extract tax ID (Steuernummer) from text."""
         patterns = [
             r"Steuer\.?\s*-?\s*Nr\.?\s*:?\s*(\d{2,3}[/\s]\d{3}[/\s]\d{4,5})",
@@ -751,7 +753,7 @@ class InvoiceExtractor:
 
         return None
 
-    def _extract_iban(self, text: str) -> Optional[str]:
+    def _extract_iban(self, text: str) -> str | None:
         """Extract IBAN from text."""
         pattern = r"IBAN\s*:?\s*([A-Z]{2}\s*\d{2}[\s\d]{12,30})"
         match = re.search(pattern, text, re.IGNORECASE)
@@ -762,7 +764,7 @@ class InvoiceExtractor:
                 return iban
         return None
 
-    def _extract_bic(self, text: str) -> Optional[str]:
+    def _extract_bic(self, text: str) -> str | None:
         """Extract BIC/SWIFT from text."""
         pattern = r"BIC\s*:?\s*([A-Z]{6}[A-Z0-9]{2,5})"
         match = re.search(pattern, text, re.IGNORECASE)
@@ -770,7 +772,7 @@ class InvoiceExtractor:
             return match.group(1).upper()
         return None
 
-    def _extract_leitweg_id(self, text: str) -> Optional[str]:
+    def _extract_leitweg_id(self, text: str) -> str | None:
         """Extract Leitweg-ID for public sector invoices."""
         pattern = r"Leitweg\s*-?\s*ID\s*:?\s*([\d\-]+)"
         match = re.search(pattern, text, re.IGNORECASE)
@@ -780,7 +782,7 @@ class InvoiceExtractor:
 
     def _extract_addresses(
         self, text: str
-    ) -> tuple[Optional[Address], Optional[Address]]:
+    ) -> tuple[Address | None, Address | None]:
         """
         Extract seller and buyer addresses from text.
         This is a simplified extraction - real implementation would be more sophisticated.
@@ -848,7 +850,11 @@ class InvoiceExtractor:
         # Pattern 2: Tabular line items with Pos/Nr, Description, Qty, Unit, Price, Total
         # Common German invoice format
         # e.g., "1  Softwareentwicklung  10  Std  85,00  850,00"
-        table_pattern = rf"^\s*(\d+)\s+(.{{10,80}}?)\s+(\d+(?:[.,]\d+)?)\s+(Stk|Std|h|kg|m|l|Stück|Stunden|Pauschal|psch)\.?\s+{amount_pattern}\s+{amount_pattern}"
+        units = r"Stk|Std|h|kg|m|l|Stück|Stunden|Pauschal|psch"
+        table_pattern = (
+            rf"^\s*(\d+)\s+(.{{10,80}}?)\s+(\d+(?:[.,]\d+)?)\s+"
+            rf"({units})\.?\s+{amount_pattern}\s+{amount_pattern}"
+        )
 
         for match in re.finditer(table_pattern, text, re.MULTILINE | re.IGNORECASE):
             try:
