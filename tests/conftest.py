@@ -13,8 +13,10 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
+import app.models  # noqa: F401 - Import all models so Base.metadata knows about every table
 from app.api.deps import get_db
 from app.config import get_settings
+from app.core.database import Base
 from app.core.security import create_access_token, get_password_hash
 from app.main import app
 from app.models.user import PlanType, User
@@ -38,6 +40,10 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
         max_overflow=3,
     )
 
+    # Create all tables before the test
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
     # Create session maker for this engine
     session_maker = async_sessionmaker(
         engine,
@@ -50,7 +56,9 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
     async with session_maker() as session:
         yield session
 
-    # Dispose the engine after the test to clean up all connections
+    # Drop all tables and dispose the engine after the test
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
     await engine.dispose()
 
 
