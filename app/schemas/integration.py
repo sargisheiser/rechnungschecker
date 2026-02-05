@@ -1,13 +1,13 @@
 """Schemas for third-party integrations."""
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
 
 
-class IntegrationType(str, Enum):
+class IntegrationType(StrEnum):
     """Supported integration types."""
 
     LEXOFFICE = "lexoffice"

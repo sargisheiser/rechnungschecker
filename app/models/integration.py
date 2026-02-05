@@ -1,7 +1,7 @@
 """Integration settings model for third-party services."""
 
-import enum
 from datetime import UTC, datetime
+from enum import StrEnum
 from uuid import uuid4
 
 from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Index, Integer, Text, func
@@ -11,7 +11,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
 
-class IntegrationType(str, enum.Enum):
+class IntegrationType(StrEnum):
     """Supported integration types."""
 
     LEXOFFICE = "lexoffice"

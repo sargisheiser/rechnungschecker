@@ -1,8 +1,8 @@
 """Organization and team management models."""
 
-import enum
 import secrets
 from datetime import UTC, date, datetime
+from enum import StrEnum
 from uuid import uuid4
 
 from sqlalchemy import (
@@ -24,7 +24,7 @@ from app.core.database import Base
 from app.models.user import PlanType
 
 
-class OrganizationRole(str, enum.Enum):
+class OrganizationRole(StrEnum):
     """Role within an organization."""
 
     OWNER = "owner"

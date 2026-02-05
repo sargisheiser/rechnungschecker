@@ -1,20 +1,20 @@
 """Schemas for CSV export functionality."""
 
 from datetime import date
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
 from pydantic import BaseModel, Field
 
 
-class ExportFormat(str, Enum):
+class ExportFormat(StrEnum):
     """Export format options."""
 
     CSV_DATEV = "datev"  # Semicolon delimiter, German headers
     CSV_EXCEL = "excel"  # Comma delimiter, German headers
 
 
-class ValidationStatus(str, Enum):
+class ValidationStatus(StrEnum):
     """Filter for validation status."""
 
     ALL = "all"

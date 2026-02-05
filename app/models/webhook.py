@@ -1,8 +1,8 @@
 """Webhook subscription and delivery models."""
 
-import enum
 import secrets
 from datetime import UTC, datetime, timedelta
+from enum import StrEnum
 from uuid import uuid4
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, func
@@ -12,7 +12,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
 
-class WebhookEventType(str, enum.Enum):
+class WebhookEventType(StrEnum):
     """Webhook event types."""
 
     VALIDATION_COMPLETED = "validation.completed"
@@ -21,7 +21,7 @@ class WebhookEventType(str, enum.Enum):
     VALIDATION_WARNING = "validation.warning"
 
 
-class DeliveryStatus(str, enum.Enum):
+class DeliveryStatus(StrEnum):
     """Webhook delivery status."""
 
     PENDING = "pending"

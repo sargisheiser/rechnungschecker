@@ -1,7 +1,7 @@
 """Stripe billing service for subscription management."""
 
 import logging
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 import stripe
@@ -18,7 +18,7 @@ settings = get_settings()
 stripe.api_key = settings.stripe_secret_key
 
 
-class StripePriceId(str, Enum):
+class StripePriceId(StrEnum):
     """Stripe Price IDs for each plan."""
 
     STARTER = "starter"

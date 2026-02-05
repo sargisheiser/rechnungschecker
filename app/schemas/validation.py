@@ -1,13 +1,13 @@
 """Pydantic schemas for validation endpoints."""
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
 from pydantic import BaseModel, Field
 
 
-class ValidationSeverity(str, Enum):
+class ValidationSeverity(StrEnum):
     """Severity level of validation messages."""
 
     ERROR = "error"

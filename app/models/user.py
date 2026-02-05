@@ -1,7 +1,7 @@
 """User and guest usage models."""
 
-import enum
 from datetime import UTC, date, datetime
+from enum import StrEnum
 from uuid import uuid4
 
 from sqlalchemy import Boolean, Date, DateTime, Enum, Index, Integer, String, func
@@ -11,7 +11,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
 
-class PlanType(str, enum.Enum):
+class PlanType(StrEnum):
     """Subscription plan types."""
 
     FREE = "free"

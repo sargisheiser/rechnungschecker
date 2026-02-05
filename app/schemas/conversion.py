@@ -2,19 +2,19 @@
 
 from datetime import date
 from decimal import Decimal
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
 
-class OutputFormat(str, Enum):
+class OutputFormat(StrEnum):
     """Supported output formats."""
 
     XRECHNUNG = "xrechnung"
     ZUGFERD = "zugferd"
 
 
-class ZUGFeRDProfile(str, Enum):
+class ZUGFeRDProfile(StrEnum):
     """ZUGFeRD profile levels."""
 
     MINIMUM = "MINIMUM"

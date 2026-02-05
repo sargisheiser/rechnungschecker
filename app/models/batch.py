@@ -1,7 +1,7 @@
 """Batch validation models for processing multiple files."""
 
-import enum
 from datetime import UTC, datetime
+from enum import StrEnum
 from uuid import uuid4
 
 from sqlalchemy import DateTime, Enum, ForeignKey, Index, Integer, LargeBinary, String, Text, func
@@ -11,7 +11,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
 
-class BatchJobStatus(str, enum.Enum):
+class BatchJobStatus(StrEnum):
     """Status of a batch validation job."""
 
     PENDING = "pending"
@@ -21,7 +21,7 @@ class BatchJobStatus(str, enum.Enum):
     CANCELLED = "cancelled"
 
 
-class BatchFileStatus(str, enum.Enum):
+class BatchFileStatus(StrEnum):
     """Status of a file within a batch job."""
 
     PENDING = "pending"

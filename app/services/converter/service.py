@@ -1,21 +1,21 @@
 """Main conversion service orchestrating PDF to e-invoice conversion."""
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 
 from app.services.converter.extractor import InvoiceData, InvoiceExtractor
 from app.services.converter.generator import XRechnungGenerator, ZUGFeRDGenerator
 from app.services.converter.ocr import OCRService
 
 
-class OutputFormat(str, Enum):
+class OutputFormat(StrEnum):
     """Supported output formats."""
 
     XRECHNUNG = "xrechnung"
     ZUGFERD = "zugferd"
 
 
-class ZUGFeRDProfile(str, Enum):
+class ZUGFeRDProfile(StrEnum):
     """ZUGFeRD profile levels."""
 
     MINIMUM = "MINIMUM"

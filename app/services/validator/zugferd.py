@@ -9,7 +9,7 @@ import logging
 import tempfile
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from uuid import UUID, uuid4
 
@@ -29,7 +29,7 @@ from app.services.validator.kosit import KoSITValidator
 logger = logging.getLogger(__name__)
 
 
-class ZUGFeRDProfile(str, Enum):
+class ZUGFeRDProfile(StrEnum):
     """ZUGFeRD/Factur-X profile levels."""
 
     MINIMUM = "MINIMUM"

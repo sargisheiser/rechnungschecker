@@ -1,12 +1,12 @@
 """Pydantic schemas for billing endpoints."""
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, Field, HttpUrl
 
 
-class PlanTier(str, Enum):
+class PlanTier(StrEnum):
     """Available subscription plans."""
 
     FREE = "free"
@@ -80,7 +80,7 @@ class BillingPortalResponse(BaseModel):
     portal_url: str
 
 
-class SubscriptionStatus(str, Enum):
+class SubscriptionStatus(StrEnum):
     """Stripe subscription statuses."""
 
     ACTIVE = "active"

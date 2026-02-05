@@ -1,7 +1,7 @@
 """Audit logging model for tracking user actions."""
 
-import enum
 from datetime import datetime
+from enum import StrEnum
 from uuid import uuid4
 
 from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, Text, func
@@ -11,7 +11,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
 
-class AuditAction(str, enum.Enum):
+class AuditAction(StrEnum):
     """Types of actions that can be audited."""
 
     # Authentication

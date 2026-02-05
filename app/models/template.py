@@ -1,7 +1,7 @@
 """Template model for storing reusable sender/receiver data."""
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from uuid import uuid4
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, String, func
@@ -12,7 +12,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
 
-class TemplateType(str, Enum):
+class TemplateType(StrEnum):
     """Template type enum."""
 
     SENDER = "sender"

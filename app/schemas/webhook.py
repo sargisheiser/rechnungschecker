@@ -1,13 +1,13 @@
 """Pydantic schemas for webhook management."""
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
 from pydantic import BaseModel, Field, HttpUrl, field_validator
 
 
-class WebhookEventType(str, Enum):
+class WebhookEventType(StrEnum):
     """Webhook event types."""
 
     VALIDATION_COMPLETED = "validation.completed"
@@ -16,7 +16,7 @@ class WebhookEventType(str, Enum):
     VALIDATION_WARNING = "validation.warning"
 
 
-class DeliveryStatus(str, Enum):
+class DeliveryStatus(StrEnum):
     """Webhook delivery status."""
 
     PENDING = "pending"

@@ -1,7 +1,7 @@
 """Scheduled validation models for cloud storage integration."""
 
-import enum
 from datetime import datetime
+from enum import StrEnum
 from uuid import uuid4
 
 from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Index, Integer, String, Text
@@ -11,7 +11,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
 
-class CloudStorageProvider(str, enum.Enum):
+class CloudStorageProvider(StrEnum):
     """Supported cloud storage providers."""
 
     S3 = "s3"
@@ -19,7 +19,7 @@ class CloudStorageProvider(str, enum.Enum):
     AZURE_BLOB = "azure_blob"
 
 
-class JobStatus(str, enum.Enum):
+class JobStatus(StrEnum):
     """Scheduled job status."""
 
     ACTIVE = "active"
@@ -27,7 +27,7 @@ class JobStatus(str, enum.Enum):
     ERROR = "error"
 
 
-class RunStatus(str, enum.Enum):
+class RunStatus(StrEnum):
     """Scheduled run status."""
 
     PENDING = "pending"

@@ -1,7 +1,7 @@
 """Validation log model for analytics."""
 
-import enum
 from datetime import datetime
+from enum import StrEnum
 from uuid import uuid4
 
 from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Index, Integer, String, func
@@ -11,7 +11,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
 
-class FileType(str, enum.Enum):
+class FileType(StrEnum):
     """Type of invoice file validated."""
 
     XRECHNUNG = "xrechnung"
