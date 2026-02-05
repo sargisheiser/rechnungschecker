@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { AxiosError } from 'axios'
 import { validationApi } from '@/lib/api'
+import { toast, toastMessages } from '@/lib/toast'
 import { getGuestId } from '@/lib/utils'
 import type { ValidationResult } from '@/types'
 import { useAuthStore } from './useAuth'
@@ -49,6 +50,14 @@ export function useValidate() {
     },
     onSuccess: (result) => {
       setResult(result)
+      // Show toast based on validation result
+      if (result.status === 'valid') {
+        toast.success(toastMessages.validationSuccess, 'Die Rechnung entspricht allen Anforderungen.')
+      } else if (result.warnings.length > 0 && result.errors.length === 0) {
+        toast.warning(toastMessages.validationWarning, `${result.warnings.length} Warnung(en) gefunden.`)
+      } else {
+        toast.error(toastMessages.validationError, `${result.errors.length} Fehler gefunden.`)
+      }
       // Invalidate history if authenticated (get fresh state)
       const { isAuthenticated } = useAuthStore.getState()
       if (isAuthenticated) {
@@ -99,6 +108,12 @@ export function useDownloadReport() {
       a.click()
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
+    },
+    onSuccess: () => {
+      toast.success(toastMessages.downloadSuccess)
+    },
+    onError: () => {
+      toast.error(toastMessages.downloadError)
     },
   })
 }

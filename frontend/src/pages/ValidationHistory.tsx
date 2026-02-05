@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
   Search,
-  FileCheck,
   CheckCircle,
   XCircle,
   Download,
@@ -14,6 +13,7 @@ import {
 } from 'lucide-react'
 import { useValidationHistory, useDownloadReport } from '@/hooks/useValidation'
 import { cn, formatDateTime } from '@/lib/utils'
+import { Skeleton, EmptyState, emptyStatePresets } from '@/components'
 
 type StatusFilter = 'all' | 'valid' | 'invalid'
 type TypeFilter = 'all' | 'xrechnung' | 'zugferd'
@@ -112,28 +112,60 @@ export function ValidationHistory() {
       {/* Table */}
       <div className="card overflow-hidden">
         {isLoading ? (
-          <div className="p-12 flex items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-          </div>
+          <>
+            {/* Skeleton table header */}
+            <div className="hidden md:grid md:grid-cols-[1fr_120px_100px_80px_80px_150px_80px] gap-4 px-6 py-3 bg-gray-50 border-b border-gray-200">
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-3 w-12" />
+              <Skeleton className="h-3 w-14" />
+              <Skeleton className="h-3 w-12" />
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-3 w-12" />
+              <Skeleton className="h-3 w-14" />
+            </div>
+            {/* Skeleton rows */}
+            <div className="divide-y divide-gray-200">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="md:grid md:grid-cols-[1fr_120px_100px_80px_80px_150px_80px] gap-4 px-6 py-4 items-center"
+                >
+                  <div className="flex items-center gap-3 mb-2 md:mb-0">
+                    <Skeleton className="h-5 w-5 rounded-full" />
+                    <Skeleton className="h-4 w-48" />
+                  </div>
+                  <Skeleton className="h-6 w-20 rounded mb-2 md:mb-0" />
+                  <Skeleton className="h-6 w-16 rounded mb-2 md:mb-0" />
+                  <Skeleton className="h-4 w-8 mb-1 md:mb-0" />
+                  <Skeleton className="h-4 w-8 mb-1 md:mb-0" />
+                  <Skeleton className="h-4 w-28 mb-2 md:mb-0" />
+                  <Skeleton className="h-8 w-8 rounded" />
+                </div>
+              ))}
+            </div>
+          </>
         ) : filteredItems.length === 0 ? (
-          <div className="p-12 text-center">
-            <FileCheck className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {search || statusFilter !== 'all' || typeFilter !== 'all'
-                ? 'Keine Ergebnisse'
-                : 'Keine Validierungen'}
-            </h3>
-            <p className="text-gray-500">
-              {search || statusFilter !== 'all' || typeFilter !== 'all'
-                ? 'Versuchen Sie andere Filterkriterien.'
-                : 'Laden Sie eine Datei hoch, um Ihre erste Validierung durchzufuehren.'}
-            </p>
-            {!search && statusFilter === 'all' && typeFilter === 'all' && (
-              <Link to="/dashboard" className="btn-primary mt-4 inline-flex">
-                Zur Validierung
-              </Link>
-            )}
-          </div>
+          search || statusFilter !== 'all' || typeFilter !== 'all' ? (
+            <EmptyState
+              {...emptyStatePresets.noSearchResults}
+              action={{
+                label: 'Filter zurücksetzen',
+                onClick: () => {
+                  setSearch('')
+                  setStatusFilter('all')
+                  setTypeFilter('all')
+                },
+              }}
+            />
+          ) : (
+            <EmptyState
+              {...emptyStatePresets.noValidations}
+              action={{
+                label: 'Erste Rechnung validieren',
+                href: '/dashboard',
+              }}
+            />
+          )
         ) : (
           <>
             {/* Table header */}

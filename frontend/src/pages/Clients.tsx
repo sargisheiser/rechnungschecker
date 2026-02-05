@@ -14,7 +14,6 @@ import {
   Trash2,
   Eye,
   EyeOff,
-  AlertTriangle,
   AlertCircle,
 } from 'lucide-react'
 import { useUser } from '@/hooks/useAuth'
@@ -27,6 +26,7 @@ import {
   useClientContext,
 } from '@/hooks/useClients'
 import { cn, formatDateTime } from '@/lib/utils'
+import { Skeleton, EmptyState, emptyStatePresets, ConfirmDialog, confirmDialogPresets } from '@/components'
 import type { Client, ClientListItem, ClientCreateRequest } from '@/types'
 
 export function ClientsPage() {
@@ -226,24 +226,45 @@ export function ClientsPage() {
         </div>
 
         {isLoading ? (
-          <div className="p-8 flex justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+          <div className="divide-y divide-gray-200">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="px-6 py-4 flex items-center justify-between">
+                <div className="flex items-center gap-4 min-w-0 flex-1">
+                  <Skeleton className="h-10 w-10 rounded-full flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Skeleton className="h-4 w-40" />
+                      <Skeleton className="h-4 w-16" />
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <Skeleton className="h-3 w-28" />
+                      <Skeleton className="h-3 w-36" />
+                    </div>
+                  </div>
+                </div>
+                <Skeleton className="h-8 w-8 rounded ml-4" />
+              </div>
+            ))}
           </div>
         ) : clientsData?.items.length === 0 ? (
-          <div className="p-8 text-center">
-            <Users className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500">
-              {search ? 'Keine Mandanten gefunden' : 'Noch keine Mandanten angelegt'}
-            </p>
-            {!search && (
-              <button
-                onClick={() => setShowCreateModal(true)}
-                className="mt-4 btn-secondary"
-              >
-                Ersten Mandanten anlegen
-              </button>
-            )}
-          </div>
+          search ? (
+            <EmptyState
+              {...emptyStatePresets.noSearchResults}
+              action={{
+                label: 'Suche zurücksetzen',
+                onClick: () => setSearch(''),
+              }}
+              size="sm"
+            />
+          ) : (
+            <EmptyState
+              {...emptyStatePresets.noClients}
+              action={{
+                label: 'Ersten Mandanten anlegen',
+                onClick: () => setShowCreateModal(true),
+              }}
+            />
+          )
         ) : (
           <div className="divide-y divide-gray-200">
             {clientsData?.items.map((client) => (
@@ -313,13 +334,15 @@ export function ClientsPage() {
       )}
 
       {/* Delete Confirm Modal */}
-      {showDeleteConfirm && (
-        <DeleteConfirmModal
-          onClose={() => setShowDeleteConfirm(null)}
-          onConfirm={() => handleDeleteClient(showDeleteConfirm)}
-          isLoading={deleteClient.isPending}
-        />
-      )}
+      <ConfirmDialog
+        isOpen={!!showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(null)}
+        onConfirm={() => showDeleteConfirm && handleDeleteClient(showDeleteConfirm)}
+        {...confirmDialogPresets.delete}
+        title="Mandant löschen?"
+        message="Diese Aktion kann nicht rückgängig gemacht werden. Alle zugehörigen Validierungen bleiben erhalten, werden aber nicht mehr diesem Mandanten zugeordnet."
+        isLoading={deleteClient.isPending}
+      />
     </div>
   )
 }
@@ -675,43 +698,3 @@ function ClientFormModal({
   )
 }
 
-function DeleteConfirmModal({
-  onClose,
-  onConfirm,
-  isLoading,
-}: {
-  onClose: () => void
-  onConfirm: () => void
-  isLoading: boolean
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white rounded-xl shadow-xl max-w-sm w-full mx-4 p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-error-100 rounded-full">
-            <AlertTriangle className="h-5 w-5 text-error-600" />
-          </div>
-          <h2 className="text-lg font-semibold text-gray-900">Mandant löschen?</h2>
-        </div>
-        <p className="text-gray-600 mb-6">
-          Diese Aktion kann nicht rückgängig gemacht werden. Alle zugehörigen
-          Validierungen bleiben erhalten, werden aber nicht mehr diesem Mandanten
-          zugeordnet.
-        </p>
-        <div className="flex gap-3">
-          <button onClick={onClose} className="btn-secondary flex-1" disabled={isLoading}>
-            Abbrechen
-          </button>
-          <button
-            onClick={onConfirm}
-            className="btn-primary bg-error-600 hover:bg-error-700 flex-1"
-            disabled={isLoading}
-          >
-            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Löschen'}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}

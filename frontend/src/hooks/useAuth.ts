@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { authApi, setAccessToken, setRefreshToken, getAccessToken } from '@/lib/api'
+import { toast, toastMessages } from '@/lib/toast'
 import type { User, LoginRequest, RegisterRequest } from '@/types'
 
 interface AuthState {
@@ -58,6 +59,10 @@ export function useLogin() {
     onSuccess: (user) => {
       setUser(user)
       queryClient.setQueryData(['user'], user)
+      toast.success(toastMessages.loginSuccess, `Willkommen zurück, ${user.full_name || user.email}!`)
+    },
+    onError: () => {
+      toast.error(toastMessages.loginError, 'Bitte überprüfen Sie Ihre Anmeldedaten.')
     },
   })
 }
@@ -83,6 +88,7 @@ export function useLogout() {
     onSettled: () => {
       logout()
       queryClient.clear()
+      toast.success(toastMessages.logoutSuccess)
     },
   })
 }
@@ -134,6 +140,10 @@ export function useUpdateProfile() {
     onSuccess: (user) => {
       setUser(user)
       queryClient.setQueryData(['user'], user)
+      toast.success(toastMessages.updateSuccess, 'Profil wurde aktualisiert.')
+    },
+    onError: () => {
+      toast.error(toastMessages.updateError)
     },
   })
 }
@@ -142,6 +152,12 @@ export function useChangePassword() {
   return useMutation({
     mutationFn: ({ currentPassword, newPassword }: { currentPassword: string; newPassword: string }) =>
       authApi.changePassword(currentPassword, newPassword),
+    onSuccess: () => {
+      toast.success('Passwort geändert', 'Ihr Passwort wurde erfolgreich aktualisiert.')
+    },
+    onError: () => {
+      toast.error('Passwort ändern fehlgeschlagen', 'Bitte überprüfen Sie Ihr aktuelles Passwort.')
+    },
   })
 }
 

@@ -7,7 +7,6 @@ import {
   Copy,
   Check,
   Trash2,
-  AlertTriangle,
   AlertCircle,
   Clock,
   Activity,
@@ -22,6 +21,7 @@ import {
 import { useUser } from '@/hooks/useAuth'
 import { useAPIKeys, useCreateAPIKey, useDeleteAPIKey, useUpdateAPIKey } from '@/hooks/useAPIKeys'
 import { cn, formatDate, formatDateTime } from '@/lib/utils'
+import { Skeleton, EmptyState, emptyStatePresets, ConfirmDialog, confirmDialogPresets } from '@/components'
 import type { APIKey, APIKeyCreated } from '@/types'
 
 export function APIKeysPage() {
@@ -238,20 +238,42 @@ export function APIKeysPage() {
         </div>
 
         {isLoading ? (
-          <div className="p-8 flex justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+          <div className="divide-y divide-gray-200">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="px-6 py-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Skeleton className="h-5 w-40" />
+                      <Skeleton className="h-5 w-20 rounded" />
+                    </div>
+                    <Skeleton className="h-4 w-32 mb-2" />
+                    <div className="flex items-center gap-4">
+                      <Skeleton className="h-3 w-28" />
+                      <Skeleton className="h-3 w-36" />
+                      <Skeleton className="h-3 w-32" />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 ml-4">
+                    <Skeleton className="h-8 w-8 rounded" />
+                    <Skeleton className="h-8 w-8 rounded" />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : apiKeysData?.items.length === 0 ? (
-          <div className="p-8 text-center">
-            <Key className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500">Noch keine API-Schlüssel erstellt</p>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="mt-4 btn-secondary"
-            >
-              Ersten Schlüssel erstellen
-            </button>
-          </div>
+          <EmptyState
+            {...emptyStatePresets.noApiKeys}
+            action={{
+              label: 'Ersten Schlüssel erstellen',
+              onClick: () => setShowCreateModal(true),
+            }}
+            secondaryAction={{
+              label: 'API-Dokumentation',
+              href: '/api/docs',
+            }}
+          />
         ) : (
           <div className="divide-y divide-gray-200">
             {apiKeysData?.items.map((key) => (
@@ -288,13 +310,15 @@ export function APIKeysPage() {
       )}
 
       {/* Delete Confirm Modal */}
-      {showDeleteConfirm && (
-        <DeleteConfirmModal
-          onClose={() => setShowDeleteConfirm(null)}
-          onConfirm={() => handleDeleteKey(showDeleteConfirm)}
-          isLoading={deleteKey.isPending}
-        />
-      )}
+      <ConfirmDialog
+        isOpen={!!showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(null)}
+        onConfirm={() => showDeleteConfirm && handleDeleteKey(showDeleteConfirm)}
+        {...confirmDialogPresets.delete}
+        title="API-Schlüssel löschen?"
+        message="Diese Aktion kann nicht rückgängig gemacht werden. Alle Anwendungen, die diesen Schlüssel verwenden, werden keinen Zugriff mehr haben."
+        isLoading={deleteKey.isPending}
+      />
     </div>
   )
 }
@@ -468,52 +492,3 @@ function CreateAPIKeyModal({
   )
 }
 
-function DeleteConfirmModal({
-  onClose,
-  onConfirm,
-  isLoading,
-}: {
-  onClose: () => void
-  onConfirm: () => void
-  isLoading: boolean
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white rounded-xl shadow-xl max-w-sm w-full mx-4 p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-error-100 rounded-full">
-            <AlertTriangle className="h-5 w-5 text-error-600" />
-          </div>
-          <h2 className="text-lg font-semibold text-gray-900">
-            Schlüssel löschen?
-          </h2>
-        </div>
-        <p className="text-gray-600 mb-6">
-          Diese Aktion kann nicht rueckgaengig gemacht werden. Alle Anwendungen, die
-          diesen Schlüssel verwenden, werden keinen Zugriff mehr haben.
-        </p>
-        <div className="flex gap-3">
-          <button
-            onClick={onClose}
-            className="btn-secondary flex-1"
-            disabled={isLoading}
-          >
-            Abbrechen
-          </button>
-          <button
-            onClick={onConfirm}
-            className="btn-primary bg-error-600 hover:bg-error-700 flex-1"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              'Löschen'
-            )}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}

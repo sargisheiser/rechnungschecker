@@ -26,6 +26,7 @@ import { useTranslation } from 'react-i18next'
 import { FileUpload } from '@/components/FileUpload'
 import { ValidationResults } from '@/components/ValidationResults'
 import { OnboardingTour } from '@/components/OnboardingTour'
+import { Skeleton } from '@/components'
 import { useValidationStore, useValidationHistory, useDownloadReport } from '@/hooks/useValidation'
 import { useUser } from '@/hooks/useAuth'
 import { useUsage, useSubscription, usePortalSession } from '@/hooks/useBilling'
@@ -226,8 +227,28 @@ export function Dashboard() {
         </div>
 
         {historyLoading ? (
-          <div className="p-8 flex items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+          <div className="divide-y divide-gray-100">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="px-6 py-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3 min-w-0 flex-1">
+                    <Skeleton className="h-5 w-5 rounded-full flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <Skeleton className="h-4 w-48 mb-2" />
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="h-5 w-16 rounded" />
+                        <Skeleton className="h-3 w-20" />
+                        <Skeleton className="h-3 w-24" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <Skeleton className="h-7 w-16 rounded" />
+                    <Skeleton className="h-7 w-7 rounded" />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : history?.items.length === 0 ? (
           <EmptyState />
@@ -330,8 +351,24 @@ function UsageBar({
 
   if (isLoading) {
     return (
-      <div className="mb-6 p-4 bg-gray-50 rounded-lg flex items-center justify-center">
-        <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+      <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="flex-1">
+            <div className="flex items-center justify-between mb-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-4 w-16" />
+            </div>
+            <Skeleton className="h-2 w-full rounded-full" />
+          </div>
+          <div className="hidden sm:block w-px h-8 bg-gray-300" />
+          <div className="flex-1">
+            <div className="flex items-center justify-between mb-2">
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-4 w-16" />
+            </div>
+            <Skeleton className="h-2 w-full rounded-full" />
+          </div>
+        </div>
       </div>
     )
   }
