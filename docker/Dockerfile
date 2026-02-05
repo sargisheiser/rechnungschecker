@@ -31,14 +31,15 @@ RUN useradd --create-home --shell /bin/bash app
 # Set working directory
 WORKDIR /app
 
-# Copy dependency files
-COPY pyproject.toml ./
+# Copy source code (needed for hatchling to build package metadata)
+COPY app/ ./app/
+COPY pyproject.toml README.md ./
 
 # Install Python dependencies
 RUN pip install --upgrade pip && \
     pip install .
 
-# Copy application code
+# Copy remaining files
 COPY --chown=app:app . .
 
 # Switch to app user
