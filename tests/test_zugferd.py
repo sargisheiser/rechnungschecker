@@ -156,5 +156,6 @@ class TestZUGFeRDProfileEnum:
     def test_profile_string_conversion(self) -> None:
         """Test profile can be used as string."""
         profile = ZUGFeRDProfile.BASIC
-        assert str(profile) == "ZUGFeRDProfile.BASIC"
+        # StrEnum returns the value directly when converted to string
+        assert str(profile) == "BASIC"
         assert profile.value == "BASIC"
