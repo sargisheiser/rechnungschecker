@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -9,7 +8,6 @@ import {
   Clock,
   Hash,
   Download,
-  Save,
   Loader2,
   AlertTriangle,
   Info,
@@ -17,13 +15,12 @@ import {
 import { validationApi } from '@/lib/api'
 import { cn, formatDateTime } from '@/lib/utils'
 import { useDownloadReport } from '@/hooks/useValidation'
+import { InlineEdit } from '@/components'
 import type { ValidationDetail } from '@/types'
 
 export function ValidationDetailPage() {
   const { id } = useParams<{ id: string }>()
   const queryClient = useQueryClient()
-  const [notes, setNotes] = useState('')
-  const [hasChanges, setHasChanges] = useState(false)
   const downloadReport = useDownloadReport()
 
   const { data: validation, isLoading, error } = useQuery<ValidationDetail>({
@@ -36,23 +33,11 @@ export function ValidationDetailPage() {
     mutationFn: (newNotes: string | null) => validationApi.updateNotes(id!, newNotes),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['validation-detail', id] })
-      setHasChanges(false)
     },
   })
 
-  useEffect(() => {
-    if (validation?.notes !== undefined) {
-      setNotes(validation.notes || '')
-    }
-  }, [validation?.notes])
-
-  const handleNotesChange = (value: string) => {
-    setNotes(value)
-    setHasChanges(value !== (validation?.notes || ''))
-  }
-
-  const handleSaveNotes = () => {
-    updateNotes.mutate(notes || null)
+  const handleSaveNotes = async (value: string) => {
+    await updateNotes.mutateAsync(value || null)
   }
 
   if (isLoading) {
@@ -233,35 +218,21 @@ export function ValidationDetailPage() {
 
           {/* Notes Card */}
           <div className="bg-white rounded-xl shadow-sm">
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900">Notizen</h3>
-              {hasChanges && (
-                <button
-                  onClick={handleSaveNotes}
-                  disabled={updateNotes.isPending}
-                  className="btn-primary btn-sm"
-                >
-                  {updateNotes.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                  ) : (
-                    <Save className="h-4 w-4 mr-1" />
-                  )}
-                  Speichern
-                </button>
-              )}
+              <p className="text-sm text-gray-500 mt-1">Klicken zum Bearbeiten</p>
             </div>
             <div className="p-6">
-              <textarea
-                value={notes}
-                onChange={(e) => handleNotesChange(e.target.value)}
-                placeholder="Fuegen Sie hier Ihre Notizen zu dieser Validierung hinzu..."
-                rows={5}
+              <InlineEdit
+                value={validation.notes || ''}
+                onSave={handleSaveNotes}
+                type="textarea"
+                rows={4}
                 maxLength={2000}
-                className="input w-full resize-none"
+                placeholder="Notizen hinzufügen..."
+                emptyText="Keine Notizen vorhanden. Klicken zum Hinzufügen."
+                className="min-h-[80px] p-3 -m-3 rounded-lg"
               />
-              <p className="text-xs text-gray-500 mt-2 text-right">
-                {notes.length} / 2000 Zeichen
-              </p>
             </div>
           </div>
         </div>

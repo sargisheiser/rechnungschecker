@@ -17,12 +17,14 @@ import {
 } from 'lucide-react'
 import {
   useTemplates,
+  useTemplate,
   useCreateTemplate,
   useDeleteTemplate,
   useUpdateTemplate,
   useSetDefaultTemplate,
 } from '@/hooks/useTemplates'
 import { cn } from '@/lib/utils'
+import { AddressInput } from '@/components'
 import type { Template, TemplateListItem, TemplateCreateRequest, TemplateType } from '@/types'
 
 export function TemplatesPage() {
@@ -34,9 +36,12 @@ export function TemplatesPage() {
   const setDefaultTemplate = useSetDefaultTemplate()
 
   const [showCreateModal, setShowCreateModal] = useState(false)
-  const [editingTemplate, setEditingTemplate] = useState<Template | null>(null)
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  // Fetch full template data when editing
+  const { data: editingTemplate, isLoading: isLoadingTemplate } = useTemplate(editingTemplateId)
 
   const handleCreateTemplate = async (data: TemplateCreateRequest) => {
     try {
@@ -52,7 +57,7 @@ export function TemplatesPage() {
     try {
       setError(null)
       await updateTemplate.mutateAsync({ id, data })
-      setEditingTemplate(null)
+      setEditingTemplateId(null)
     } catch (err) {
       setError('Vorlage konnte nicht aktualisiert werden')
     }
@@ -175,7 +180,7 @@ export function TemplatesPage() {
               <TemplateCard
                 key={template.id}
                 template={template}
-                onEdit={() => setEditingTemplate(template as unknown as Template)}
+                onEdit={() => setEditingTemplateId(template.id)}
                 onSetDefault={() => handleSetDefault(template.id)}
                 onDelete={() => setShowDeleteConfirm(template.id)}
                 isSettingDefault={setDefaultTemplate.isPending}
@@ -197,15 +202,24 @@ export function TemplatesPage() {
       )}
 
       {/* Edit Modal */}
-      {editingTemplate && (
+      {editingTemplateId && editingTemplate && (
         <TemplateFormModal
           title="Vorlage bearbeiten"
           templateType={editingTemplate.template_type}
           initialData={editingTemplate}
-          onClose={() => setEditingTemplate(null)}
+          onClose={() => setEditingTemplateId(null)}
           onSubmit={(data) => handleUpdateTemplate(editingTemplate.id, data)}
-          isLoading={updateTemplate.isPending}
+          isLoading={updateTemplate.isPending || isLoadingTemplate}
         />
+      )}
+      {/* Loading state for edit modal */}
+      {editingTemplateId && isLoadingTemplate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="fixed inset-0 bg-black/50" onClick={() => setEditingTemplateId(null)} />
+          <div className="relative bg-white rounded-xl shadow-xl p-8">
+            <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+          </div>
+        </div>
       )}
 
       {/* Delete Confirm Modal */}
@@ -439,39 +453,22 @@ function TemplateFormModal({
               <h3 className="text-sm font-medium text-gray-700 mb-3">Adresse</h3>
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Straße
-              </label>
-              <input
-                type="text"
-                value={formData.street}
-                onChange={(e) => updateField('street', e.target.value)}
-                className="input"
-                maxLength={200}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                PLZ
-              </label>
-              <input
-                type="text"
-                value={formData.postal_code}
-                onChange={(e) => updateField('postal_code', e.target.value)}
-                className="input"
-                maxLength={20}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Ort
-              </label>
-              <input
-                type="text"
-                value={formData.city}
-                onChange={(e) => updateField('city', e.target.value)}
-                className="input"
-                maxLength={100}
+              <AddressInput
+                values={{
+                  street: formData.street,
+                  postalCode: formData.postal_code,
+                  city: formData.city,
+                  countryCode: formData.country_code,
+                }}
+                onChange={(fields) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    street: fields.street || '',
+                    postal_code: fields.postalCode || '',
+                    city: fields.city || '',
+                    country_code: fields.countryCode || 'DE',
+                  }))
+                }}
               />
             </div>
 

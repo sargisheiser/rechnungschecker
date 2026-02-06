@@ -1,10 +1,11 @@
 import { useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { useDropzone } from 'react-dropzone'
-import { Upload, FileText, AlertCircle, Loader2, UserPlus } from 'lucide-react'
+import { Upload, FileText, AlertCircle, UserPlus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn, isValidInvoiceFile } from '@/lib/utils'
 import { useValidate, useValidationStore } from '@/hooks/useValidation'
+import { ValidationProgress } from './ui/ValidationProgress'
 
 interface FileUploadProps {
   className?: string
@@ -92,15 +93,9 @@ export function FileUpload({ className }: FileUploadProps) {
 
         <div className="flex flex-col items-center text-center">
           {isValidating ? (
-            <>
-              <Loader2 className="h-12 w-12 text-primary-600 animate-spin mb-4" />
-              <p className="text-lg font-medium text-gray-900">
-                {t('upload.validating')}
-              </p>
-              <p className="text-sm text-gray-500 mt-1">
-                {t('upload.pleaseWait')}
-              </p>
-            </>
+            <div className="py-4 w-full">
+              <ValidationProgress isValidating={isValidating} />
+            </div>
           ) : isDragActive ? (
             <>
               <Upload className="h-12 w-12 text-primary-600 mb-4" />

@@ -26,7 +26,7 @@ import { useTranslation } from 'react-i18next'
 import { FileUpload } from '@/components/FileUpload'
 import { ValidationResults } from '@/components/ValidationResults'
 import { OnboardingTour } from '@/components/OnboardingTour'
-import { Skeleton } from '@/components'
+import { Skeleton, OnboardingChecklist } from '@/components'
 import { useValidationStore, useValidationHistory, useDownloadReport } from '@/hooks/useValidation'
 import { useUser } from '@/hooks/useAuth'
 import { useUsage, useSubscription, usePortalSession } from '@/hooks/useBilling'
@@ -55,6 +55,16 @@ export function Dashboard() {
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Onboarding tour for new users */}
       {user && <OnboardingTour userCreatedAt={user.created_at} />}
+
+      {/* Onboarding checklist for new users */}
+      {user && (
+        <OnboardingChecklist
+          className="mb-6"
+          hasValidations={(history?.total ?? 0) > 0}
+          hasCompletedProfile={!!(user.full_name || user.company_name)}
+          hasTemplates={false}
+        />
+      )}
 
       {/* Checkout success message */}
       {checkoutStatus === 'success' && (
