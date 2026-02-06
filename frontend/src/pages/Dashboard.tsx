@@ -320,6 +320,9 @@ export function Dashboard() {
               </div>
               <Users className="h-8 w-8 text-gray-300" />
             </div>
+            <p className="text-xs text-gray-500 mb-3">
+              Mandanten und Rechnungen verwalten
+            </p>
             <Link to="/mandanten" className="btn-secondary w-full text-sm py-2">
               {t('clients.manageClients')}
             </Link>
