@@ -14,6 +14,54 @@ import type { ValidationError } from '@/types'
 
 // German explanations for common XRechnung/ZUGFeRD error codes
 const ERROR_EXPLANATIONS: Record<string, { title: string; explanation: string; fix?: string; docLink?: string }> = {
+  // === EN16931 Business Rules (BR-CO-*) ===
+  'BR-CO-10': {
+    title: 'Steuersumme stimmt nicht überein',
+    explanation: 'Die Summe aller einzelnen Steuerbeträge muss dem Gesamtsteuerbetrag entsprechen.',
+    fix: 'Prüfen Sie: Nettosumme aller Positionen + MwSt-Summe = Bruttosumme. Runden Sie Zwischenergebnisse kaufmännisch auf 2 Nachkommastellen.',
+  },
+  'BR-CO-13': {
+    title: 'Fälligkeitsdatum vor Rechnungsdatum',
+    explanation: 'Das Zahlungsfälligkeitsdatum darf nicht vor dem Rechnungsdatum liegen.',
+    fix: 'Korrigieren Sie das Fälligkeitsdatum (BT-9) oder das Rechnungsdatum (BT-2).',
+  },
+  'BR-CO-15': {
+    title: 'Negativer Einzelpreis',
+    explanation: 'Der Nettoeinzelpreis eines Artikels muss positiv oder null sein.',
+    fix: 'Verwenden Sie für Gutschriften/Rabatte die Zuschläge/Abzüge (Allowances/Charges) anstatt negativer Preise.',
+  },
+  'BR-CO-16': {
+    title: 'Summe der Positionsnettobeträge falsch',
+    explanation: 'Die Summe aller Positionsnettobeträge stimmt nicht mit der Rechnungssumme überein.',
+    fix: 'Prüfen Sie: Summe(Positionsnetto) = Rechnungsnetto vor Zu-/Abschlägen.',
+  },
+  'BR-CO-25': {
+    title: 'Zahlungsziel fehlt',
+    explanation: 'Bei positivem Zahlbetrag muss entweder ein Fälligkeitsdatum oder Zahlungsbedingungen angegeben werden.',
+    fix: 'Fügen Sie entweder das Fälligkeitsdatum (BT-9, z.B. "2024-02-15") oder Zahlungsbedingungen (BT-20, z.B. "Zahlbar innerhalb 14 Tagen") hinzu.',
+  },
+  // === PEPPOL Rules ===
+  'PEPPOL-EN16931-R120': {
+    title: 'Positionsnettobetrag falsch berechnet',
+    explanation: 'Der Nettobetrag einer Rechnungsposition stimmt nicht mit der Berechnung überein.',
+    fix: 'Formel: Positionsnetto = Menge × (Einzelpreis / Preisbasis) + Zuschläge - Abzüge. Prüfen Sie Rundung auf 2 Nachkommastellen.',
+  },
+  'PEPPOL-EN16931-R121': {
+    title: 'Rechnungssumme falsch berechnet',
+    explanation: 'Die Gesamtsumme der Rechnung stimmt nicht mit der Berechnung überein.',
+    fix: 'Formel: Brutto = Netto + MwSt. Prüfen Sie alle Zwischenberechnungen.',
+  },
+  'PEPPOL-EN16931-R110': {
+    title: 'Rechnungsdatum fehlt',
+    explanation: 'Jede Rechnung muss ein Rechnungsdatum haben.',
+    fix: 'Fügen Sie das Rechnungsdatum (BT-2) im Format JJJJ-MM-TT hinzu.',
+  },
+  'PEPPOL-EN16931-R080': {
+    title: 'Dokumentwährung fehlt',
+    explanation: 'Die Rechnungswährung muss angegeben sein.',
+    fix: 'Fügen Sie den Währungscode (BT-5) hinzu, z.B. "EUR".',
+  },
+  // === German specific rules (BR-DE-*) ===
   'BR-DE-1': {
     title: 'Fehlende XRechnung-Kennung',
     explanation: 'Das Dokument muss eine gueltige XRechnung-Versionskennung enthalten.',

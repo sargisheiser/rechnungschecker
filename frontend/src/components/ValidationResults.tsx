@@ -1,3 +1,4 @@
+import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import {
   CheckCircle,
@@ -6,12 +7,59 @@ import {
   Download,
   RefreshCw,
   UserPlus,
+  ChevronDown,
+  ChevronUp,
+  Layers,
 } from 'lucide-react'
 import { cn, formatDateTime } from '@/lib/utils'
 import { useValidationStore, useDownloadReport } from '@/hooks/useValidation'
 import { useAuthStore } from '@/hooks/useAuth'
 import { ValidationErrorItem } from './ValidationErrorItem'
-import type { ValidationStatus } from '@/types'
+import type { ValidationError, ValidationStatus } from '@/types'
+
+// Group errors by error code
+interface GroupedError {
+  code: string
+  errors: ValidationError[]
+  count: number
+  locations: string[]
+}
+
+function groupErrorsByCode(errors: ValidationError[]): GroupedError[] {
+  const groups = new Map<string, GroupedError>()
+
+  errors.forEach((error) => {
+    const key = error.code || error.message
+    if (!groups.has(key)) {
+      groups.set(key, {
+        code: error.code,
+        errors: [],
+        count: 0,
+        locations: [],
+      })
+    }
+    const group = groups.get(key)!
+    group.errors.push(error)
+    group.count++
+    if (error.location) {
+      // Extract line number from location if present
+      const lineMatch = error.location.match(/line[:\s]*(\d+)/i) ||
+                        error.location.match(/\[(\d+)\]/) ||
+                        error.location.match(/InvoiceLine\[(\d+)\]/)
+      if (lineMatch) {
+        group.locations.push(`Zeile ${lineMatch[1]}`)
+      } else if (error.location.includes('InvoiceLine')) {
+        // Extract position number from XPath
+        const posMatch = error.location.match(/InvoiceLine\[(\d+)\]/)
+        if (posMatch) {
+          group.locations.push(`Position ${posMatch[1]}`)
+        }
+      }
+    }
+  })
+
+  return Array.from(groups.values())
+}
 
 interface ValidationResultsProps {
   className?: string
@@ -139,34 +187,22 @@ export function ValidationResults({ className }: ValidationResultsProps) {
           </div>
         </div>
 
-        {/* Errors */}
+        {/* Errors - Grouped */}
         {errors.length > 0 && (
-          <div className="mb-4">
-            <h4 className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
-              <XCircle className="h-4 w-4 text-error-500" />
-              Fehler ({errors.length})
-            </h4>
-            <div className="space-y-2">
-              {errors.map((error, index) => (
-                <ValidationErrorItem key={index} error={error} />
-              ))}
-            </div>
-          </div>
+          <GroupedErrorsSection
+            title="Fehler"
+            errors={errors}
+            icon={<XCircle className="h-4 w-4 text-error-500" />}
+          />
         )}
 
-        {/* Warnings */}
+        {/* Warnings - Grouped */}
         {warnings.length > 0 && (
-          <div className="mb-4">
-            <h4 className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-warning-500" />
-              Warnungen ({warnings.length})
-            </h4>
-            <div className="space-y-2">
-              {warnings.map((warning, index) => (
-                <ValidationErrorItem key={index} error={warning} />
-              ))}
-            </div>
-          </div>
+          <GroupedErrorsSection
+            title="Warnungen"
+            errors={warnings}
+            icon={<AlertTriangle className="h-4 w-4 text-warning-500" />}
+          />
         )}
 
         {/* Success message */}
@@ -220,6 +256,150 @@ export function ValidationResults({ className }: ValidationResultsProps) {
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+// Component for grouped error display
+function GroupedErrorsSection({
+  title,
+  errors,
+  icon,
+}: {
+  title: string
+  errors: ValidationError[]
+  icon: React.ReactNode
+}) {
+  const groupedErrors = useMemo(() => groupErrorsByCode(errors), [errors])
+  const hasDuplicates = groupedErrors.some((g) => g.count > 1)
+
+  return (
+    <div className="mb-4">
+      <h4 className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
+        {icon}
+        {title} ({errors.length})
+        {hasDuplicates && (
+          <span className="text-xs font-normal text-gray-500 flex items-center gap-1">
+            <Layers className="h-3 w-3" />
+            {groupedErrors.length} Typen
+          </span>
+        )}
+      </h4>
+      <div className="space-y-2">
+        {groupedErrors.map((group, index) => (
+          <GroupedErrorItem key={`${group.code}-${index}`} group={group} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// Component for a single grouped error
+function GroupedErrorItem({ group }: { group: GroupedError }) {
+  const [expanded, setExpanded] = useState(false)
+  const hasMultiple = group.count > 1
+
+  // Get unique locations
+  const uniqueLocations = [...new Set(group.locations)]
+
+  if (!hasMultiple) {
+    // Single error - show normally
+    return <ValidationErrorItem error={group.errors[0]} />
+  }
+
+  // Multiple occurrences - show grouped
+  return (
+    <div className="rounded-lg border border-error-200 bg-error-50 overflow-hidden">
+      {/* Header with count badge */}
+      <div className="p-3">
+        <div className="flex items-start gap-2">
+          <XCircle className="h-5 w-5 mt-0.5 flex-shrink-0 text-error-500" />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-error-100 text-error-700">
+                {group.count}× betroffen
+              </span>
+              {group.code && (
+                <span className="text-xs font-mono text-gray-500">
+                  {group.code}
+                </span>
+              )}
+            </div>
+
+            {/* Error message - show first one */}
+            <p className="text-sm text-gray-900 mt-1">
+              {group.errors[0].message}
+            </p>
+
+            {/* Affected positions */}
+            {uniqueLocations.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1">
+                <span className="text-xs text-gray-500">Betroffen:</span>
+                {uniqueLocations.slice(0, expanded ? undefined : 5).map((loc, i) => (
+                  <span
+                    key={i}
+                    className="inline-flex px-1.5 py-0.5 text-xs bg-gray-100 text-gray-600 rounded"
+                  >
+                    {loc}
+                  </span>
+                ))}
+                {!expanded && uniqueLocations.length > 5 && (
+                  <span className="text-xs text-gray-400">
+                    +{uniqueLocations.length - 5} weitere
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Suggestion */}
+            {group.errors[0].suggestion && (
+              <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-md">
+                <p className="text-xs text-amber-700">
+                  💡 {group.errors[0].suggestion}
+                </p>
+              </div>
+            )}
+
+            {/* Expand button for details */}
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="mt-2 flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700"
+            >
+              {expanded ? (
+                <>
+                  <ChevronUp className="h-3 w-3" />
+                  Weniger anzeigen
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-3 w-3" />
+                  Alle {group.count} Vorkommen anzeigen
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Expanded: show all individual errors */}
+      {expanded && (
+        <div className="border-t border-error-200 p-3 pt-0 space-y-2">
+          <p className="text-xs text-gray-500 pt-3 pb-1">Einzelne Vorkommen:</p>
+          {group.errors.map((error, i) => (
+            <div
+              key={i}
+              className="text-xs p-2 bg-white rounded border border-gray-200"
+            >
+              {error.location && (
+                <p className="font-mono text-gray-500 break-all">
+                  📍 {error.location}
+                </p>
+              )}
+              <p className="text-gray-700 mt-1">{error.message}</p>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
