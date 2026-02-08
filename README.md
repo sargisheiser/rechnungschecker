@@ -283,16 +283,42 @@ Error response format:
 
 ## Testing
 
-Test files are included in the `test_files/` directory:
+### Backend Tests
 
 ```bash
-# Run validation tests
+# Run backend tests
 pytest
 
 # Test with coverage
 pytest --cov=app --cov-report=html
+```
 
-# Manual testing with test files
+### Frontend Tests
+
+```bash
+cd frontend
+
+# Run unit tests
+npm test
+
+# Run with coverage
+npm run test:coverage
+
+# Run E2E tests (Playwright)
+npm run test:e2e
+
+# E2E with UI
+npm run test:e2e:ui
+
+# Analyze bundle size
+npm run build:analyze
+```
+
+### Manual Testing
+
+Test files are included in the `test_files/` directory:
+
+```bash
 curl -X POST http://localhost:8000/api/v1/validate/guest \
   -F "file=@test_files/xrechnung/valid_xrechnung.xml" \
   -F "guest_id=test-123"
@@ -431,25 +457,35 @@ ls -la kosit/*.jar kosit/scenarios.xml
 
 ## Pricing Plans
 
-| Feature | Free | Starter | Pro | Steuerberater |
-|---------|------|---------|-----|---------------|
-| Validations/month | 10 | 100 | 500 | Unlimited |
-| Conversions/month | 5 | 50 | 200 | Unlimited |
-| Invoice Creator | - | ✓ | ✓ | ✓ |
+| Feature | Free | Starter (€29/mo) | Pro (€79/mo) | Steuerberater (€199/mo) |
+|---------|------|------------------|--------------|-------------------------|
+| Validations/month | 5 | 100 | Unlimited | Unlimited |
+| Conversions/month | - | 20 | 100 | 500 |
+| Batch Processing | - | ✓ (5 files) | ✓ (20 files) | ✓ (50 files) |
+| PDF Reports | ✓ (watermark) | ✓ | ✓ | ✓ |
+| Validation History | - | 30 days | 1 year | Unlimited |
 | Templates | - | ✓ | ✓ | ✓ |
-| Batch Processing | - | - | ✓ | ✓ |
 | Scheduled Validations | - | - | ✓ | ✓ |
 | Teams/Organizations | - | - | ✓ | ✓ |
 | Analytics Dashboard | - | - | ✓ | ✓ |
-| API Access | - | - | ✓ | ✓ |
+| API Access | - | - | ✓ (1k calls) | ✓ (5k calls) |
 | Webhooks | - | - | ✓ | ✓ |
-| Client Management | - | - | - | ✓ |
-| Priority Support | - | - | - | ✓ |
+| Client Management | - | - | - | ✓ (100 clients) |
+| Custom Branding | - | - | ✓ | ✓ |
+| Support | Community | Email | Priority Email | Phone |
+
+**Annual pricing**: €299/year, €799/year, €1999/year (save ~15%)
 
 ## Tech Stack
 
 - **Backend**: Python 3.11+, FastAPI, SQLAlchemy (async), PostgreSQL
 - **Frontend**: React 18, TypeScript, Vite, Tailwind CSS, React Query
+  - Route-based code splitting with React.lazy() for optimized bundle size
+  - Vendor chunking (react, react-query, UI libraries)
+- **Testing**:
+  - Backend: pytest with async support
+  - Frontend: Vitest + React Testing Library
+  - E2E: Playwright
 - **Validation**: KoSIT Validator (Java)
 - **AI**: OpenAI GPT-4o for PDF extraction
 - **Email**: Mailgun
