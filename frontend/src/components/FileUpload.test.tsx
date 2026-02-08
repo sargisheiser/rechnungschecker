@@ -45,7 +45,7 @@ describe('FileUpload', () => {
       isPending: false,
       isError: false,
       error: null,
-    })
+    } as unknown as ReturnType<typeof useValidate>)
 
     vi.mocked(useDropzone).mockReturnValue({
       getRootProps: () => ({ 'data-testid': 'dropzone' }),
@@ -60,7 +60,7 @@ describe('FileUpload', () => {
       isFileDialogActive: false,
       rootRef: { current: null },
       inputRef: { current: null },
-    })
+    } as ReturnType<typeof useDropzone>)
   })
 
   afterEach(() => {
@@ -101,7 +101,7 @@ describe('FileUpload', () => {
         isFileDialogActive: false,
         rootRef: { current: null },
         inputRef: { current: null },
-      })
+      } as ReturnType<typeof useDropzone>)
 
       render(<FileUpload />)
 
@@ -131,8 +131,8 @@ describe('FileUpload', () => {
         mutate: mockMutate,
         isPending: false,
         isError: true,
-        error: { message: 'Validation failed' } as Error,
-      })
+        error: { message: 'Validation failed' },
+      } as unknown as ReturnType<typeof useValidate>)
 
       render(<FileUpload />)
 
@@ -159,7 +159,7 @@ describe('FileUpload', () => {
         isFileDialogActive: false,
         rootRef: { current: null },
         inputRef: { current: null },
-      })
+      } as ReturnType<typeof useDropzone>)
 
       render(<FileUpload />)
 
@@ -253,7 +253,7 @@ describe('FileUpload', () => {
           isFileDialogActive: false,
           rootRef: { current: null },
           inputRef: { current: null },
-        }
+        } as ReturnType<typeof useDropzone>
       })
 
       render(<FileUpload />)
@@ -283,7 +283,7 @@ describe('FileUpload', () => {
           isFileDialogActive: false,
           rootRef: { current: null },
           inputRef: { current: null },
-        }
+        } as ReturnType<typeof useDropzone>
       })
 
       render(<FileUpload />)
@@ -312,7 +312,7 @@ describe('FileUpload', () => {
           isFileDialogActive: false,
           rootRef: { current: null },
           inputRef: { current: null },
-        }
+        } as ReturnType<typeof useDropzone>
       })
 
       render(<FileUpload />)
@@ -341,7 +341,7 @@ describe('FileUpload', () => {
           isFileDialogActive: false,
           rootRef: { current: null },
           inputRef: { current: null },
-        }
+        } as ReturnType<typeof useDropzone>
       })
 
       render(<FileUpload />)

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, act, waitFor } from '@/test/test-utils'
+import { render, screen, act } from '@/test/test-utils'
 import { ValidationProgress } from './ValidationProgress'
 
 describe('ValidationProgress', () => {

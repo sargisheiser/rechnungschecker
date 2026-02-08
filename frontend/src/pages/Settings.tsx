@@ -27,7 +27,6 @@ import {
   useDeleteAccount,
 } from '@/hooks/useAuth'
 import { useSubscription, useUsage, usePortalSession } from '@/hooks/useBilling'
-import { cn as _cn } from '@/lib/utils'
 
 export function SettingsPage() {
   const { t } = useTranslation()

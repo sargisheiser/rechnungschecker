@@ -130,7 +130,8 @@ export function WebhooksPage() {
       }))
       setTimeout(() => {
         setTestResults((prev) => {
-          const { [id]: _, ...rest } = prev
+          const { [id]: _removed, ...rest } = prev
+          void _removed // Intentionally unused - just removing from object
           return rest
         })
       }, 5000)

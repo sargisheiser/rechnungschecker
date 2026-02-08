@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, waitFor, act } from '@/test/test-utils'
+import { render, screen, fireEvent, act } from '@/test/test-utils'
 import { AddressInput } from './AddressInput'
 
 // Mock the address lookup functions

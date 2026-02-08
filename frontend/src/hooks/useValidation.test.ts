@@ -10,7 +10,7 @@ import {
   useDownloadReport,
 } from './useValidation'
 import { useAuthStore } from './useAuth'
-import type { ValidationResult } from '@/types'
+import type { ValidationResult, ValidationHistoryItem } from '@/types'
 
 // Mock the API module
 vi.mock('@/lib/api', () => ({
@@ -86,6 +86,17 @@ const mockWarningResult: ValidationResult = {
   ],
   validated_at: '2024-01-15T10:30:00Z',
   can_download_report: true,
+}
+
+// Mock history item (different structure than ValidationResult)
+const mockHistoryItem: ValidationHistoryItem = {
+  id: 'val-1',
+  file_name: 'invoice.xml',
+  file_type: 'xrechnung',
+  is_valid: true,
+  error_count: 0,
+  warning_count: 0,
+  validated_at: '2024-01-15T10:30:00Z',
 }
 
 // Helper to create a wrapper with QueryClientProvider
@@ -233,7 +244,19 @@ describe('useValidate', () => {
   describe('authenticated user', () => {
     beforeEach(() => {
       useAuthStore.setState({
-        user: { id: '1', email: 'test@example.com' } as any,
+        user: {
+          id: '1',
+          email: 'test@example.com',
+          plan: 'free',
+          is_active: true,
+          is_verified: true,
+          is_admin: false,
+          created_at: '2024-01-01T00:00:00Z',
+          email_notifications: true,
+          notify_validation_results: true,
+          notify_weekly_summary: false,
+          notify_marketing: false,
+        },
         isAuthenticated: true,
       })
     })
@@ -350,11 +373,11 @@ describe('useValidate', () => {
     })
 
     it('stores guest_id in localStorage when returned', async () => {
-      vi.mocked(getGuestId).mockReturnValue(undefined)
+      vi.mocked(getGuestId).mockReturnValue(undefined as unknown as string)
       vi.mocked(validationApi.validateGuest).mockResolvedValue({
         ...mockValidResult,
         guest_id: 'new-guest-456',
-      } as any)
+      })
 
       const { result } = renderHook(() => useValidate(), { wrapper: createWrapper() })
 
@@ -434,7 +457,7 @@ describe('useValidationHistory', () => {
   it('fetches history when authenticated', async () => {
     useAuthStore.setState({ isAuthenticated: true })
     vi.mocked(validationApi.getHistory).mockResolvedValue({
-      items: [mockValidResult],
+      items: [mockHistoryItem],
       total: 1,
       page: 1,
       page_size: 10,

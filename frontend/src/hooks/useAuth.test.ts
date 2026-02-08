@@ -235,7 +235,7 @@ describe('useLogin', () => {
   })
 
   it('logs in user and stores tokens', async () => {
-    const tokens = { access_token: 'access-123', refresh_token: 'refresh-123' }
+    const tokens = { access_token: 'access-123', refresh_token: 'refresh-123', token_type: 'bearer' }
     vi.mocked(authApi.login).mockResolvedValue(tokens)
     vi.mocked(authApi.getMe).mockResolvedValue(mockUser)
 
@@ -256,7 +256,7 @@ describe('useLogin', () => {
   })
 
   it('shows success toast on login', async () => {
-    const tokens = { access_token: 'access-123', refresh_token: 'refresh-123' }
+    const tokens = { access_token: 'access-123', refresh_token: 'refresh-123', token_type: 'bearer' }
     vi.mocked(authApi.login).mockResolvedValue(tokens)
     vi.mocked(authApi.getMe).mockResolvedValue(mockUser)
 
