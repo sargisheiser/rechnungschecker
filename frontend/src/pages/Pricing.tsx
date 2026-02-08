@@ -32,7 +32,7 @@ const FALLBACK_PLANS: Plan[] = [
     name: 'Starter',
     description: 'Fuer kleine Unternehmen',
     price_monthly: 29,
-    price_annual: 290,
+    price_annual: 299,
     popular: false,
     features: {
       validations_per_month: 100,
@@ -51,7 +51,7 @@ const FALLBACK_PLANS: Plan[] = [
     name: 'Professional',
     description: 'Fuer wachsende Unternehmen',
     price_monthly: 79,
-    price_annual: 790,
+    price_annual: 799,
     popular: true,
     features: {
       validations_per_month: null,
@@ -70,7 +70,7 @@ const FALLBACK_PLANS: Plan[] = [
     name: 'Steuerberater',
     description: 'Fuer Kanzleien',
     price_monthly: 199,
-    price_annual: 1990,
+    price_annual: 1999,
     popular: false,
     features: {
       validations_per_month: null,
@@ -361,12 +361,12 @@ function PlanCard({
 
         <div className="mt-4">
           <span className="text-4xl font-bold text-gray-900">
-            {formatCurrency(monthlyEquivalent)}
+            {formatCurrency(price)}
           </span>
-          <span className="text-gray-500">/Monat</span>
+          <span className="text-gray-500">/{annual ? 'Jahr' : 'Monat'}</span>
           {annual && price > 0 && (
             <p className="text-sm text-gray-500 mt-1">
-              {formatCurrency(price)} jaehrlich
+              entspricht {formatCurrency(monthlyEquivalent)}/Monat
             </p>
           )}
         </div>
