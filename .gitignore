@@ -136,3 +136,8 @@ test_xrechnung-report.xml
 
 # Implementation docs (internal)
 IMPLEMENTATION_PLAN.md
+
+# Playwright
+frontend/playwright-report/
+frontend/test-results/
+frontend/playwright/.cache/
