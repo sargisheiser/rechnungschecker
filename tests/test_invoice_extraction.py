@@ -2,14 +2,12 @@
 
 from datetime import date
 from decimal import Decimal
-from unittest.mock import MagicMock, patch
-from uuid import uuid4
+from unittest.mock import MagicMock
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.invoice_extraction import InvoiceExtractionService
-
 
 # Sample UBL (XRechnung) XML
 SAMPLE_UBL_XML = b"""<?xml version="1.0" encoding="UTF-8"?>
@@ -342,12 +340,12 @@ class TestDATEVExportWithExtractedData:
     async def test_export_uses_extracted_amounts(self, db_session: AsyncSession):
         """Test that DATEV export uses real extracted amounts."""
         from app.models.extracted_invoice import ExtractedInvoiceData
+
+        # Create a test user
+        from app.models.user import PlanType, User
         from app.models.validation import ValidationLog
         from app.schemas.datev import DATEVConfig, Kontenrahmen
         from app.services.export.datev import DATEVExportService
-
-        # Create a test user
-        from app.models.user import User, PlanType
         user = User(
             email="datev_test@test.com",
             password_hash="hashed",

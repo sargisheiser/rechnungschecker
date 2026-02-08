@@ -231,9 +231,8 @@ class InvoiceExtractionService:
                 root, ".//cac:AccountingSupplierParty/cac:Party/cac:PartyName/cbc:Name", NAMESPACES
             )
             if not seller_name:
-                seller_name = self._get_text(
-                    root, ".//cac:AccountingSupplierParty/cac:Party/cac:PartyLegalEntity/cbc:RegistrationName", NAMESPACES
-                )
+                xpath = ".//cac:AccountingSupplierParty/cac:Party/cac:PartyLegalEntity/cbc:RegistrationName"
+                seller_name = self._get_text(root, xpath, NAMESPACES)
 
             return ExtractedInvoiceDataCreate(
                 invoice_number=invoice_number,

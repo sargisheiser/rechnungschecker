@@ -9,11 +9,10 @@ from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from app.models.extracted_invoice import ExtractedInvoiceData
 from app.models.validation import ValidationLog
-from app.schemas.datev import DATEVBuchung, DATEVConfig, Kontenrahmen
+from app.schemas.datev import DATEVBuchung, DATEVConfig
 from app.services.export.kontenrahmen import (
     get_bu_schluessel,
     get_debitor_account,

@@ -1,7 +1,7 @@
 """CSV export endpoints for DATEV and Excel compatibility."""
 
 import logging
-from datetime import date, datetime
+from datetime import date
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, status
@@ -9,7 +9,7 @@ from fastapi.responses import StreamingResponse
 
 from app.api.deps import CurrentUser, DbSession
 from app.models.user import PlanType
-from app.schemas.datev import DATEVConfig, DATEVExportResponse, Kontenrahmen
+from app.schemas.datev import DATEVConfig, Kontenrahmen
 from app.schemas.export import ExportFormat, ValidationStatus
 from app.services.export import DATEVExportService, ExportService
 
@@ -153,7 +153,7 @@ async def export_clients(
 @router.get(
     "/datev/buchungsstapel",
     summary="Export validations as DATEV Buchungsstapel",
-    description="Download validated invoices as DATEV Buchungsstapel CSV file for import into DATEV accounting software.",
+    description="Download validated invoices as DATEV Buchungsstapel CSV for DATEV import.",
     responses={
         200: {
             "content": {"text/csv": {}},

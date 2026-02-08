@@ -12,17 +12,16 @@ from app.models.validation import FileType, ValidationLog
 from app.schemas.datev import (
     DATEVBuchung,
     DATEVConfig,
-    DATEVExportRequest,
     Kontenrahmen,
 )
 from app.services.export.kontenrahmen import (
+    SKR03_ACCOUNTS,
+    SKR04_ACCOUNTS,
     get_accounts,
     get_bu_schluessel,
     get_debitor_account,
     get_kreditor_account,
     get_revenue_account,
-    SKR03_ACCOUNTS,
-    SKR04_ACCOUNTS,
 )
 
 
