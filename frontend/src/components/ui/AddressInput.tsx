@@ -39,6 +39,16 @@ export function AddressInput({
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
   const lookupTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
 
+  // Refs to hold latest values/onChange to avoid stale closures in useEffect
+  const valuesRef = useRef(values)
+  const onChangeRef = useRef(onChange)
+
+  // Keep refs updated
+  useEffect(() => {
+    valuesRef.current = values
+    onChangeRef.current = onChange
+  }, [values, onChange])
+
   // PLZ auto-lookup for city
   useEffect(() => {
     const plz = values.postalCode?.trim()
@@ -61,7 +71,8 @@ export function AddressInput({
       const city = await lookupCityByPLZ(plz)
 
       if (city) {
-        onChange({ ...values, city })
+        // Use refs to get latest values and onChange
+        onChangeRef.current({ ...valuesRef.current, city })
         setLookupSuccess(true)
         // Reset success indicator after 2 seconds
         setTimeout(() => setLookupSuccess(false), 2000)
