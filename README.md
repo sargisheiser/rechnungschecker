@@ -28,6 +28,13 @@ E-Invoice Validation & Conversion Platform for German SMEs and Steuerberater.
 - **Dashboard Quick Actions**: Quick access to common features
 - **Client Management**: Manage multiple clients (Steuerberater plan)
 
+### DATEV Export
+- **DATEV Buchungsstapel**: Export validated invoices to DATEV CSV format
+- **SKR03/SKR04 Support**: Automatic account mapping for both Kontenrahmen
+- **Real Invoice Data**: Extracts amounts, dates, VAT rates from XML
+- **BU-Schlüssel**: Correct tax codes for 0%, 7%, 19% VAT rates
+- **Seller Name**: Automatic Buchungstext from invoice seller
+
 ### Integration & API
 - **REST API**: Full API access for integration
 - **API Keys**: Generate and manage API keys (Pro+)
@@ -185,6 +192,8 @@ The application is now available at:
 | GET | `/api/v1/convert/status` | Get conversion service status |
 | **Reports** | | |
 | GET | `/api/v1/reports/{id}/pdf` | Download validation report |
+| **Export** | | |
+| GET | `/api/v1/export/datev/buchungsstapel` | Export to DATEV Buchungsstapel CSV |
 | **Templates** | | |
 | GET | `/api/v1/templates/` | List saved templates |
 | POST | `/api/v1/templates/` | Create new template |
@@ -358,6 +367,7 @@ rechnungschecker/
 │       ├── validator/             # KoSIT validation
 │       ├── converter/             # PDF to e-invoice conversion
 │       ├── invoice_creator/       # XRechnung XML generation
+│       ├── export/                # DATEV Buchungsstapel export
 │       ├── scheduler/             # APScheduler for cron jobs
 │       ├── storage/               # Cloud storage (S3) client
 │       ├── oauth/                 # Google OAuth service

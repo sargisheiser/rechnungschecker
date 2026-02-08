@@ -142,3 +142,8 @@ ROADMAP.md
 frontend/playwright-report/
 frontend/test-results/
 frontend/playwright/.cache/
+
+# Test coverage
+frontend/coverage/
+coverage/
+htmlcov/
