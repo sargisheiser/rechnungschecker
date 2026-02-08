@@ -136,6 +136,7 @@ test_xrechnung-report.xml
 
 # Implementation docs (internal)
 IMPLEMENTATION_PLAN.md
+ROADMAP.md
 
 # Playwright
 frontend/playwright-report/
