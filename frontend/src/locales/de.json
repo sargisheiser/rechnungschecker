@@ -38,7 +38,10 @@
     "login": "Anmelden",
     "register": "Kostenlos starten",
     "getStarted": "Kostenlos starten",
-    "admin": "Admin"
+    "admin": "Admin",
+    "userMenu": "Benutzermenü",
+    "openMenu": "Menü öffnen",
+    "closeMenu": "Menü schließen"
   },
   "landing": {
     "hero": {

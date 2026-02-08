@@ -82,10 +82,18 @@ export function Layout() {
                     {t('nav.analytics')}
                   </Link>
                   <div className="relative group">
-                    <button className="flex items-center gap-2 p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100">
+                    <button
+                      className="flex items-center gap-2 p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                      aria-label={t('nav.userMenu')}
+                      aria-haspopup="menu"
+                    >
                       <User className="h-5 w-5" />
                     </button>
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                    <div
+                      className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all"
+                      role="menu"
+                      aria-label={t('nav.userMenu')}
+                    >
                       {user?.is_admin && (
                         <>
                           <Link
@@ -139,7 +147,9 @@ export function Layout() {
             <div className="md:hidden flex items-center">
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="text-gray-600 hover:text-gray-900"
+                className="text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-lg p-1"
+                aria-label={mobileMenuOpen ? t('nav.closeMenu') : t('nav.openMenu')}
+                aria-expanded={mobileMenuOpen}
               >
                 {mobileMenuOpen ? (
                   <X className="h-6 w-6" />

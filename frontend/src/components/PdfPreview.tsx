@@ -34,10 +34,11 @@ export function PdfPreview({ file, className }: PdfPreviewProps) {
           </div>
           <button
             onClick={() => setIsExpanded(true)}
-            className="p-1.5 rounded-md hover:bg-gray-200 transition-colors"
+            className="p-1.5 rounded-md hover:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
             title="Vollbild"
+            aria-label="PDF im Vollbild anzeigen"
           >
-            <Maximize2 className="h-4 w-4 text-gray-500" />
+            <Maximize2 className="h-4 w-4 text-gray-500" aria-hidden="true" />
           </button>
         </div>
         <div className="relative bg-gray-100" style={{ height: '500px' }}>
@@ -60,7 +61,12 @@ export function PdfPreview({ file, className }: PdfPreviewProps) {
 
       {/* Fullscreen Modal */}
       {isExpanded && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="PDF Vollbildansicht"
+        >
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
               <div className="flex items-center gap-2">
@@ -72,10 +78,11 @@ export function PdfPreview({ file, className }: PdfPreviewProps) {
               </div>
               <button
                 onClick={() => setIsExpanded(false)}
-                className="p-2 rounded-md hover:bg-gray-100 transition-colors"
+                className="p-2 rounded-md hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
                 title="Schliessen"
+                aria-label="Vollbildmodus schließen"
               >
-                <X className="h-5 w-5 text-gray-500" />
+                <X className="h-5 w-5 text-gray-500" aria-hidden="true" />
               </button>
             </div>
             <div className="flex-1 bg-gray-100">

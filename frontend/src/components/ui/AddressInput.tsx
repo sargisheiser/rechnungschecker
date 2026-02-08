@@ -162,6 +162,11 @@ export function AddressInput({
               placeholder="Straße, PLZ oder Stadt eingeben..."
               disabled={disabled}
               className="input pl-10 pr-10"
+              role="combobox"
+              aria-expanded={showSuggestions}
+              aria-haspopup="listbox"
+              aria-controls="address-suggestions"
+              aria-autocomplete="list"
             />
             {isSearching && (
               <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-gray-400" />
@@ -175,15 +180,22 @@ export function AddressInput({
                 className="fixed inset-0 z-10"
                 onClick={() => setShowSuggestions(false)}
               />
-              <div className="absolute z-20 mt-1 w-full bg-white rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto">
+              <div
+                id="address-suggestions"
+                className="absolute z-20 mt-1 w-full bg-white rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto"
+                role="listbox"
+                aria-label="Adressvorschläge"
+              >
                 {suggestions.map((suggestion, index) => (
                   <button
                     key={index}
                     type="button"
+                    role="option"
+                    aria-selected={false}
                     onClick={() => handleSelectSuggestion(suggestion)}
-                    className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-start gap-3 border-b border-gray-100 last:border-0"
+                    className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-start gap-3 border-b border-gray-100 last:border-0 focus:outline-none focus:bg-primary-50"
                   >
-                    <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                    <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" aria-hidden="true" />
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-gray-900 truncate">
                         {suggestion.street}
