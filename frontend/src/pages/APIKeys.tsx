@@ -125,14 +125,20 @@ export function APIKeysPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            <Link
+              to="/api-dokumentation"
+              className="btn-secondary flex items-center gap-2"
+            >
+              <BookOpen className="h-4 w-4" />
+              Integrations-Guide
+            </Link>
             <a
               href="/api/docs"
               target="_blank"
               rel="noopener noreferrer"
-              className="btn-secondary flex items-center gap-2"
+              className="btn-ghost flex items-center gap-2"
             >
-              <BookOpen className="h-4 w-4" />
-              API-Dokumentation
+              OpenAPI Docs
               <ExternalLink className="h-3 w-3" />
             </a>
             <button
@@ -270,8 +276,8 @@ export function APIKeysPage() {
               onClick: () => setShowCreateModal(true),
             }}
             secondaryAction={{
-              label: 'API-Dokumentation',
-              href: '/api/docs',
+              label: 'Integrations-Guide',
+              href: '/api-dokumentation',
             }}
           />
         ) : (
@@ -291,13 +297,16 @@ export function APIKeysPage() {
 
       {/* Documentation Link */}
       <div className="mt-8 p-4 bg-gray-50 rounded-lg">
-        <h3 className="font-medium text-gray-900 mb-2">API-Dokumentation</h3>
+        <h3 className="font-medium text-gray-900 mb-2">Schnellstart</h3>
         <p className="text-sm text-gray-600 mb-3">
-          Verwenden Sie Ihren API-Schlüssel im Authorization-Header:
+          Verwenden Sie Ihren API-Schluessel im Authorization-Header:
         </p>
         <code className="block px-3 py-2 bg-gray-900 text-green-400 rounded text-sm font-mono overflow-x-auto">
-          curl -H "Authorization: Bearer rc_live_xxx..." https://api.rechnungschecker.de/api/v1/validate/
+          curl -H "Authorization: Bearer rck_live_xxx..." https://api.rechnungschecker.de/v1/validate/ -F "file=@rechnung.xml"
         </code>
+        <Link to="/api-dokumentation" className="inline-block mt-3 text-sm text-primary-600 hover:text-primary-700">
+          Vollstaendigen Integrations-Guide ansehen &rarr;
+        </Link>
       </div>
 
       {/* Create Modal */}

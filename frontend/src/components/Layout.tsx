@@ -1,5 +1,5 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom'
-import { FileCheck, Menu, X, User, LogOut, Settings, BarChart3, FolderUp, Files, BookTemplate, Shield } from 'lucide-react'
+import { FileCheck, Menu, X, User, LogOut, Settings, BarChart3, FolderUp, BookTemplate, Shield, LayoutDashboard, FileOutput, Home, CreditCard } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore, useLogout } from '@/hooks/useAuth'
@@ -35,56 +35,55 @@ export function Layout() {
             </div>
 
             {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-6">
+            <div className="hidden md:flex items-center gap-4">
               <Link
                 to="/"
-                className="text-gray-600 hover:text-gray-900 font-medium"
+                className="text-gray-600 hover:text-gray-900 font-medium flex items-center gap-1.5"
               >
+                <Home className="h-4 w-4" />
                 {t('nav.home')}
               </Link>
               <Link
                 to="/preise"
-                className="text-gray-600 hover:text-gray-900 font-medium"
+                className="text-gray-600 hover:text-gray-900 font-medium flex items-center gap-1.5"
               >
+                <CreditCard className="h-4 w-4" />
                 {t('nav.pricing')}
               </Link>
 
               {isAuthenticated ? (
                 <div className="flex items-center gap-4">
-                  <Link to="/dashboard" className="btn-secondary">
+                  <Link
+                    to="/dashboard"
+                    className="text-gray-600 hover:text-gray-900 font-medium flex items-center gap-1.5"
+                  >
+                    <LayoutDashboard className="h-4 w-4" />
                     {t('nav.dashboard')}
                   </Link>
                   <Link
                     to="/konvertierung"
-                    className="text-gray-600 hover:text-gray-900 font-medium"
+                    className="text-gray-600 hover:text-gray-900 font-medium flex items-center gap-1.5"
                   >
+                    <FileOutput className="h-4 w-4" />
                     {t('nav.conversion')}
                   </Link>
                   <Link
-                    to="/batch-konvertierung"
-                    className="text-gray-600 hover:text-gray-900 font-medium flex items-center gap-1"
-                  >
-                    <Files className="h-4 w-4" />
-                    Batch
-                  </Link>
-                  <Link
-                    to="/analytik"
-                    className="text-gray-600 hover:text-gray-900 font-medium flex items-center gap-1"
-                  >
-                    <BarChart3 className="h-4 w-4" />
-                    {t('nav.analytics')}
-                  </Link>
-                  <Link
                     to="/batch"
-                    className="text-gray-600 hover:text-gray-900 font-medium flex items-center gap-1"
+                    className="text-gray-600 hover:text-gray-900 font-medium flex items-center gap-1.5"
                   >
                     <FolderUp className="h-4 w-4" />
                     {t('nav.batch')}
                   </Link>
+                  <Link
+                    to="/analytik"
+                    className="text-gray-600 hover:text-gray-900 font-medium flex items-center gap-1.5"
+                  >
+                    <BarChart3 className="h-4 w-4" />
+                    {t('nav.analytics')}
+                  </Link>
                   <div className="relative group">
-                    <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
+                    <button className="flex items-center gap-2 p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100">
                       <User className="h-5 w-5" />
-                      <span className="text-sm">{user?.email}</span>
                     </button>
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
                       {user?.is_admin && (
@@ -161,79 +160,78 @@ export function Layout() {
             <div className="px-2 pt-2 pb-3 space-y-1">
               <Link
                 to="/"
-                className="block px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
                 onClick={() => setMobileMenuOpen(false)}
               >
+                <Home className="h-4 w-4" />
                 {t('nav.home')}
               </Link>
               <Link
                 to="/preise"
-                className="block px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
                 onClick={() => setMobileMenuOpen(false)}
               >
+                <CreditCard className="h-4 w-4" />
                 {t('nav.pricing')}
               </Link>
               {isAuthenticated ? (
                 <>
                   <Link
                     to="/dashboard"
-                    className="block px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
                     onClick={() => setMobileMenuOpen(false)}
                   >
+                    <LayoutDashboard className="h-4 w-4" />
                     {t('nav.dashboard')}
                   </Link>
                   <Link
                     to="/konvertierung"
-                    className="block px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
                     onClick={() => setMobileMenuOpen(false)}
                   >
+                    <FileOutput className="h-4 w-4" />
                     {t('nav.conversion')}
                   </Link>
                   <Link
-                    to="/batch-konvertierung"
-                    className="block px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Batch Konvertierung
-                  </Link>
-                  <Link
-                    to="/analytik"
-                    className="block px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    {t('nav.analytics')}
-                  </Link>
-                  <Link
                     to="/batch"
-                    className="block px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
                     onClick={() => setMobileMenuOpen(false)}
                   >
+                    <FolderUp className="h-4 w-4" />
                     {t('nav.batch')}
                   </Link>
                   <Link
-                    to="/vorlagen"
-                    className="block px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
+                    to="/analytik"
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
                     onClick={() => setMobileMenuOpen(false)}
                   >
+                    <BarChart3 className="h-4 w-4" />
+                    {t('nav.analytics')}
+                  </Link>
+                  <Link
+                    to="/vorlagen"
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <BookTemplate className="h-4 w-4" />
                     Vorlagen
                   </Link>
                   {user?.is_admin && (
                     <Link
                       to="/admin"
-                      className="block px-3 py-2 rounded-lg text-primary-600 hover:bg-primary-50 font-medium"
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-primary-600 hover:bg-primary-50 font-medium"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      <span className="flex items-center gap-2">
-                        <Shield className="h-4 w-4" />
-                        {t('nav.admin')}
-                      </span>
+                      <Shield className="h-4 w-4" />
+                      {t('nav.admin')}
                     </Link>
                   )}
                   <Link
                     to="/einstellungen"
-                    className="block px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
                     onClick={() => setMobileMenuOpen(false)}
                   >
+                    <Settings className="h-4 w-4" />
                     {t('nav.settings')}
                   </Link>
                   <button
@@ -241,8 +239,9 @@ export function Layout() {
                       handleLogout()
                       setMobileMenuOpen(false)
                     }}
-                    className="block w-full text-left px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
+                    className="flex items-center gap-2 w-full text-left px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50"
                   >
+                    <LogOut className="h-4 w-4" />
                     {t('nav.logout')}
                   </button>
                 </>
@@ -306,9 +305,9 @@ export function Layout() {
                   </Link>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white">
+                  <Link to="/api-dokumentation" className="hover:text-white">
                     {t('footer.apiDocs')}
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>

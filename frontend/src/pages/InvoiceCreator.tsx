@@ -19,6 +19,7 @@ import {
 import { invoiceApi } from '@/lib/api'
 import type { InvoiceData, InvoiceLineItem, PartyInfo } from '@/types'
 import { Alert } from '@/components/Alert'
+import { SkeletonDraftItem } from '@/components/ui/Skeleton'
 
 const WIZARD_STEPS = [
   { id: 1, name: 'Grunddaten', icon: FileText },
@@ -93,8 +94,10 @@ export function InvoiceCreatorPage() {
         )}
 
         {draftsLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+          <div className="card divide-y">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <SkeletonDraftItem key={i} />
+            ))}
           </div>
         ) : draftsData?.drafts.length === 0 ? (
           <div className="card p-12 text-center">

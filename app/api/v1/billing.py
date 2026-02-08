@@ -138,8 +138,12 @@ async def create_checkout(
             detail="Der kostenlose Plan erfordert keine Zahlung",
         )
 
-    # Check if user already has a paid subscription
-    if current_user.plan != PlanType.FREE and current_user.stripe_subscription_id:
+    # Check if user already has a paid subscription (skip for demo subscriptions)
+    is_demo_subscription = (
+        current_user.stripe_subscription_id
+        and current_user.stripe_subscription_id.startswith("demo_")
+    )
+    if current_user.plan != PlanType.FREE and current_user.stripe_subscription_id and not is_demo_subscription:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Sie haben bereits ein aktives Abonnement. "

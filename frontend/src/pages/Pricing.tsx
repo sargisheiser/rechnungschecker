@@ -1,21 +1,118 @@
-import { useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { Check, X, Loader2, AlertCircle, Shield } from 'lucide-react'
-import { usePlans, useCheckout } from '@/hooks/useBilling'
+import { usePlans, useCheckout, useSubscription } from '@/hooks/useBilling'
 import { useAuthStore } from '@/hooks/useAuth'
 import { cn, formatCurrency } from '@/lib/utils'
 import type { Plan, PlanTier } from '@/types'
 
+// Fallback plans if API is unavailable
+const FALLBACK_PLANS: Plan[] = [
+  {
+    id: 'free' as PlanTier,
+    name: 'Kostenlos',
+    description: 'Fuer Einsteiger',
+    price_monthly: 0,
+    price_annual: 0,
+    popular: false,
+    features: {
+      validations_per_month: 5,
+      conversions_per_month: 0,
+      batch_upload: false,
+      api_access: false,
+      api_calls_per_month: 0,
+      report_download: false,
+      multi_client: false,
+      max_clients: 0,
+      support_level: 'community',
+    },
+  },
+  {
+    id: 'starter' as PlanTier,
+    name: 'Starter',
+    description: 'Fuer kleine Unternehmen',
+    price_monthly: 29,
+    price_annual: 290,
+    popular: false,
+    features: {
+      validations_per_month: 100,
+      conversions_per_month: 50,
+      batch_upload: false,
+      api_access: false,
+      api_calls_per_month: 0,
+      report_download: true,
+      multi_client: false,
+      max_clients: 0,
+      support_level: 'email',
+    },
+  },
+  {
+    id: 'pro' as PlanTier,
+    name: 'Professional',
+    description: 'Fuer wachsende Unternehmen',
+    price_monthly: 79,
+    price_annual: 790,
+    popular: true,
+    features: {
+      validations_per_month: null,
+      conversions_per_month: 200,
+      batch_upload: true,
+      api_access: true,
+      api_calls_per_month: 10000,
+      report_download: true,
+      multi_client: false,
+      max_clients: 0,
+      support_level: 'priority',
+    },
+  },
+  {
+    id: 'steuerberater' as PlanTier,
+    name: 'Steuerberater',
+    description: 'Fuer Kanzleien',
+    price_monthly: 199,
+    price_annual: 1990,
+    popular: false,
+    features: {
+      validations_per_month: null,
+      conversions_per_month: 999999,
+      batch_upload: true,
+      api_access: true,
+      api_calls_per_month: 100000,
+      report_download: true,
+      multi_client: true,
+      max_clients: 100,
+      support_level: 'phone',
+    },
+  },
+]
+
 export function Pricing() {
   const [annual, setAnnual] = useState(true)
+  const [checkoutError, setCheckoutError] = useState<string | null>(null)
   const [searchParams] = useSearchParams()
-  const { data: plans, isLoading } = usePlans()
-  const { isAuthenticated } = useAuthStore()
+  const navigate = useNavigate()
+  const { data: apiPlans, isLoading, error } = usePlans()
+  const { isAuthenticated, user } = useAuthStore()
+  const { data: subscription } = useSubscription()
   const checkout = useCheckout()
+
+  // Use API plans if available, otherwise fallback
+  const plans = apiPlans && apiPlans.length > 0 ? apiPlans : (error ? FALLBACK_PLANS : undefined)
 
   const checkoutCanceled = searchParams.get('checkout') === 'canceled'
 
+  // Check if user has an active paid subscription
+  const hasActiveSubscription = isAuthenticated && subscription && subscription.plan !== 'free'
+  const currentPlan = subscription?.plan || user?.plan || 'free'
+
+  // Clear error when changing annual/monthly
+  useEffect(() => {
+    setCheckoutError(null)
+  }, [annual])
+
   const handleSelectPlan = (planId: PlanTier) => {
+    setCheckoutError(null)
+
     if (planId === 'free') {
       // Redirect to register for free plan
       window.location.href = '/registrieren'
@@ -28,7 +125,22 @@ export function Pricing() {
       return
     }
 
-    checkout.mutate({ plan: planId, annual })
+    // If user has active subscription, redirect to billing portal
+    if (hasActiveSubscription) {
+      navigate('/einstellungen')
+      return
+    }
+
+    checkout.mutate(
+      { plan: planId, annual },
+      {
+        onError: (err: unknown) => {
+          const axiosError = err as { response?: { data?: { detail?: string } } }
+          const message = axiosError.response?.data?.detail || 'Checkout fehlgeschlagen. Bitte versuchen Sie es erneut.'
+          setCheckoutError(message)
+        },
+      }
+    )
   }
 
   return (
@@ -49,6 +161,28 @@ export function Pricing() {
               <AlertCircle className="h-5 w-5 text-warning-600" />
               <span className="text-warning-700">
                 Checkout abgebrochen. Sie können jederzeit erneut starten.
+              </span>
+            </div>
+          )}
+
+          {checkoutError && (
+            <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg inline-flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-red-600" />
+              <span className="text-red-700">{checkoutError}</span>
+            </div>
+          )}
+
+          {hasActiveSubscription && (
+            <div className="mt-6 p-4 bg-primary-50 border border-primary-200 rounded-lg inline-flex items-center gap-3">
+              <Check className="h-5 w-5 text-primary-600" />
+              <span className="text-primary-700">
+                Sie haben bereits ein aktives <strong>{currentPlan}</strong>-Abonnement.{' '}
+                <button
+                  onClick={() => navigate('/einstellungen')}
+                  className="underline hover:no-underline"
+                >
+                  Abonnement verwalten
+                </button>
               </span>
             </div>
           )}
@@ -106,9 +240,14 @@ export function Pricing() {
           <div className="flex justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
           </div>
+        ) : !plans || plans.length === 0 ? (
+          <div className="text-center py-12">
+            <AlertCircle className="h-12 w-12 text-warning-500 mx-auto mb-4" />
+            <p className="text-gray-600">Keine Preisplaene verfuegbar.</p>
+          </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {plans?.map((plan) => (
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mt-6 isolate">
+            {plans.map((plan) => (
               <PlanCard
                 key={plan.id}
                 plan={plan}
@@ -116,6 +255,8 @@ export function Pricing() {
                 onSelect={() => handleSelectPlan(plan.id)}
                 isLoading={checkout.isPending}
                 isAuthenticated={isAuthenticated}
+                isCurrentPlan={plan.id === currentPlan}
+                hasActiveSubscription={hasActiveSubscription || false}
               />
             ))}
           </div>
@@ -156,12 +297,16 @@ function PlanCard({
   onSelect,
   isLoading,
   isAuthenticated,
+  isCurrentPlan,
+  hasActiveSubscription,
 }: {
   plan: Plan
   annual: boolean
   onSelect: () => void
   isLoading: boolean
   isAuthenticated: boolean
+  isCurrentPlan: boolean
+  hasActiveSubscription: boolean
 }) {
   const price = annual ? plan.price_annual : plan.price_monthly
   const monthlyEquivalent = annual ? plan.price_annual / 12 : plan.price_monthly
@@ -190,12 +335,20 @@ function PlanCard({
   return (
     <div
       className={cn(
-        'card flex flex-col',
-        plan.popular && 'ring-2 ring-primary-500 relative'
+        'card flex flex-col relative overflow-visible',
+        isCurrentPlan && 'ring-2 ring-success-500',
+        plan.popular && !isCurrentPlan && 'ring-2 ring-primary-500'
       )}
     >
-      {plan.popular && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+      {isCurrentPlan && (
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 pointer-events-none">
+          <span className="bg-success-500 text-white text-xs font-medium px-3 py-1 rounded-full">
+            Aktuell
+          </span>
+        </div>
+      )}
+      {plan.popular && !isCurrentPlan && (
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 pointer-events-none">
           <span className="bg-primary-500 text-white text-xs font-medium px-3 py-1 rounded-full">
             Beliebt
           </span>
@@ -239,21 +392,33 @@ function PlanCard({
         </ul>
       </div>
 
-      <div className="p-6 pt-0">
+      <div className="p-6 pt-0 relative z-30">
         <button
-          onClick={onSelect}
-          disabled={isLoading}
+          onClick={(e) => {
+            e.stopPropagation()
+            onSelect()
+          }}
+          disabled={isLoading || isCurrentPlan}
           className={cn(
-            'w-full',
-            plan.popular ? 'btn-primary' : 'btn-secondary'
+            'w-full cursor-pointer',
+            isCurrentPlan
+              ? 'btn-secondary opacity-70 cursor-not-allowed'
+              : plan.popular
+                ? 'btn-primary'
+                : 'btn-secondary'
           )}
+          type="button"
         >
           {isLoading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
+          ) : isCurrentPlan ? (
+            'Aktueller Plan'
           ) : plan.id === 'free' ? (
             'Kostenlos starten'
           ) : !isAuthenticated ? (
             'Registrieren'
+          ) : hasActiveSubscription ? (
+            'Wechseln'
           ) : (
             'Auswählen'
           )}

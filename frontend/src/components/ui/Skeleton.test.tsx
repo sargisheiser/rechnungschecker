@@ -10,6 +10,10 @@ import {
   SkeletonTable,
   SkeletonListItem,
   SkeletonValidationItem,
+  SkeletonDraftItem,
+  SkeletonAnalyticsCard,
+  SkeletonChart,
+  SkeletonBatchJob,
 } from './Skeleton'
 
 describe('Skeleton', () => {
@@ -146,5 +150,58 @@ describe('SkeletonValidationItem', () => {
     const { container } = render(<SkeletonValidationItem />)
     const skeletons = container.querySelectorAll('.animate-pulse')
     expect(skeletons.length).toBeGreaterThan(3)
+  })
+})
+
+describe('SkeletonDraftItem', () => {
+  it('renders draft item structure', () => {
+    const { container } = render(<SkeletonDraftItem />)
+    const skeletons = container.querySelectorAll('.animate-pulse')
+    expect(skeletons.length).toBeGreaterThanOrEqual(3)
+  })
+
+  it('applies custom className', () => {
+    const { container } = render(<SkeletonDraftItem className="custom-class" />)
+    expect(container.firstChild).toHaveClass('custom-class')
+  })
+})
+
+describe('SkeletonAnalyticsCard', () => {
+  it('renders analytics card structure', () => {
+    const { container } = render(<SkeletonAnalyticsCard />)
+    const skeletons = container.querySelectorAll('.animate-pulse')
+    expect(skeletons.length).toBeGreaterThanOrEqual(3)
+  })
+
+  it('has card styling', () => {
+    const { container } = render(<SkeletonAnalyticsCard />)
+    expect(container.firstChild).toHaveClass('rounded-xl', 'border')
+  })
+})
+
+describe('SkeletonChart', () => {
+  it('renders chart placeholder with bars', () => {
+    const { container } = render(<SkeletonChart />)
+    const skeletons = container.querySelectorAll('.animate-pulse')
+    // Should have title skeleton + 12 bar skeletons
+    expect(skeletons.length).toBeGreaterThanOrEqual(10)
+  })
+
+  it('has card styling', () => {
+    const { container } = render(<SkeletonChart />)
+    expect(container.firstChild).toHaveClass('rounded-xl', 'border')
+  })
+})
+
+describe('SkeletonBatchJob', () => {
+  it('renders batch job structure', () => {
+    const { container } = render(<SkeletonBatchJob />)
+    const skeletons = container.querySelectorAll('.animate-pulse')
+    expect(skeletons.length).toBeGreaterThanOrEqual(4)
+  })
+
+  it('has rounded border', () => {
+    const { container } = render(<SkeletonBatchJob />)
+    expect(container.firstChild).toHaveClass('rounded-lg', 'border')
   })
 })

@@ -85,7 +85,7 @@ export function Dashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-semibold text-gray-900">
-            {t('dashboard.welcomeBack')}, {user?.company_name || user?.full_name || user?.email?.split('@')[0]}
+            {t('dashboard.welcomeBack')}{user?.company_name || user?.full_name ? `, ${user?.company_name || user?.full_name}` : ''}
           </h1>
           <span className={cn(
             'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',

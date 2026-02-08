@@ -35,6 +35,7 @@ import { AdminRoute } from '@/components/AdminRoute'
 import { AdminDashboard } from '@/pages/admin/AdminDashboard'
 import { AdminUsers } from '@/pages/admin/AdminUsers'
 import { GoogleCallback } from '@/pages/GoogleCallback'
+import { ApiDocs } from '@/pages/ApiDocs'
 
 function App() {
   return (
@@ -53,6 +54,7 @@ function App() {
         <Route path="datenschutz" element={<Datenschutz />} />
         <Route path="agb" element={<AGB />} />
         <Route path="kontakt" element={<Kontakt />} />
+        <Route path="api-dokumentation" element={<ApiDocs />} />
         <Route
           path="demo-checkout"
           element={

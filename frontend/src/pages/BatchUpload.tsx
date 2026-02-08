@@ -20,6 +20,7 @@ import {
 import { useBatchJobs, useCreateBatch, useCancelBatch, useDeleteBatch, useBatchJob } from '@/hooks/useBatch'
 import { cn } from '@/lib/utils'
 import type { BatchJob, BatchJobStatus } from '@/lib/api'
+import { SkeletonBatchJob } from '@/components/ui/Skeleton'
 
 const MAX_FILES = 50
 
@@ -295,8 +296,10 @@ export default function BatchUpload() {
           <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('batch.recentJobs')}</h2>
 
           {jobsLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 text-blue-500 animate-spin" />
+            <div className="space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <SkeletonBatchJob key={i} />
+              ))}
             </div>
           ) : jobs && jobs.items.length > 0 ? (
             <div className="space-y-4">

@@ -26,6 +26,7 @@ import {
   Mail,
   Send,
 } from 'lucide-react'
+import { GroupedErrorsSection } from '@/components/GroupedErrors'
 import { useDropzone } from 'react-dropzone'
 import { useUser } from '@/hooks/useAuth'
 import { useUsage } from '@/hooks/useBilling'
@@ -875,46 +876,25 @@ export function ConversionPage() {
             </div>
           )}
 
-          {/* Validation Errors */}
+          {/* Validation Errors - Grouped */}
           {conversionResult.validationResult && conversionResult.validationResult.error_count > 0 && (
-            <div className="bg-error-50 border border-error-200 rounded-lg p-4 mb-6 text-left">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 text-error-500 flex-shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <h4 className="font-medium text-error-800">Validierungsfehler</h4>
-                  <ul className="mt-2 space-y-2">
-                    {conversionResult.validationResult.errors.map((e, i) => (
-                      <li key={i} className="text-sm text-error-700">
-                        <span className="font-mono bg-error-100 px-1 rounded text-xs">{e.code}</span>
-                        <span className="ml-2">{e.message_de}</span>
-                        {e.suggestion && (
-                          <p className="text-error-600 text-xs mt-1 ml-4">Tipp: {e.suggestion}</p>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
+            <div className="mb-6 text-left">
+              <GroupedErrorsSection
+                title="Validierungsfehler"
+                errors={conversionResult.validationResult.errors}
+                type="error"
+              />
             </div>
           )}
 
-          {/* Validation Warnings */}
+          {/* Validation Warnings - Grouped */}
           {conversionResult.validationResult && conversionResult.validationResult.warning_count > 0 && (
-            <div className="bg-warning-50 border border-warning-200 rounded-lg p-4 mb-6 text-left">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 text-warning-500 flex-shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <h4 className="font-medium text-warning-800">Validierungswarnungen</h4>
-                  <ul className="mt-2 space-y-2">
-                    {conversionResult.validationResult.warnings.map((w, i) => (
-                      <li key={i} className="text-sm text-warning-700">
-                        <span className="font-mono bg-warning-100 px-1 rounded text-xs">{w.code}</span>
-                        <span className="ml-2">{w.message_de}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
+            <div className="mb-6 text-left">
+              <GroupedErrorsSection
+                title="Validierungswarnungen"
+                errors={conversionResult.validationResult.warnings}
+                type="warning"
+              />
             </div>
           )}
 
