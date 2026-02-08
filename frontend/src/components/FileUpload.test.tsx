@@ -232,4 +232,123 @@ describe('FileUpload', () => {
       expect(screen.getByText(/free validation has been used/i)).toBeInTheDocument()
     })
   })
+
+  describe('onDrop callback', () => {
+    it('calls validate.mutate with valid XML file', () => {
+      // Capture the onDrop function passed to useDropzone
+      let capturedOnDrop: ((files: File[]) => void) | undefined
+
+      vi.mocked(useDropzone).mockImplementation((options) => {
+        capturedOnDrop = options?.onDrop as (files: File[]) => void
+        return {
+          getRootProps: () => ({ 'data-testid': 'dropzone' }),
+          getInputProps: () => ({ type: 'file' }),
+          isDragActive: false,
+          fileRejections: [],
+          open: vi.fn(),
+          acceptedFiles: [],
+          isFocused: false,
+          isDragAccept: false,
+          isDragReject: false,
+          isFileDialogActive: false,
+          rootRef: { current: null },
+          inputRef: { current: null },
+        }
+      })
+
+      render(<FileUpload />)
+
+      // Now call the captured onDrop with a valid XML file
+      const xmlFile = new File(['<Invoice></Invoice>'], 'invoice.xml', { type: 'application/xml' })
+      capturedOnDrop?.([xmlFile])
+
+      expect(mockMutate).toHaveBeenCalledWith(xmlFile)
+    })
+
+    it('calls validate.mutate with valid PDF file', () => {
+      let capturedOnDrop: ((files: File[]) => void) | undefined
+
+      vi.mocked(useDropzone).mockImplementation((options) => {
+        capturedOnDrop = options?.onDrop as (files: File[]) => void
+        return {
+          getRootProps: () => ({ 'data-testid': 'dropzone' }),
+          getInputProps: () => ({ type: 'file' }),
+          isDragActive: false,
+          fileRejections: [],
+          open: vi.fn(),
+          acceptedFiles: [],
+          isFocused: false,
+          isDragAccept: false,
+          isDragReject: false,
+          isFileDialogActive: false,
+          rootRef: { current: null },
+          inputRef: { current: null },
+        }
+      })
+
+      render(<FileUpload />)
+
+      const pdfFile = new File(['%PDF-1.4'], 'invoice.pdf', { type: 'application/pdf' })
+      capturedOnDrop?.([pdfFile])
+
+      expect(mockMutate).toHaveBeenCalledWith(pdfFile)
+    })
+
+    it('does not call validate.mutate with invalid file type', () => {
+      let capturedOnDrop: ((files: File[]) => void) | undefined
+
+      vi.mocked(useDropzone).mockImplementation((options) => {
+        capturedOnDrop = options?.onDrop as (files: File[]) => void
+        return {
+          getRootProps: () => ({ 'data-testid': 'dropzone' }),
+          getInputProps: () => ({ type: 'file' }),
+          isDragActive: false,
+          fileRejections: [],
+          open: vi.fn(),
+          acceptedFiles: [],
+          isFocused: false,
+          isDragAccept: false,
+          isDragReject: false,
+          isFileDialogActive: false,
+          rootRef: { current: null },
+          inputRef: { current: null },
+        }
+      })
+
+      render(<FileUpload />)
+
+      const txtFile = new File(['some text'], 'file.txt', { type: 'text/plain' })
+      capturedOnDrop?.([txtFile])
+
+      expect(mockMutate).not.toHaveBeenCalled()
+    })
+
+    it('does not call validate.mutate with empty file array', () => {
+      let capturedOnDrop: ((files: File[]) => void) | undefined
+
+      vi.mocked(useDropzone).mockImplementation((options) => {
+        capturedOnDrop = options?.onDrop as (files: File[]) => void
+        return {
+          getRootProps: () => ({ 'data-testid': 'dropzone' }),
+          getInputProps: () => ({ type: 'file' }),
+          isDragActive: false,
+          fileRejections: [],
+          open: vi.fn(),
+          acceptedFiles: [],
+          isFocused: false,
+          isDragAccept: false,
+          isDragReject: false,
+          isFileDialogActive: false,
+          rootRef: { current: null },
+          inputRef: { current: null },
+        }
+      })
+
+      render(<FileUpload />)
+
+      capturedOnDrop?.([])
+
+      expect(mockMutate).not.toHaveBeenCalled()
+    })
+  })
 })
