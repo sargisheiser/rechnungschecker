@@ -41,7 +41,7 @@ class TestPlanDefinitions:
         assert starter.id == PlanTier.STARTER
         assert starter.name == "Starter"
         assert starter.price_monthly == 29
-        assert starter.price_annual == 279
+        assert starter.price_annual == 299
 
     def test_free_plan_features(self) -> None:
         """Test free plan has expected limitations."""
