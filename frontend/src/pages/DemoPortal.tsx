@@ -211,3 +211,5 @@ export function DemoPortal() {
     </div>
   )
 }
+
+export default DemoPortal

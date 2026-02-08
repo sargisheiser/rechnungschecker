@@ -380,3 +380,5 @@ export function AdminUsers() {
     </div>
   )
 }
+
+export default AdminUsers

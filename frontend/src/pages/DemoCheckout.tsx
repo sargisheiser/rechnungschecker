@@ -218,3 +218,5 @@ export function DemoCheckout() {
     </div>
   )
 }
+
+export default DemoCheckout

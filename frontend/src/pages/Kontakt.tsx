@@ -269,3 +269,5 @@ export function Kontakt() {
     </div>
   )
 }
+
+export default Kontakt

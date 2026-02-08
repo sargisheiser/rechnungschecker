@@ -86,3 +86,5 @@ export function GoogleCallback() {
     </div>
   )
 }
+
+export default GoogleCallback

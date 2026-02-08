@@ -501,3 +501,4 @@ function CreateAPIKeyModal({
   )
 }
 
+export default APIKeysPage

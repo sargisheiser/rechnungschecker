@@ -633,3 +633,5 @@ function Tooltip({ content, children }: { content: string; children: React.React
     </div>
   )
 }
+
+export default Dashboard

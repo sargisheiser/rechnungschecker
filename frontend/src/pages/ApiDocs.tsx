@@ -437,3 +437,5 @@ echo "Fehler: " . $result['error_count'] . "\\n";`}
     </div>
   )
 }
+
+export default ApiDocs

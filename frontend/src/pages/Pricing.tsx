@@ -436,3 +436,5 @@ function FaqItem({ question, answer }: { question: string; answer: string }) {
     </div>
   )
 }
+
+export default Pricing

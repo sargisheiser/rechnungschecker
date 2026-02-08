@@ -497,3 +497,5 @@ function DeleteConfirmModal({
     </div>
   )
 }
+
+export default IntegrationsPage

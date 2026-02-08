@@ -1,44 +1,73 @@
+import { Suspense, lazy } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { Loader2 } from 'lucide-react'
 import { Layout } from '@/components/Layout'
-import { Landing } from '@/pages/Landing'
-import { Dashboard } from '@/pages/Dashboard'
-import { Pricing } from '@/pages/Pricing'
-import { Login } from '@/pages/Login'
-import { Register } from '@/pages/Register'
-import { EmailVerificationPending } from '@/pages/EmailVerificationPending'
-import { ForgotPassword } from '@/pages/ForgotPassword'
-import { ResetPassword } from '@/pages/ResetPassword'
-import { Impressum } from '@/pages/Impressum'
-import { Datenschutz } from '@/pages/Datenschutz'
-import { AGB } from '@/pages/AGB'
-import { Kontakt } from '@/pages/Kontakt'
-import { ValidationDetailPage } from '@/pages/ValidationDetail'
-import { DemoCheckout } from '@/pages/DemoCheckout'
-import { DemoPortal } from '@/pages/DemoPortal'
-import { APIKeysPage } from '@/pages/APIKeys'
-import { ClientsPage } from '@/pages/Clients'
-import { ConversionPage } from '@/pages/Conversion'
-import { IntegrationsPage } from '@/pages/Integrations'
-import { WebhooksPage } from '@/pages/Webhooks'
-import { ExportPage } from '@/pages/Export'
-import { SettingsPage } from '@/pages/Settings'
-import AnalyticsPage from '@/pages/Analytics'
-import BatchUploadPage from '@/pages/BatchUpload'
-import BatchConversionPage from '@/pages/BatchConversion'
-import { TemplatesPage } from '@/pages/Templates'
-import { ValidationHistory } from '@/pages/ValidationHistory'
-import TeamPage from '@/pages/Team'
-import InvoiceCreatorPage from '@/pages/InvoiceCreator'
-import ScheduledValidationsPage from '@/pages/ScheduledValidations'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { AdminRoute } from '@/components/AdminRoute'
-import { AdminDashboard } from '@/pages/admin/AdminDashboard'
-import { AdminUsers } from '@/pages/admin/AdminUsers'
-import { GoogleCallback } from '@/pages/GoogleCallback'
-import { ApiDocs } from '@/pages/ApiDocs'
+
+// Critical path - keep eager loaded
+import { Landing } from '@/pages/Landing'
+import { Login } from '@/pages/Login'
+import { Register } from '@/pages/Register'
+
+// Lazy loaded pages - Auth
+const EmailVerificationPending = lazy(() => import('@/pages/EmailVerificationPending'))
+const ForgotPassword = lazy(() => import('@/pages/ForgotPassword'))
+const ResetPassword = lazy(() => import('@/pages/ResetPassword'))
+const GoogleCallback = lazy(() => import('@/pages/GoogleCallback'))
+
+// Lazy loaded pages - Legal
+const Impressum = lazy(() => import('@/pages/Impressum'))
+const Datenschutz = lazy(() => import('@/pages/Datenschutz'))
+const AGB = lazy(() => import('@/pages/AGB'))
+const Kontakt = lazy(() => import('@/pages/Kontakt'))
+
+// Lazy loaded pages - Public
+const Pricing = lazy(() => import('@/pages/Pricing'))
+const ApiDocs = lazy(() => import('@/pages/ApiDocs'))
+
+// Lazy loaded pages - Dashboard
+const Dashboard = lazy(() => import('@/pages/Dashboard'))
+const ValidationHistory = lazy(() => import('@/pages/ValidationHistory'))
+const ValidationDetailPage = lazy(() => import('@/pages/ValidationDetail'))
+
+// Lazy loaded pages - Settings
+const SettingsPage = lazy(() => import('@/pages/Settings'))
+const APIKeysPage = lazy(() => import('@/pages/APIKeys'))
+const ClientsPage = lazy(() => import('@/pages/Clients'))
+
+// Lazy loaded pages - Features
+const ConversionPage = lazy(() => import('@/pages/Conversion'))
+const BatchConversionPage = lazy(() => import('@/pages/BatchConversion'))
+const InvoiceCreatorPage = lazy(() => import('@/pages/InvoiceCreator'))
+const BatchUploadPage = lazy(() => import('@/pages/BatchUpload'))
+const AnalyticsPage = lazy(() => import('@/pages/Analytics'))
+const TemplatesPage = lazy(() => import('@/pages/Templates'))
+const IntegrationsPage = lazy(() => import('@/pages/Integrations'))
+const WebhooksPage = lazy(() => import('@/pages/Webhooks'))
+const ExportPage = lazy(() => import('@/pages/Export'))
+const TeamPage = lazy(() => import('@/pages/Team'))
+const ScheduledValidationsPage = lazy(() => import('@/pages/ScheduledValidations'))
+
+// Lazy loaded pages - Demo
+const DemoCheckout = lazy(() => import('@/pages/DemoCheckout'))
+const DemoPortal = lazy(() => import('@/pages/DemoPortal'))
+
+// Lazy loaded pages - Admin
+const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'))
+const AdminUsers = lazy(() => import('@/pages/admin/AdminUsers'))
+
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
+    </div>
+  )
+}
 
 function App() {
   return (
+    <Suspense fallback={<PageLoader />}>
     <Routes>
       <Route path="/" element={<Layout />}>
         <Route index element={<Landing />} />
@@ -234,6 +263,7 @@ function App() {
         />
       </Route>
     </Routes>
+    </Suspense>
   )
 }
 

@@ -190,3 +190,5 @@ export function AGB() {
     </div>
   )
 }
+
+export default AGB

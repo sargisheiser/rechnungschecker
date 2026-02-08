@@ -181,3 +181,5 @@ export function Datenschutz() {
     </div>
   )
 }
+
+export default Datenschutz

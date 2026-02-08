@@ -698,3 +698,4 @@ function ClientFormModal({
   )
 }
 
+export default ClientsPage

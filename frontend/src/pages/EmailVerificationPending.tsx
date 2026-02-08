@@ -236,3 +236,5 @@ export function EmailVerificationPending() {
     </div>
   )
 }
+
+export default EmailVerificationPending

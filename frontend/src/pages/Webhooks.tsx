@@ -630,3 +630,5 @@ function DeleteConfirmModal({
     </div>
   )
 }
+
+export default WebhooksPage

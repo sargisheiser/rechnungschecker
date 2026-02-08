@@ -240,3 +240,5 @@ export function ValidationDetailPage() {
     </div>
   )
 }
+
+export default ValidationDetailPage

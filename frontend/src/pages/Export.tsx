@@ -439,3 +439,5 @@ export function ExportPage() {
     </div>
   )
 }
+
+export default ExportPage
