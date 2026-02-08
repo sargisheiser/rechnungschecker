@@ -4,6 +4,7 @@ from app.models.api_key import APIKey
 from app.models.audit import AuditAction, AuditLog
 from app.models.batch import BatchFile, BatchFileStatus, BatchJob, BatchJobStatus
 from app.models.client import Client
+from app.models.extracted_invoice import ExtractedInvoiceData
 from app.models.integration import IntegrationSettings, IntegrationType
 from app.models.invoice_draft import InvoiceDraft
 from app.models.organization import (
@@ -34,6 +35,7 @@ __all__ = [
     "User",
     "GuestUsage",
     "ValidationLog",
+    "ExtractedInvoiceData",
     "APIKey",
     "Client",
     "WebhookSubscription",

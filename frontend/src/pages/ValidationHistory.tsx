@@ -10,8 +10,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Filter,
+  FileSpreadsheet,
+  Check,
 } from 'lucide-react'
 import { useValidationHistory, useDownloadReport } from '@/hooks/useValidation'
+import { useExportDATEV } from '@/hooks/useExport'
+import { useAuthStore } from '@/hooks/useAuth'
 import { cn, formatDateTime } from '@/lib/utils'
 import { Skeleton, EmptyState, emptyStatePresets } from '@/components'
 
@@ -24,10 +28,52 @@ export function ValidationHistory() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [selectionMode, setSelectionMode] = useState(false)
   const pageSize = 20
 
   const { data: history, isLoading } = useValidationHistory(page, pageSize)
   const downloadReport = useDownloadReport()
+  const exportDATEV = useExportDATEV()
+  const { user } = useAuthStore()
+
+  // Check if user has Steuerberater plan for DATEV export
+  const canExportDATEV = user?.plan === 'steuerberater'
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    if (!filteredItems) return
+    const validIds = filteredItems.filter((item) => item.is_valid).map((item) => item.id)
+    if (selectedIds.size === validIds.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(validIds))
+    }
+  }
+
+  const handleDATEVExport = () => {
+    if (selectedIds.size === 0) return
+    exportDATEV.mutate({
+      validationIds: Array.from(selectedIds),
+      kontenrahmen: 'SKR03',
+    })
+  }
+
+  const exitSelectionMode = () => {
+    setSelectionMode(false)
+    setSelectedIds(new Set())
+  }
 
   // Client-side filtering (backend doesn't support these filters yet)
   const filteredItems = useMemo(() => {
@@ -61,10 +107,54 @@ export function ValidationHistory() {
           <ArrowLeft className="h-4 w-4 mr-1" />
           Zurück zum Dashboard
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">Validierungsverlauf</h1>
-        <p className="text-gray-600 mt-1">
-          Alle Ihre vergangenen Validierungen
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Validierungsverlauf</h1>
+            <p className="text-gray-600 mt-1">
+              Alle Ihre vergangenen Validierungen
+            </p>
+          </div>
+
+          {/* DATEV Export Button */}
+          {canExportDATEV && (
+            <div className="flex items-center gap-2">
+              {selectionMode ? (
+                <>
+                  <span className="text-sm text-gray-500">
+                    {selectedIds.size} ausgewaehlt
+                  </span>
+                  <button
+                    onClick={handleDATEVExport}
+                    disabled={selectedIds.size === 0 || exportDATEV.isPending}
+                    className="btn-primary flex items-center gap-2"
+                  >
+                    {exportDATEV.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <FileSpreadsheet className="h-4 w-4" />
+                    )}
+                    DATEV Export
+                  </button>
+                  <button
+                    onClick={exitSelectionMode}
+                    className="btn-secondary"
+                  >
+                    Abbrechen
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setSelectionMode(true)}
+                  className="btn-secondary flex items-center gap-2"
+                  title="Rechnungen fuer DATEV-Export auswaehlen"
+                >
+                  <FileSpreadsheet className="h-4 w-4" />
+                  Export fuer DATEV
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Filters */}
@@ -169,7 +259,29 @@ export function ValidationHistory() {
         ) : (
           <>
             {/* Table header */}
-            <div className="hidden md:grid md:grid-cols-[1fr_120px_100px_80px_80px_150px_80px] gap-4 px-6 py-3 bg-gray-50 border-b border-gray-200 text-xs font-medium text-gray-500 uppercase tracking-wide">
+            <div className={cn(
+              "hidden md:grid gap-4 px-6 py-3 bg-gray-50 border-b border-gray-200 text-xs font-medium text-gray-500 uppercase tracking-wide",
+              selectionMode
+                ? "md:grid-cols-[40px_1fr_120px_100px_80px_80px_150px_80px]"
+                : "md:grid-cols-[1fr_120px_100px_80px_80px_150px_80px]"
+            )}>
+              {selectionMode && (
+                <div className="flex items-center">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      toggleSelectAll()
+                    }}
+                    className="p-1 rounded hover:bg-gray-200"
+                    title="Alle gueltigen auswaehlen"
+                  >
+                    <Check className={cn(
+                      "h-4 w-4",
+                      selectedIds.size > 0 ? "text-primary-600" : "text-gray-400"
+                    )} />
+                  </button>
+                </div>
+              )}
               <div>Dateiname</div>
               <div>Typ</div>
               <div>Status</div>
@@ -184,9 +296,40 @@ export function ValidationHistory() {
               {filteredItems.map((item) => (
                 <div
                   key={item.id}
-                  className="md:grid md:grid-cols-[1fr_120px_100px_80px_80px_150px_80px] gap-4 px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors items-center"
-                  onClick={() => navigate(`/validierung/${item.id}`)}
+                  className={cn(
+                    "md:grid gap-4 px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors items-center",
+                    selectionMode
+                      ? "md:grid-cols-[40px_1fr_120px_100px_80px_80px_150px_80px]"
+                      : "md:grid-cols-[1fr_120px_100px_80px_80px_150px_80px]",
+                    selectedIds.has(item.id) && "bg-primary-50"
+                  )}
+                  onClick={() => {
+                    if (selectionMode && item.is_valid) {
+                      toggleSelection(item.id)
+                    } else if (!selectionMode) {
+                      navigate(`/validierung/${item.id}`)
+                    }
+                  }}
                 >
+                  {/* Selection checkbox */}
+                  {selectionMode && (
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(item.id)}
+                        disabled={!item.is_valid}
+                        onChange={(e) => {
+                          e.stopPropagation()
+                          if (item.is_valid) {
+                            toggleSelection(item.id)
+                          }
+                        }}
+                        className="h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500 disabled:opacity-50"
+                        title={item.is_valid ? 'Auswaehlen' : 'Nur gueltige Rechnungen koennen exportiert werden'}
+                      />
+                    </div>
+                  )}
+
                   {/* Filename */}
                   <div className="flex items-center gap-3 mb-2 md:mb-0">
                     {item.is_valid ? (

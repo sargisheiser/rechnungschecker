@@ -34,3 +34,9 @@ export {
   useDeleteTemplate,
   useSetDefaultTemplate,
 } from './useTemplates'
+
+export {
+  useExportDATEV,
+  useExportValidations,
+  useExportClients,
+} from './useExport'

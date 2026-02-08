@@ -18,7 +18,7 @@ depends_on = None
 
 def upgrade() -> None:
     # Create template_type enum
-    template_type_enum = postgresql.ENUM("sender", "receiver", name="templatetype")
+    template_type_enum = postgresql.ENUM("sender", "receiver", name="templatetype", create_type=False)
     template_type_enum.create(op.get_bind(), checkfirst=True)
 
     # Create templates table

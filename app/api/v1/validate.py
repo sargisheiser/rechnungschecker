@@ -35,6 +35,7 @@ from app.schemas.validation import (
     ValidationHistoryResponse,
     ValidationResponse,
 )
+from app.services.invoice_extraction import InvoiceExtractionService
 from app.services.validation_history import ValidationHistoryService
 from app.services.validator.xrechnung import XRechnungValidator
 from app.services.validator.zugferd import ZUGFeRDValidator
@@ -194,6 +195,14 @@ async def validate_file(
                 client_id=validated_client_id,
                 file_name=filename,
                 file_size_bytes=len(content),
+            )
+
+            # Extract invoice data for DATEV export
+            extraction_service = InvoiceExtractionService(db)
+            await extraction_service.extract_and_store(
+                validation_id=result.id,
+                content=content,
+                is_pdf=is_pdf,
             )
 
             # Trigger webhooks for PRO+ users

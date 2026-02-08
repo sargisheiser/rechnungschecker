@@ -1,7 +1,7 @@
 """CSV export endpoints for DATEV and Excel compatibility."""
 
 import logging
-from datetime import date
+from datetime import date, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, status
@@ -9,8 +9,9 @@ from fastapi.responses import StreamingResponse
 
 from app.api.deps import CurrentUser, DbSession
 from app.models.user import PlanType
+from app.schemas.datev import DATEVConfig, DATEVExportResponse, Kontenrahmen
 from app.schemas.export import ExportFormat, ValidationStatus
-from app.services.export import ExportService
+from app.services.export import DATEVExportService, ExportService
 
 logger = logging.getLogger(__name__)
 
@@ -137,6 +138,86 @@ async def export_clients(
     logger.info(
         f"Clients exported: user={current_user.email}, "
         f"format={format.value}, include_inactive={include_inactive}"
+    )
+
+    return StreamingResponse(
+        iter([csv_content]),
+        media_type="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Content-Type": "text/csv; charset=utf-8",
+        },
+    )
+
+
+@router.get(
+    "/datev/buchungsstapel",
+    summary="Export validations as DATEV Buchungsstapel",
+    description="Download validated invoices as DATEV Buchungsstapel CSV file for import into DATEV accounting software.",
+    responses={
+        200: {
+            "content": {"text/csv": {}},
+            "description": "DATEV Buchungsstapel CSV file",
+        }
+    },
+)
+async def export_datev_buchungsstapel(
+    current_user: CurrentUser,
+    db: DbSession,
+    validation_ids: list[UUID] = Query(..., description="List of validation IDs to export"),
+    kontenrahmen: Kontenrahmen = Query(
+        default=Kontenrahmen.SKR03, description="Chart of accounts (SKR03 or SKR04)"
+    ),
+    debitor_konto: str = Query(default="1400", description="Debtor account number"),
+    berater_nummer: str = Query(default="", description="DATEV consultant number"),
+    mandanten_nummer: str = Query(default="", description="DATEV client number"),
+) -> StreamingResponse:
+    """Export validated invoices as DATEV Buchungsstapel CSV file.
+
+    This endpoint generates a DATEV-compatible CSV file in EXTF format
+    that can be imported into DATEV accounting software.
+
+    Args:
+        validation_ids: List of validation IDs to export (must be valid invoices)
+        kontenrahmen: Chart of accounts to use (SKR03 or SKR04)
+        debitor_konto: Debtor account number (default: 1400 for SKR03)
+        berater_nummer: DATEV consultant number (optional)
+        mandanten_nummer: DATEV client number (optional)
+
+    Returns:
+        DATEV Buchungsstapel CSV file download
+    """
+    _check_export_access(current_user)
+
+    if not validation_ids:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Mindestens eine Validierungs-ID muss angegeben werden.",
+        )
+
+    # Build configuration
+    config = DATEVConfig(
+        kontenrahmen=kontenrahmen,
+        debitor_konto=debitor_konto,
+        berater_nummer=berater_nummer,
+        mandanten_nummer=mandanten_nummer,
+    )
+
+    # Generate export
+    service = DATEVExportService(db)
+    csv_content, buchungen_count, total_umsatz = await service.export_buchungsstapel(
+        user_id=current_user.id,
+        validation_ids=validation_ids,
+        config=config,
+    )
+
+    # Generate filename with date
+    today = date.today().strftime("%Y%m%d")
+    filename = f"EXTF_Buchungsstapel_{today}.csv"
+
+    logger.info(
+        f"DATEV Buchungsstapel exported: user={current_user.email}, "
+        f"buchungen={buchungen_count}, total={total_umsatz}"
     )
 
     return StreamingResponse(
