@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import {
   FileCheck,
@@ -35,7 +35,7 @@ import { cn, formatDate, formatDateTime } from '@/lib/utils'
 
 export function Dashboard() {
   const { t } = useTranslation()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { currentResult } = useValidationStore()
   const { data: user } = useUser()
   const { data: usage, isLoading: usageLoading } = useUsage()
@@ -45,8 +45,23 @@ export function Dashboard() {
   const { data: history, isLoading: historyLoading } = useValidationHistory(1, 5)
   const portalSession = usePortalSession()
   const [showClientDropdown, setShowClientDropdown] = useState(false)
+  const [showPaymentSuccess, setShowPaymentSuccess] = useState(false)
 
   const checkoutStatus = searchParams.get('checkout')
+
+  // Auto-dismiss payment success message after 5 seconds
+  useEffect(() => {
+    if (checkoutStatus === 'success') {
+      setShowPaymentSuccess(true)
+      const timer = setTimeout(() => {
+        setShowPaymentSuccess(false)
+        // Remove the checkout parameter from URL
+        searchParams.delete('checkout')
+        setSearchParams(searchParams, { replace: true })
+      }, 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [checkoutStatus, searchParams, setSearchParams])
   const canManageClients = user?.plan === 'steuerberater'
   const selectedClient = clients?.items.find((c) => c.id === selectedClientId)
   const isPro = user?.plan === 'pro' || user?.plan === 'steuerberater'
@@ -66,18 +81,28 @@ export function Dashboard() {
         />
       )}
 
-      {/* Checkout success message */}
-      {checkoutStatus === 'success' && (
-        <div className="mb-6 p-4 bg-success-50 border border-success-200 rounded-lg flex items-center gap-3">
-          <CheckCircle className="h-5 w-5 text-success-600" />
-          <div>
-            <p className="font-medium text-success-700">
+      {/* Checkout success message - auto-dismisses after 5 seconds */}
+      {showPaymentSuccess && (
+        <div className="mb-6 p-4 sm:p-4 bg-success-50 border border-success-200 rounded-lg flex items-center gap-3 animate-in fade-in duration-300">
+          <CheckCircle className="h-6 w-6 sm:h-5 sm:w-5 text-success-600 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-base sm:text-base font-medium text-success-700">
               {t('dashboard.paymentSuccess')}
             </p>
-            <p className="text-sm text-success-600">
+            <p className="text-sm sm:text-sm text-success-600">
               {t('dashboard.subscriptionActivated')}
             </p>
           </div>
+          <button
+            onClick={() => {
+              setShowPaymentSuccess(false)
+              searchParams.delete('checkout')
+              setSearchParams(searchParams, { replace: true })
+            }}
+            className="text-success-600 hover:text-success-800 flex-shrink-0"
+          >
+            <XCircle className="h-6 w-6 sm:h-5 sm:w-5" />
+          </button>
         </div>
       )}
 
@@ -506,44 +531,58 @@ function ValidationHistoryItem({
   const StatusIcon = isValid ? CheckCircle : XCircle
 
   return (
-    <div className="px-6 py-4 hover:bg-gray-50 transition-colors">
-      <div className="flex items-start justify-between gap-4">
+    <div className="px-4 sm:px-6 py-4 hover:bg-gray-50 transition-colors">
+      {/* Mobile: Stack vertically, Desktop: Side by side */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+        {/* File info */}
         <div className="flex items-start gap-3 min-w-0">
           <StatusIcon className={cn(
-            'h-5 w-5 flex-shrink-0 mt-0.5',
+            'h-6 w-6 sm:h-5 sm:w-5 flex-shrink-0 mt-0.5',
             isValid ? 'text-success-500' : 'text-error-500'
           )} />
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">
+          <div className="min-w-0 flex-1">
+            <p className="text-base sm:text-sm font-medium text-gray-900 truncate">
               {item.file_name || 'Unbekannte Datei'}
             </p>
-            <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+            {/* Mobile: Wrap to multiple lines */}
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5 text-sm sm:text-xs text-gray-500">
               <span className={cn(
-                'px-1.5 py-0.5 rounded font-medium',
+                'px-2 py-0.5 rounded font-medium',
                 isValid ? 'bg-success-100 text-success-700' : 'bg-error-100 text-error-700'
               )}>
                 {isValid ? t('dashboard.statusValid') : t('dashboard.statusInvalid')}
               </span>
-              <span>{item.file_type.toUpperCase()}</span>
+              <span className="font-medium">{item.file_type.toUpperCase()}</span>
               <span>{formatDateTime(item.validated_at)}</span>
-              {item.error_count > 0 && (
-                <span className="text-error-600">{item.error_count} {t('dashboard.errors')}</span>
-              )}
-              {item.warning_count > 0 && (
-                <span className="text-warning-600">{item.warning_count} {t('dashboard.warnings')}</span>
-              )}
             </div>
+            {/* Error/Warning counts on separate line for clarity */}
+            {(item.error_count > 0 || item.warning_count > 0) && (
+              <div className="flex items-center gap-3 mt-1.5 text-sm sm:text-xs">
+                {item.error_count > 0 && (
+                  <span className="flex items-center gap-1 text-error-600 font-medium">
+                    <XCircle className="h-4 w-4 sm:h-3 sm:w-3" />
+                    {item.error_count} {t('dashboard.errors')}
+                  </span>
+                )}
+                {item.warning_count > 0 && (
+                  <span className="flex items-center gap-1 text-warning-600 font-medium">
+                    <AlertTriangle className="h-4 w-4 sm:h-3 sm:w-3" />
+                    {item.warning_count} {t('dashboard.warnings')}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2 flex-shrink-0">
+        {/* Action Buttons - Full width on mobile */}
+        <div className="flex items-center gap-2 sm:flex-shrink-0 ml-9 sm:ml-0">
           {!isValid && (
             <Link
               to={`/validierung/${item.id}`}
-              className="btn-primary text-xs px-3 py-1.5"
+              className="btn-primary text-sm sm:text-xs px-3 py-2 sm:py-1.5 flex-1 sm:flex-none"
             >
-              <AlertTriangle className="h-3 w-3 mr-1" />
+              <AlertTriangle className="h-4 w-4 sm:h-3 sm:w-3 mr-1" />
               {t('dashboard.fixIssues')}
             </Link>
           )}
@@ -553,21 +592,21 @@ function ValidationHistoryItem({
               downloadReport.mutate(item.id)
             }}
             disabled={downloadReport.isPending}
-            className="btn-secondary text-xs px-3 py-1.5"
+            className="btn-secondary text-sm sm:text-xs px-3 py-2 sm:py-1.5"
             title={t('dashboard.downloadReport')}
           >
             {downloadReport.isPending ? (
-              <Loader2 className="h-3 w-3 animate-spin" />
+              <Loader2 className="h-4 w-4 sm:h-3 sm:w-3 animate-spin" />
             ) : (
-              <Download className="h-3 w-3" />
+              <Download className="h-4 w-4 sm:h-3 sm:w-3" />
             )}
           </button>
           <Link
             to={`/validierung/${item.id}`}
-            className="btn-secondary text-xs px-3 py-1.5"
+            className="btn-secondary text-sm sm:text-xs px-3 py-2 sm:py-1.5"
             title={t('dashboard.viewDetails')}
           >
-            <Eye className="h-3 w-3" />
+            <Eye className="h-4 w-4 sm:h-3 sm:w-3" />
           </Link>
         </div>
       </div>
@@ -595,17 +634,17 @@ function ActionCard({
       className="flex flex-col p-4 rounded-lg border border-gray-200 bg-white hover:border-primary-300 hover:bg-primary-50 transition-all hover:shadow-sm group"
     >
       <div className="flex items-center justify-between mb-2">
-        <Icon className="h-5 w-5 text-gray-400 group-hover:text-primary-500 transition-colors" />
+        <Icon className="h-6 w-6 sm:h-5 sm:w-5 text-gray-400 group-hover:text-primary-500 transition-colors" />
         {badge && (
-          <span className="text-xs px-1.5 py-0.5 bg-primary-100 text-primary-700 rounded">
+          <span className="text-sm sm:text-xs px-1.5 py-0.5 bg-primary-100 text-primary-700 rounded">
             {badge}
           </span>
         )}
       </div>
-      <span className="text-sm font-medium text-gray-900 group-hover:text-primary-700">
+      <span className="text-base sm:text-sm font-medium text-gray-900 group-hover:text-primary-700">
         {label}
       </span>
-      <span className="text-xs text-gray-500 mt-1">
+      <span className="text-sm sm:text-xs text-gray-500 mt-1">
         {description}
       </span>
     </Link>
