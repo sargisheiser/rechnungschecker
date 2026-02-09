@@ -27,6 +27,8 @@ SAMPLE_UBL_XML = b"""<?xml version="1.0" encoding="UTF-8"?>
     <cac:TaxTotal>
         <cbc:TaxAmount currencyID="EUR">190.00</cbc:TaxAmount>
         <cac:TaxSubtotal>
+            <cbc:TaxableAmount currencyID="EUR">1000.00</cbc:TaxableAmount>
+            <cbc:TaxAmount currencyID="EUR">190.00</cbc:TaxAmount>
             <cac:TaxCategory>
                 <cbc:Percent>19</cbc:Percent>
             </cac:TaxCategory>
@@ -61,12 +63,100 @@ SAMPLE_CII_XML = b"""<?xml version="1.0" encoding="UTF-8"?>
         <ram:ApplicableHeaderTradeSettlement>
             <ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>
             <ram:ApplicableTradeTax>
+                <ram:CalculatedAmount>35.00</ram:CalculatedAmount>
+                <ram:BasisAmount>500.00</ram:BasisAmount>
                 <ram:RateApplicablePercent>7</ram:RateApplicablePercent>
             </ram:ApplicableTradeTax>
             <ram:SpecifiedTradeSettlementHeaderMonetarySummation>
                 <ram:TaxBasisTotalAmount>500.00</ram:TaxBasisTotalAmount>
                 <ram:TaxTotalAmount>35.00</ram:TaxTotalAmount>
                 <ram:GrandTotalAmount>535.00</ram:GrandTotalAmount>
+            </ram:SpecifiedTradeSettlementHeaderMonetarySummation>
+        </ram:ApplicableHeaderTradeSettlement>
+    </rsm:SupplyChainTradeTransaction>
+</rsm:CrossIndustryInvoice>
+"""
+
+
+# Sample UBL (XRechnung) XML with multiple VAT rates
+SAMPLE_UBL_MULTI_VAT_XML = b"""<?xml version="1.0" encoding="UTF-8"?>
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
+         xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
+         xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
+    <cbc:ID>RE-2024-MULTI</cbc:ID>
+    <cbc:IssueDate>2024-06-20</cbc:IssueDate>
+    <cbc:DocumentCurrencyCode>EUR</cbc:DocumentCurrencyCode>
+    <cac:AccountingSupplierParty>
+        <cac:Party>
+            <cac:PartyName>
+                <cbc:Name>Multi-Rate Lieferant GmbH</cbc:Name>
+            </cac:PartyName>
+        </cac:Party>
+    </cac:AccountingSupplierParty>
+    <cac:TaxTotal>
+        <cbc:TaxAmount currencyID="EUR">22.50</cbc:TaxAmount>
+        <cac:TaxSubtotal>
+            <cbc:TaxableAmount currencyID="EUR">100.00</cbc:TaxableAmount>
+            <cbc:TaxAmount currencyID="EUR">19.00</cbc:TaxAmount>
+            <cac:TaxCategory>
+                <cbc:Percent>19</cbc:Percent>
+            </cac:TaxCategory>
+        </cac:TaxSubtotal>
+        <cac:TaxSubtotal>
+            <cbc:TaxableAmount currencyID="EUR">50.00</cbc:TaxableAmount>
+            <cbc:TaxAmount currencyID="EUR">3.50</cbc:TaxAmount>
+            <cac:TaxCategory>
+                <cbc:Percent>7</cbc:Percent>
+            </cac:TaxCategory>
+        </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:LegalMonetaryTotal>
+        <cbc:TaxExclusiveAmount currencyID="EUR">150.00</cbc:TaxExclusiveAmount>
+        <cbc:TaxInclusiveAmount currencyID="EUR">172.50</cbc:TaxInclusiveAmount>
+        <cbc:PayableAmount currencyID="EUR">172.50</cbc:PayableAmount>
+    </cac:LegalMonetaryTotal>
+</Invoice>
+"""
+
+# Sample CII (ZUGFeRD) XML with multiple VAT rates
+SAMPLE_CII_MULTI_VAT_XML = b"""<?xml version="1.0" encoding="UTF-8"?>
+<rsm:CrossIndustryInvoice
+    xmlns:rsm="urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100"
+    xmlns:ram="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100"
+    xmlns:udt="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100">
+    <rsm:ExchangedDocument>
+        <ram:ID>ZF-2024-MULTI</ram:ID>
+        <ram:IssueDateTime>
+            <udt:DateTimeString>20240715</udt:DateTimeString>
+        </ram:IssueDateTime>
+    </rsm:ExchangedDocument>
+    <rsm:SupplyChainTradeTransaction>
+        <ram:ApplicableHeaderTradeAgreement>
+            <ram:SellerTradeParty>
+                <ram:Name>Multi-Rate ZUGFeRD AG</ram:Name>
+            </ram:SellerTradeParty>
+        </ram:ApplicableHeaderTradeAgreement>
+        <ram:ApplicableHeaderTradeSettlement>
+            <ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>
+            <ram:ApplicableTradeTax>
+                <ram:CalculatedAmount>38.00</ram:CalculatedAmount>
+                <ram:BasisAmount>200.00</ram:BasisAmount>
+                <ram:RateApplicablePercent>19</ram:RateApplicablePercent>
+            </ram:ApplicableTradeTax>
+            <ram:ApplicableTradeTax>
+                <ram:CalculatedAmount>7.00</ram:CalculatedAmount>
+                <ram:BasisAmount>100.00</ram:BasisAmount>
+                <ram:RateApplicablePercent>7</ram:RateApplicablePercent>
+            </ram:ApplicableTradeTax>
+            <ram:ApplicableTradeTax>
+                <ram:CalculatedAmount>0.00</ram:CalculatedAmount>
+                <ram:BasisAmount>50.00</ram:BasisAmount>
+                <ram:RateApplicablePercent>0</ram:RateApplicablePercent>
+            </ram:ApplicableTradeTax>
+            <ram:SpecifiedTradeSettlementHeaderMonetarySummation>
+                <ram:TaxBasisTotalAmount>350.00</ram:TaxBasisTotalAmount>
+                <ram:TaxTotalAmount>45.00</ram:TaxTotalAmount>
+                <ram:GrandTotalAmount>395.00</ram:GrandTotalAmount>
             </ram:SpecifiedTradeSettlementHeaderMonetarySummation>
         </ram:ApplicableHeaderTradeSettlement>
     </rsm:SupplyChainTradeTransaction>
@@ -331,6 +421,151 @@ class TestMinimalXML:
         assert result.gross_amount is None
         # Low confidence when no gross amount
         assert result.confidence == Decimal("0.5")
+
+
+class TestMultiRateExtractionUBL:
+    """Test UBL extraction with multiple VAT rates."""
+
+    def test_extract_ubl_multi_rate_breakdown(self):
+        """Test extracting VAT breakdown from multi-rate UBL XML."""
+        mock_db = MagicMock(spec=AsyncSession)
+        service = InvoiceExtractionService(mock_db)
+        result = service._extract_from_xml(SAMPLE_UBL_MULTI_VAT_XML)
+
+        assert result is not None
+        assert result.vat_breakdown is not None
+        assert len(result.vat_breakdown) == 2
+
+    def test_extract_ubl_multi_rate_values(self):
+        """Test VAT breakdown values from multi-rate UBL XML."""
+        mock_db = MagicMock(spec=AsyncSession)
+        service = InvoiceExtractionService(mock_db)
+        result = service._extract_from_xml(SAMPLE_UBL_MULTI_VAT_XML)
+
+        assert result is not None
+        assert result.vat_breakdown is not None
+
+        # Sort by rate for predictable order
+        breakdown = sorted(result.vat_breakdown, key=lambda x: x.rate, reverse=True)
+
+        # 19% rate
+        assert breakdown[0].rate == Decimal("19")
+        assert breakdown[0].net_amount == Decimal("100.00")
+        assert breakdown[0].vat_amount == Decimal("19.00")
+
+        # 7% rate
+        assert breakdown[1].rate == Decimal("7")
+        assert breakdown[1].net_amount == Decimal("50.00")
+        assert breakdown[1].vat_amount == Decimal("3.50")
+
+    def test_extract_ubl_multi_rate_dominant(self):
+        """Test dominant VAT rate selection (highest net amount)."""
+        mock_db = MagicMock(spec=AsyncSession)
+        service = InvoiceExtractionService(mock_db)
+        result = service._extract_from_xml(SAMPLE_UBL_MULTI_VAT_XML)
+
+        assert result is not None
+        # 19% rate has highest net amount (100 > 50)
+        assert result.vat_rate == Decimal("19")
+
+    def test_extract_ubl_multi_rate_totals(self):
+        """Test total amounts from multi-rate UBL XML."""
+        mock_db = MagicMock(spec=AsyncSession)
+        service = InvoiceExtractionService(mock_db)
+        result = service._extract_from_xml(SAMPLE_UBL_MULTI_VAT_XML)
+
+        assert result is not None
+        assert result.net_amount == Decimal("150.00")
+        assert result.vat_amount == Decimal("22.50")
+        assert result.gross_amount == Decimal("172.50")
+
+
+class TestMultiRateExtractionCII:
+    """Test CII extraction with multiple VAT rates."""
+
+    def test_extract_cii_multi_rate_breakdown(self):
+        """Test extracting VAT breakdown from multi-rate CII XML."""
+        mock_db = MagicMock(spec=AsyncSession)
+        service = InvoiceExtractionService(mock_db)
+        result = service._extract_from_xml(SAMPLE_CII_MULTI_VAT_XML)
+
+        assert result is not None
+        assert result.vat_breakdown is not None
+        assert len(result.vat_breakdown) == 3
+
+    def test_extract_cii_multi_rate_values(self):
+        """Test VAT breakdown values from multi-rate CII XML."""
+        mock_db = MagicMock(spec=AsyncSession)
+        service = InvoiceExtractionService(mock_db)
+        result = service._extract_from_xml(SAMPLE_CII_MULTI_VAT_XML)
+
+        assert result is not None
+        assert result.vat_breakdown is not None
+
+        # Sort by rate for predictable order
+        breakdown = sorted(result.vat_breakdown, key=lambda x: x.rate, reverse=True)
+
+        # 19% rate
+        assert breakdown[0].rate == Decimal("19")
+        assert breakdown[0].net_amount == Decimal("200.00")
+        assert breakdown[0].vat_amount == Decimal("38.00")
+
+        # 7% rate
+        assert breakdown[1].rate == Decimal("7")
+        assert breakdown[1].net_amount == Decimal("100.00")
+        assert breakdown[1].vat_amount == Decimal("7.00")
+
+        # 0% rate
+        assert breakdown[2].rate == Decimal("0")
+        assert breakdown[2].net_amount == Decimal("50.00")
+        assert breakdown[2].vat_amount == Decimal("0.00")
+
+    def test_extract_cii_multi_rate_dominant(self):
+        """Test dominant VAT rate selection (highest net amount)."""
+        mock_db = MagicMock(spec=AsyncSession)
+        service = InvoiceExtractionService(mock_db)
+        result = service._extract_from_xml(SAMPLE_CII_MULTI_VAT_XML)
+
+        assert result is not None
+        # 19% rate has highest net amount (200 > 100 > 50)
+        assert result.vat_rate == Decimal("19")
+
+    def test_extract_cii_multi_rate_totals(self):
+        """Test total amounts from multi-rate CII XML."""
+        mock_db = MagicMock(spec=AsyncSession)
+        service = InvoiceExtractionService(mock_db)
+        result = service._extract_from_xml(SAMPLE_CII_MULTI_VAT_XML)
+
+        assert result is not None
+        assert result.net_amount == Decimal("350.00")
+        assert result.vat_amount == Decimal("45.00")
+        assert result.gross_amount == Decimal("395.00")
+
+
+class TestSingleRateBackwardCompatibility:
+    """Test that single-rate invoices still work correctly."""
+
+    def test_single_rate_ubl_has_breakdown(self):
+        """Test single-rate UBL still produces breakdown."""
+        mock_db = MagicMock(spec=AsyncSession)
+        service = InvoiceExtractionService(mock_db)
+        result = service._extract_from_xml(SAMPLE_UBL_XML)
+
+        assert result is not None
+        assert result.vat_breakdown is not None
+        assert len(result.vat_breakdown) == 1
+        assert result.vat_breakdown[0].rate == Decimal("19")
+
+    def test_single_rate_cii_has_breakdown(self):
+        """Test single-rate CII still produces breakdown."""
+        mock_db = MagicMock(spec=AsyncSession)
+        service = InvoiceExtractionService(mock_db)
+        result = service._extract_from_xml(SAMPLE_CII_XML)
+
+        assert result is not None
+        assert result.vat_breakdown is not None
+        assert len(result.vat_breakdown) == 1
+        assert result.vat_breakdown[0].rate == Decimal("7")
 
 
 class TestDATEVExportWithExtractedData:

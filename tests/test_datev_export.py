@@ -1,5 +1,6 @@
 """Tests for DATEV Buchungsstapel export."""
 
+import json
 import uuid
 from datetime import date
 from decimal import Decimal
@@ -7,13 +8,15 @@ from decimal import Decimal
 import pytest
 from httpx import AsyncClient
 
-from app.models.user import User
+from app.models.extracted_invoice import ExtractedInvoiceData
+from app.models.user import PlanType, User
 from app.models.validation import FileType, ValidationLog
 from app.schemas.datev import (
     DATEVBuchung,
     DATEVConfig,
     Kontenrahmen,
 )
+from app.services.export.datev import DATEVExportService
 from app.services.export.kontenrahmen import (
     SKR03_ACCOUNTS,
     SKR04_ACCOUNTS,
@@ -527,3 +530,301 @@ class TestDATEVExportService:
         assert count == 1
         assert "valid_invoice" in csv_content
         assert "invalid_invoice" not in csv_content
+
+
+class TestMultiRateDATEVExport:
+    """Tests for multi-VAT rate DATEV export."""
+
+    @pytest.mark.asyncio
+    async def test_multi_rate_generates_multiple_bookings(
+        self, db_session, test_steuerberater_user: tuple[User, str]
+    ) -> None:
+        """Test that multi-rate invoice generates multiple bookings."""
+        user, _ = test_steuerberater_user
+
+        # Create test validation
+        validation = ValidationLog(
+            id=uuid.uuid4(),
+            user_id=user.id,
+            file_name="multi_rate_invoice.xml",
+            file_type=FileType.XRECHNUNG,
+            file_hash="m" * 64,
+            file_size_bytes=1000,
+            is_valid=True,
+            error_count=0,
+            warning_count=0,
+            info_count=0,
+            processing_time_ms=100,
+            validator_version="1.0.0",
+        )
+        db_session.add(validation)
+        await db_session.flush()
+
+        # Create extracted data with multi-rate breakdown
+        vat_breakdown = json.dumps([
+            {"rate": "19", "net_amount": "100.00", "vat_amount": "19.00"},
+            {"rate": "7", "net_amount": "50.00", "vat_amount": "3.50"},
+        ])
+        extracted = ExtractedInvoiceData(
+            validation_id=validation.id,
+            invoice_number="MULTI-2024-001",
+            invoice_date=date(2024, 6, 15),
+            net_amount=Decimal("150.00"),
+            vat_amount=Decimal("22.50"),
+            gross_amount=Decimal("172.50"),
+            currency="EUR",
+            vat_rate=Decimal("19.00"),
+            seller_name="Multi-Rate Supplier",
+            vat_breakdown=vat_breakdown,
+        )
+        db_session.add(extracted)
+        await db_session.commit()
+
+        # Export to DATEV
+        service = DATEVExportService(db_session)
+        config = DATEVConfig(kontenrahmen=Kontenrahmen.SKR03)
+
+        csv_content, count, total = await service.export_buchungsstapel(
+            user_id=user.id,
+            validation_ids=[validation.id],
+            config=config,
+        )
+
+        # Should have 2 bookings (one per VAT rate)
+        assert count == 2
+        # Total should be sum of net amounts
+        assert total == Decimal("150.00")
+
+    @pytest.mark.asyncio
+    async def test_multi_rate_correct_accounts(
+        self, db_session, test_steuerberater_user: tuple[User, str]
+    ) -> None:
+        """Test that multi-rate bookings use correct revenue accounts."""
+        user, _ = test_steuerberater_user
+
+        validation = ValidationLog(
+            id=uuid.uuid4(),
+            user_id=user.id,
+            file_name="multi_rate_invoice.xml",
+            file_type=FileType.XRECHNUNG,
+            file_hash="n" * 64,
+            file_size_bytes=1000,
+            is_valid=True,
+            error_count=0,
+            warning_count=0,
+            info_count=0,
+            processing_time_ms=100,
+            validator_version="1.0.0",
+        )
+        db_session.add(validation)
+        await db_session.flush()
+
+        vat_breakdown = json.dumps([
+            {"rate": "19", "net_amount": "100.00", "vat_amount": "19.00"},
+            {"rate": "7", "net_amount": "50.00", "vat_amount": "3.50"},
+        ])
+        extracted = ExtractedInvoiceData(
+            validation_id=validation.id,
+            invoice_number="MULTI-2024-002",
+            invoice_date=date(2024, 6, 20),
+            net_amount=Decimal("150.00"),
+            vat_amount=Decimal("22.50"),
+            gross_amount=Decimal("172.50"),
+            currency="EUR",
+            vat_rate=Decimal("19.00"),
+            seller_name="Multi-Rate Supplier",
+            vat_breakdown=vat_breakdown,
+        )
+        db_session.add(extracted)
+        await db_session.commit()
+
+        service = DATEVExportService(db_session)
+        config = DATEVConfig(kontenrahmen=Kontenrahmen.SKR03)
+
+        csv_content, count, _ = await service.export_buchungsstapel(
+            user_id=user.id,
+            validation_ids=[validation.id],
+            config=config,
+        )
+
+        assert count == 2
+
+        # Check that CSV contains correct accounts
+        # SKR03: 8400 for 19%, 8300 for 7%
+        assert "8400" in csv_content  # 19% revenue account
+        assert "8300" in csv_content  # 7% revenue account
+
+        # Check BU-Schluessel
+        assert ";9;" in csv_content  # BU-Schluessel 9 for 19%
+        assert ";8;" in csv_content  # BU-Schluessel 8 for 7%
+
+    @pytest.mark.asyncio
+    async def test_multi_rate_with_zero_percent(
+        self, db_session, test_steuerberater_user: tuple[User, str]
+    ) -> None:
+        """Test multi-rate export with 0% VAT rate."""
+        user, _ = test_steuerberater_user
+
+        validation = ValidationLog(
+            id=uuid.uuid4(),
+            user_id=user.id,
+            file_name="multi_rate_with_zero.xml",
+            file_type=FileType.ZUGFERD,
+            file_hash="o" * 64,
+            file_size_bytes=1000,
+            is_valid=True,
+            error_count=0,
+            warning_count=0,
+            info_count=0,
+            processing_time_ms=100,
+            validator_version="1.0.0",
+        )
+        db_session.add(validation)
+        await db_session.flush()
+
+        vat_breakdown = json.dumps([
+            {"rate": "19", "net_amount": "200.00", "vat_amount": "38.00"},
+            {"rate": "7", "net_amount": "100.00", "vat_amount": "7.00"},
+            {"rate": "0", "net_amount": "50.00", "vat_amount": "0.00"},
+        ])
+        extracted = ExtractedInvoiceData(
+            validation_id=validation.id,
+            invoice_number="MULTI-2024-003",
+            invoice_date=date(2024, 7, 15),
+            net_amount=Decimal("350.00"),
+            vat_amount=Decimal("45.00"),
+            gross_amount=Decimal("395.00"),
+            currency="EUR",
+            vat_rate=Decimal("19.00"),
+            seller_name="Multi-Rate ZUGFeRD Supplier",
+            vat_breakdown=vat_breakdown,
+        )
+        db_session.add(extracted)
+        await db_session.commit()
+
+        service = DATEVExportService(db_session)
+        config = DATEVConfig(kontenrahmen=Kontenrahmen.SKR03)
+
+        csv_content, count, total = await service.export_buchungsstapel(
+            user_id=user.id,
+            validation_ids=[validation.id],
+            config=config,
+        )
+
+        # Should have 3 bookings (one per VAT rate)
+        assert count == 3
+        assert total == Decimal("350.00")
+
+        # Check for 0% account (SKR03: 8120)
+        assert "8120" in csv_content
+
+    @pytest.mark.asyncio
+    async def test_single_rate_fallback(
+        self, db_session, test_steuerberater_user: tuple[User, str]
+    ) -> None:
+        """Test that single-rate invoice without breakdown still works."""
+        user, _ = test_steuerberater_user
+
+        validation = ValidationLog(
+            id=uuid.uuid4(),
+            user_id=user.id,
+            file_name="single_rate_invoice.xml",
+            file_type=FileType.XRECHNUNG,
+            file_hash="p" * 64,
+            file_size_bytes=1000,
+            is_valid=True,
+            error_count=0,
+            warning_count=0,
+            info_count=0,
+            processing_time_ms=100,
+            validator_version="1.0.0",
+        )
+        db_session.add(validation)
+        await db_session.flush()
+
+        # No vat_breakdown - single rate invoice
+        extracted = ExtractedInvoiceData(
+            validation_id=validation.id,
+            invoice_number="SINGLE-2024-001",
+            invoice_date=date(2024, 5, 15),
+            net_amount=Decimal("1000.00"),
+            vat_amount=Decimal("190.00"),
+            gross_amount=Decimal("1190.00"),
+            currency="EUR",
+            vat_rate=Decimal("19.00"),
+            seller_name="Single Rate Supplier",
+            vat_breakdown=None,  # No breakdown
+        )
+        db_session.add(extracted)
+        await db_session.commit()
+
+        service = DATEVExportService(db_session)
+        config = DATEVConfig(kontenrahmen=Kontenrahmen.SKR03)
+
+        csv_content, count, total = await service.export_buchungsstapel(
+            user_id=user.id,
+            validation_ids=[validation.id],
+            config=config,
+        )
+
+        # Should have 1 booking using gross amount
+        assert count == 1
+        assert total == Decimal("1190.00")
+        assert "1190,00" in csv_content
+
+    @pytest.mark.asyncio
+    async def test_multi_rate_same_invoice_number(
+        self, db_session, test_steuerberater_user: tuple[User, str]
+    ) -> None:
+        """Test that all bookings from same invoice share the same Belegnummer."""
+        user, _ = test_steuerberater_user
+
+        validation = ValidationLog(
+            id=uuid.uuid4(),
+            user_id=user.id,
+            file_name="multi_rate_invoice.xml",
+            file_type=FileType.XRECHNUNG,
+            file_hash="q" * 64,
+            file_size_bytes=1000,
+            is_valid=True,
+            error_count=0,
+            warning_count=0,
+            info_count=0,
+            processing_time_ms=100,
+            validator_version="1.0.0",
+        )
+        db_session.add(validation)
+        await db_session.flush()
+
+        vat_breakdown = json.dumps([
+            {"rate": "19", "net_amount": "100.00", "vat_amount": "19.00"},
+            {"rate": "7", "net_amount": "50.00", "vat_amount": "3.50"},
+        ])
+        extracted = ExtractedInvoiceData(
+            validation_id=validation.id,
+            invoice_number="SHARED-BELEG-001",
+            invoice_date=date(2024, 8, 1),
+            net_amount=Decimal("150.00"),
+            vat_amount=Decimal("22.50"),
+            gross_amount=Decimal("172.50"),
+            currency="EUR",
+            vat_rate=Decimal("19.00"),
+            seller_name="Multi-Rate Supplier",
+            vat_breakdown=vat_breakdown,
+        )
+        db_session.add(extracted)
+        await db_session.commit()
+
+        service = DATEVExportService(db_session)
+        config = DATEVConfig(kontenrahmen=Kontenrahmen.SKR03)
+
+        csv_content, count, _ = await service.export_buchungsstapel(
+            user_id=user.id,
+            validation_ids=[validation.id],
+            config=config,
+        )
+
+        assert count == 2
+
+        # Invoice number should appear twice (once per booking)
+        assert csv_content.count("SHARED-BELEG-001") == 2

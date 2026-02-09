@@ -1,5 +1,6 @@
 """Invoice data extraction service for DATEV export."""
 
+import json
 import logging
 import re
 from datetime import date
@@ -10,7 +11,7 @@ from xml.etree import ElementTree as ET
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.extracted_invoice import ExtractedInvoiceData
-from app.schemas.extracted_invoice import ExtractedInvoiceDataCreate
+from app.schemas.extracted_invoice import ExtractedInvoiceDataCreate, VATBreakdownItem
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +67,20 @@ class InvoiceExtractionService:
                 logger.warning(f"Failed to extract data from XML for validation {validation_id}")
                 return None
 
+            # Serialize vat_breakdown to JSON
+            vat_breakdown_json = None
+            if extracted.vat_breakdown:
+                vat_breakdown_json = json.dumps(
+                    [
+                        {
+                            "rate": str(item.rate),
+                            "net_amount": str(item.net_amount),
+                            "vat_amount": str(item.vat_amount),
+                        }
+                        for item in extracted.vat_breakdown
+                    ]
+                )
+
             # Store in database
             invoice_data = ExtractedInvoiceData(
                 validation_id=validation_id,
@@ -78,6 +93,7 @@ class InvoiceExtractionService:
                 vat_rate=extracted.vat_rate,
                 seller_name=extracted.seller_name,
                 confidence=extracted.confidence,
+                vat_breakdown=vat_breakdown_json,
             )
 
             self.db.add(invoice_data)
@@ -215,13 +231,34 @@ class InvoiceExtractionService:
                     self._get_text(tax_total, "cbc:TaxAmount", NAMESPACES)
                 )
 
-            # VAT rate from TaxSubtotal
-            vat_rate = None
-            tax_subtotal = root.find(".//cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory", NAMESPACES)
-            if tax_subtotal is not None:
-                vat_rate = self._parse_decimal(
-                    self._get_text(tax_subtotal, "cbc:Percent", NAMESPACES)
+            # Extract ALL tax subtotals for multi-rate support
+            vat_breakdown: list[VATBreakdownItem] = []
+            tax_subtotals = root.findall(".//cac:TaxTotal/cac:TaxSubtotal", NAMESPACES)
+            for subtotal in tax_subtotals:
+                rate = self._parse_decimal(
+                    self._get_text(subtotal, "cac:TaxCategory/cbc:Percent", NAMESPACES)
                 )
+                net = self._parse_decimal(
+                    self._get_text(subtotal, "cbc:TaxableAmount", NAMESPACES)
+                )
+                vat = self._parse_decimal(
+                    self._get_text(subtotal, "cbc:TaxAmount", NAMESPACES)
+                )
+
+                if rate is not None and net is not None:
+                    vat_breakdown.append(
+                        VATBreakdownItem(
+                            rate=rate,
+                            net_amount=net,
+                            vat_amount=vat or Decimal("0"),
+                        )
+                    )
+
+            # Determine dominant VAT rate (highest net amount) for backward compatibility
+            vat_rate = None
+            if vat_breakdown:
+                dominant = max(vat_breakdown, key=lambda x: x.net_amount)
+                vat_rate = dominant.rate
 
             # Currency
             currency = self._get_text(root, ".//cbc:DocumentCurrencyCode", NAMESPACES) or "EUR"
@@ -244,6 +281,7 @@ class InvoiceExtractionService:
                 vat_rate=vat_rate,
                 seller_name=seller_name[:200] if seller_name else None,
                 confidence=Decimal("0.95") if gross_amount else Decimal("0.5"),
+                vat_breakdown=vat_breakdown if vat_breakdown else None,
             )
 
         except Exception as e:
@@ -298,6 +336,7 @@ class InvoiceExtractionService:
             gross_amount = None
             vat_rate = None
             currency = "EUR"
+            vat_breakdown: list[VATBreakdownItem] = []
 
             if settlement is not None:
                 # Currency
@@ -329,15 +368,38 @@ class InvoiceExtractionService:
                             self._get_text(summation, "{*}DuePayableAmount")
                         )
 
-                # VAT rate from applicable trade tax
-                tax = settlement.find(".//ram:ApplicableTradeTax", NAMESPACES)
-                if tax is None:
-                    tax = settlement.find(".//{*}ApplicableTradeTax")
-                if tax is not None:
-                    vat_rate = self._parse_decimal(
-                        self._get_text(tax, "ram:RateApplicablePercent", NAMESPACES) or
-                        self._get_text(tax, "{*}RateApplicablePercent")
+                # Extract ALL ApplicableTradeTax elements for multi-rate support
+                taxes = settlement.findall(".//ram:ApplicableTradeTax", NAMESPACES)
+                if not taxes:
+                    taxes = settlement.findall(".//{*}ApplicableTradeTax")
+
+                for tax in taxes:
+                    rate = self._parse_decimal(
+                        self._get_text(tax, "ram:RateApplicablePercent", NAMESPACES)
+                        or self._get_text(tax, "{*}RateApplicablePercent")
                     )
+                    net = self._parse_decimal(
+                        self._get_text(tax, "ram:BasisAmount", NAMESPACES)
+                        or self._get_text(tax, "{*}BasisAmount")
+                    )
+                    vat = self._parse_decimal(
+                        self._get_text(tax, "ram:CalculatedAmount", NAMESPACES)
+                        or self._get_text(tax, "{*}CalculatedAmount")
+                    )
+
+                    if rate is not None and net is not None:
+                        vat_breakdown.append(
+                            VATBreakdownItem(
+                                rate=rate,
+                                net_amount=net,
+                                vat_amount=vat or Decimal("0"),
+                            )
+                        )
+
+                # Determine dominant VAT rate (highest net amount)
+                if vat_breakdown:
+                    dominant = max(vat_breakdown, key=lambda x: x.net_amount)
+                    vat_rate = dominant.rate
 
             # Seller name
             seller_party = transaction.find(".//ram:ApplicableHeaderTradeAgreement/ram:SellerTradeParty", NAMESPACES)
@@ -360,6 +422,7 @@ class InvoiceExtractionService:
                 vat_rate=vat_rate,
                 seller_name=seller_name[:200] if seller_name else None,
                 confidence=Decimal("0.9") if gross_amount else Decimal("0.4"),
+                vat_breakdown=vat_breakdown if vat_breakdown else None,
             )
 
         except Exception as e:

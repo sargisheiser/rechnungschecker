@@ -4,7 +4,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from uuid import uuid4
 
-from sqlalchemy import Date, DateTime, ForeignKey, Numeric, String, func
+from sqlalchemy import Date, DateTime, ForeignKey, Numeric, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -54,6 +54,10 @@ class ExtractedInvoiceData(Base):
 
     # Seller info (for Buchungstext in DATEV)
     seller_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
+
+    # VAT breakdown for multi-rate invoices (JSON array)
+    # Format: [{"rate": "19", "net_amount": "100.00", "vat_amount": "19.00"}, ...]
+    vat_breakdown: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Extraction metadata
     confidence: Mapped[Decimal] = mapped_column(

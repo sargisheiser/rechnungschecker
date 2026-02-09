@@ -2,6 +2,7 @@
 
 import csv
 import io
+import json
 import logging
 from datetime import date, datetime
 from decimal import Decimal
@@ -96,13 +97,13 @@ class DATEVExportService:
         extracted_result = await self.db.execute(extracted_query)
         extracted_data = {e.validation_id: e for e in extracted_result.scalars().all()}
 
-        # Convert validations to bookings
+        # Convert validations to bookings (multiple per invoice if multi-rate)
         buchungen: list[DATEVBuchung] = []
         for validation in validations:
             extracted = extracted_data.get(validation.id)
-            buchung = self._validation_to_buchung(validation, config, extracted)
-            if buchung:
-                buchungen.append(buchung)
+            buchungen.extend(
+                self._validation_to_buchungen(validation, config, extracted)
+            )
 
         # Generate CSV
         csv_content = self._generate_csv(buchungen, config)
@@ -115,13 +116,15 @@ class DATEVExportService:
 
         return csv_content, len(buchungen), total_umsatz
 
-    def _validation_to_buchung(
+    def _validation_to_buchungen(
         self,
         validation: ValidationLog,
         config: DATEVConfig,
         extracted: ExtractedInvoiceData | None = None,
-    ) -> DATEVBuchung | None:
-        """Convert a validation log entry to a DATEV booking.
+    ) -> list[DATEVBuchung]:
+        """Convert a validation log entry to DATEV bookings.
+
+        Generates one booking per VAT rate for multi-rate invoices.
 
         Args:
             validation: Validation log entry
@@ -129,43 +132,84 @@ class DATEVExportService:
             extracted: Optional extracted invoice data for real amounts
 
         Returns:
-            DATEV booking or None if conversion fails
+            List of DATEV bookings (one per VAT rate)
         """
-        # Use extracted data if available, otherwise use fallback values
-        if extracted and extracted.gross_amount:
-            # Real invoice data available
-            umsatz = extracted.gross_amount
-            vat_rate = extracted.vat_rate or Decimal("19")
-            invoice_date = extracted.invoice_date or validation.created_at.date()
-            belegnummer = extracted.invoice_number or self._generate_belegnummer(validation)
-            buchungstext = self._generate_buchungstext_from_extracted(extracted, validation)
-            waehrung = extracted.currency or "EUR"
-        else:
-            # Fallback to placeholder values
-            umsatz = Decimal("0")
-            vat_rate = Decimal("19")
-            invoice_date = validation.created_at.date()
-            belegnummer = self._generate_belegnummer(validation)
-            buchungstext = self._generate_buchungstext(validation)
-            waehrung = "EUR"
+        if not extracted:
+            # No extracted data, return single fallback booking
+            return [
+                DATEVBuchung(
+                    umsatz=Decimal("0"),
+                    soll_haben="S",
+                    waehrung="EUR",
+                    konto=get_debitor_account(config.kontenrahmen, config.debitor_konto),
+                    gegenkonto=get_revenue_account(
+                        config.kontenrahmen, Decimal("19")
+                    ).konto,
+                    bu_schluessel=get_bu_schluessel(Decimal("19")),
+                    belegdatum=validation.created_at.date(),
+                    belegnummer=self._generate_belegnummer(validation)[:36],
+                    buchungstext=self._generate_buchungstext(validation),
+                )
+            ]
 
-        bu_schluessel = get_bu_schluessel(vat_rate)
-
-        # Get accounts based on configuration
+        # Common booking fields
+        invoice_date = extracted.invoice_date or validation.created_at.date()
+        belegnummer = (
+            extracted.invoice_number or self._generate_belegnummer(validation)
+        )[:36]
+        buchungstext = self._generate_buchungstext_from_extracted(extracted, validation)
+        waehrung = extracted.currency or "EUR"
         konto = get_debitor_account(config.kontenrahmen, config.debitor_konto)
-        gegenkonto = get_revenue_account(config.kontenrahmen, vat_rate).konto
 
-        return DATEVBuchung(
-            umsatz=umsatz,
-            soll_haben="S",  # Debit for revenue
-            waehrung=waehrung,
-            konto=konto,
-            gegenkonto=gegenkonto,
-            bu_schluessel=bu_schluessel,
-            belegdatum=invoice_date,
-            belegnummer=belegnummer[:36] if belegnummer else "",
-            buchungstext=buchungstext,
-        )
+        # Parse VAT breakdown if available
+        breakdowns: list[dict] = []
+        if extracted.vat_breakdown:
+            try:
+                breakdowns = json.loads(extracted.vat_breakdown)
+            except json.JSONDecodeError:
+                pass
+
+        # If no breakdown, fall back to single-rate using gross amount
+        if not breakdowns:
+            if not extracted.gross_amount:
+                return []
+
+            vat_rate = extracted.vat_rate or Decimal("19")
+            return [
+                DATEVBuchung(
+                    umsatz=extracted.gross_amount,
+                    soll_haben="S",
+                    waehrung=waehrung,
+                    konto=konto,
+                    gegenkonto=get_revenue_account(config.kontenrahmen, vat_rate).konto,
+                    bu_schluessel=get_bu_schluessel(vat_rate),
+                    belegdatum=invoice_date,
+                    belegnummer=belegnummer,
+                    buchungstext=buchungstext,
+                )
+            ]
+
+        # Generate one booking per VAT rate
+        buchungen: list[DATEVBuchung] = []
+        for breakdown in breakdowns:
+            rate = Decimal(str(breakdown["rate"]))
+            net_amount = Decimal(str(breakdown["net_amount"]))
+
+            buchungen.append(
+                DATEVBuchung(
+                    umsatz=net_amount,
+                    soll_haben="S",
+                    waehrung=waehrung,
+                    konto=konto,
+                    gegenkonto=get_revenue_account(config.kontenrahmen, rate).konto,
+                    bu_schluessel=get_bu_schluessel(rate),
+                    belegdatum=invoice_date,
+                    belegnummer=belegnummer,
+                    buchungstext=buchungstext,
+                )
+            )
+
+        return buchungen
 
     def _generate_belegnummer(self, validation: ValidationLog) -> str:
         """Generate document number from validation.

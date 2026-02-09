@@ -7,6 +7,14 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 
+class VATBreakdownItem(BaseModel):
+    """Single VAT rate breakdown item."""
+
+    rate: Decimal
+    net_amount: Decimal
+    vat_amount: Decimal
+
+
 class ExtractedInvoiceDataCreate(BaseModel):
     """Schema for creating extracted invoice data."""
 
@@ -19,6 +27,7 @@ class ExtractedInvoiceDataCreate(BaseModel):
     vat_rate: Decimal | None = None
     seller_name: str | None = None
     confidence: Decimal = Field(default=Decimal("1.0"), ge=0, le=1)
+    vat_breakdown: list[VATBreakdownItem] | None = None
 
 
 class ExtractedInvoiceDataResponse(BaseModel):
@@ -36,5 +45,6 @@ class ExtractedInvoiceDataResponse(BaseModel):
     seller_name: str | None
     confidence: Decimal
     extracted_at: datetime
+    vat_breakdown: list[VATBreakdownItem] | None = None
 
     model_config = {"from_attributes": True}
