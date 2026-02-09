@@ -9,7 +9,7 @@ import pytest
 from httpx import AsyncClient
 
 from app.models.extracted_invoice import ExtractedInvoiceData
-from app.models.user import PlanType, User
+from app.models.user import User
 from app.models.validation import FileType, ValidationLog
 from app.schemas.datev import (
     DATEVBuchung,
